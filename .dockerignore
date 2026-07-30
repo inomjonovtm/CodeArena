@@ -1,0 +1,40 @@
+# Ildizdagi Dockerfile uchun build konteksti — butun repozitoriy.
+#
+# DIQQAT: naqshlar kontekst ildiziga nisbatan qo'llanadi. `.venv/` faqat
+# ildizdagi katalogga mos keladi, `backend/.venv` ga EMAS — shuning uchun
+# ichma-ich joylashishi mumkin bo'lgan hamma narsa `**/` bilan yoziladi.
+# Busiz build kontekstiga yuzlab megabayt virtual muhit va node_modules
+# kirib ketardi.
+
+**/.git/
+.github/
+.claude/
+
+# --- Python
+**/__pycache__/
+**/*.py[cod]
+**/.venv/
+**/venv/
+**/*.sqlite3
+backend/media/
+backend/staticfiles/
+backend/backups/
+
+# --- Node / Next.js
+**/node_modules/
+**/.next/
+**/.next-*/
+frontend/out/
+**/*.tsbuildinfo
+
+# --- Sirlar: konteynerga muhit o'zgaruvchilari orqali beriladi
+**/.env
+**/.env.local
+!**/.env.example
+
+# --- Kerak emas
+**/.vscode/
+**/.idea/
+**/.DS_Store
+**/Thumbs.db
+infra/certbot/

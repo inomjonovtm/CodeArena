@@ -107,24 +107,69 @@ TEMPLATES = [
 # bir vaqtda yozishni va tip tekshiruvini boshqacha bajaradi, shu sababli
 # lokalda o'tgan kod produksiyada uzilib qolishi mumkin edi. Endi ishlab
 # chiqish ham, produksiya ham bitta bazada ketadi.
-DB_PASSWORD = env("POSTGRES_PASSWORD", "codearena")
+#
+# Ikki xil sozlash qo'llanadi:
+#   * `DATABASE_URL` — boshqariladigan bazalar va hosting platformalari
+#     odatda shu bitta o'zgaruvchini beradi;
+#   * `POSTGRES_*` — docker-compose va lokal ish uchun.
+# Ikkalasi ham bo'lsa, `DATABASE_URL` ustun turadi.
+_DB_OPTIONS: dict[str, object] = {
+    "connect_timeout": int(env("POSTGRES_CONNECT_TIMEOUT", "10")),
+}
+
+
+def _database_from_url(url: str) -> dict[str, object] | None:
+    """`postgres://user:parol@host:port/nom?sslmode=require` ni ajratadi.
+
+    Tashqi kutubxona (`dj-database-url`) qo'shilmadi: kerak bo'ladigan
+    narsa shu bir nechta qatordan iborat va bitta bog'liqlikni saqlab
+    yurishdan arzonroq.
+    """
+    from urllib.parse import parse_qsl, unquote, urlparse
+
+    parsed = urlparse(url)
+    if parsed.scheme not in {"postgres", "postgresql", "pgsql"}:
+        raise RuntimeError(
+            f"DATABASE_URL sxemasi qo'llanmaydi: {parsed.scheme!r}. "
+            "Faqat PostgreSQL (postgres:// yoki postgresql://)."
+        )
+
+    options = dict(_DB_OPTIONS)
+    # Boshqariladigan bazalar ko'pincha `?sslmode=require` talab qiladi —
+    # uni yo'qotib qo'ysak, ulanish rad etilardi.
+    options.update(dict(parse_qsl(parsed.query)))
+
+    return {
+        "NAME": unquote(parsed.path).lstrip("/") or "codearena",
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "localhost",
+        "PORT": str(parsed.port or 5432),
+        "OPTIONS": options,
+    }
+
+
+_db_url = env("DATABASE_URL")
+_db = _database_from_url(_db_url) if _db_url else {
+    "NAME": env("POSTGRES_DB", "codearena"),
+    "USER": env("POSTGRES_USER", "codearena"),
+    "PASSWORD": env("POSTGRES_PASSWORD", "codearena"),
+    "HOST": env("POSTGRES_HOST", "localhost"),
+    "PORT": env("POSTGRES_PORT", "5432"),
+    "OPTIONS": _DB_OPTIONS,
+}
+
+DB_PASSWORD = str(_db["PASSWORD"])
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", "codearena"),
-        "USER": env("POSTGRES_USER", "codearena"),
-        "PASSWORD": DB_PASSWORD,
-        "HOST": env("POSTGRES_HOST", "localhost"),
-        "PORT": env("POSTGRES_PORT", "5432"),
         # Ulanishni qayta ishlatish — har so'rovda yangi TCP ulanish ochilmaydi.
         "CONN_MAX_AGE": int(env("POSTGRES_CONN_MAX_AGE", "60")),
         # Qayta ishlatishdan oldin ulanish tirikligini tekshiradi: baza
         # qayta ishga tushganda birinchi so'rov 500 bermasligi uchun.
         "CONN_HEALTH_CHECKS": True,
-        "OPTIONS": {
-            "connect_timeout": int(env("POSTGRES_CONNECT_TIMEOUT", "10")),
-        },
+        **_db,
     }
 }
 

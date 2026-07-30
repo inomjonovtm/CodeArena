@@ -1,0 +1,19 @@
+# Matn fayllari repozitoriyda LF bilan saqlanadi.
+* text=auto eol=lf
+
+# Konteynerga tushadigan fayllar HAR DOIM LF bo'lishi shart. Windowsda
+# `core.autocrlf=true` bilan checkout qilinsa, `entrypoint.sh` ning shebangi
+# `#!/usr/bin/env bash\r` ga aylanib, Linux konteynerda
+# "no such file or directory" xatosini berardi.
+*.sh              text eol=lf
+Dockerfile        text eol=lf
+*.conf            text eol=lf
+*.template        text eol=lf
+docker-compose*.yml text eol=lf
+.env.example      text eol=lf
+
+# Ikkilik fayllar
+*.png  binary
+*.jpg  binary
+*.gz   binary
+*.ico  binary

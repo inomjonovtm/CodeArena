@@ -1,5 +1,65 @@
 # Deploy
 
+Ikki yo'l bor:
+
+| Yo'l | Qachon | Fayl |
+|---|---|---|
+| **Yagona konteyner** | "Dockerfile push qil" turidagi hosting platformalari | ildizdagi [`Dockerfile`](Dockerfile) |
+| **Ajratilgan xizmatlar** | o'z serveringiz bo'lsa | [`docker-compose.prod.yml`](docker-compose.prod.yml) + GitHub Actions |
+
+Ikkalasi ham tashqi **PostgreSQL** talab qiladi — konteynerlarning hech birida
+baza yo'q.
+
+---
+
+## A. Yagona konteyner (hosting platformalari)
+
+Repozitoriy ildizidagi `Dockerfile` bitta image quradi va bitta port ochadi:
+
+```
+nginx :$PORT ── /api/, /health/, /static/, /media/ → gunicorn :8000
+             └─ qolgan hammasi                      → next     :3000
+```
+
+Jarayonlarni `supervisord` boshqaradi va biri tushsa qayta ko'taradi.
+Migratsiya va `collectstatic` har ishga tushishda avtomatik bajariladi.
+
+### Kerakli muhit o'zgaruvchilari
+
+| O'zgaruvchi | Qiymat | Izoh |
+|---|---|---|
+| `DATABASE_URL` | `postgresql://user:parol@host:5432/nom?sslmode=require` | tashqi Postgres |
+| `DJANGO_SECRET_KEY` | 64 belgili tasodifiy satr | standart qiymat bilan **ishga tushmaydi** |
+| `DJANGO_DEBUG` | `False` | |
+| `DJANGO_ALLOWED_HOSTS` | `sizning-domen.app` | noto'g'ri bo'lsa hamma so'rov 400 beradi |
+| `CORS_ALLOWED_ORIGINS` | `https://sizning-domen.app` | |
+| `CSRF_TRUSTED_ORIGINS` | `https://sizning-domen.app` | |
+| `FRONTEND_URL` | `https://sizning-domen.app` | xatlardagi havolalar shundan quriladi |
+| `AUTH_COOKIE_SECURE` | `True` | |
+| `PORT` | platforma o'zi beradi | berilmasa `8080` |
+| `REDIS_URL` | ixtiyoriy | bo'lsa celery worker + beat yoqiladi; bo'lmasa tasklar sinxron bajariladi |
+
+`DATABASE_URL` o'rniga alohida `POSTGRES_DB` / `POSTGRES_USER` /
+`POSTGRES_PASSWORD` / `POSTGRES_HOST` / `POSTGRES_PORT` ham beriladi.
+Ikkalasi bo'lsa `DATABASE_URL` ustun turadi.
+
+### Birinchi ishga tushirishdan keyin
+
+Administrator hisobi qo'lda yaratiladi — platformaning konsolida:
+
+```bash
+cd /app/backend && python manage.py createsuperuser
+```
+
+> **Judge0 bu rejimda yo'q.** Kod tekshiruvi lokal runnerga tushadi
+> (`LOCAL_JUDGE_ENABLED=True`), u esa **to'liq sandbox emas**: tarmoq va fayl
+> tizimi bloklanmagan. Ishonchsiz foydalanuvchilar kodi uchun alohida Judge0
+> ko'taring va `JUDGE0_URL` ni ko'rsating.
+
+---
+
+## B. Ajratilgan xizmatlar (o'z serveringiz)
+
 GitHub Actions orqali: **CI o'tadi → image'lar GHCR'ga chiqadi → serverga SSH
 bilan yetkaziladi.** Serverda kod ham, Node/Python ham kerak emas — faqat
 Docker va bir nechta konfiguratsiya fayli.
@@ -18,7 +78,7 @@ push → main
 
 ---
 
-## 1. Serverni tayyorlash
+### 1. Serverni tayyorlash
 
 Talab: Ubuntu 22.04+ (yoki shunga o'xshash), 4 GB RAM dan yuqori
 (Judge0 konteynerlari ochko'z), Docker Engine + Compose plugin.
@@ -87,7 +147,7 @@ LOCAL_JUDGE_ENABLED=False
 
 ---
 
-## 2. GitHub sirlarini sozlash
+### 2. GitHub sirlarini sozlash
 
 Repozitoriy → Settings → Secrets and variables → Actions:
 
@@ -118,7 +178,7 @@ GHCR uchun alohida token kerak emas — workflow `GITHUB_TOKEN` bilan ishlaydi
 
 ---
 
-## 3. Birinchi ishga tushirish
+### 3. Birinchi ishga tushirish
 
 Deploy workflow'i `migrate` xizmatini avtomatik bajaradi, lekin birinchi marta
 administrator hisobi qo'lda yaratiladi:
@@ -150,7 +210,7 @@ faollashtiring (fayl repozitoriyda — o'zgartirib, push qiling).
 
 ---
 
-## 4. Kundalik ish
+### 4. Kundalik ish
 
 | Vazifa | Buyruq |
 |---|---|
