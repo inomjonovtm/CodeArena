@@ -37,7 +37,7 @@ class AdminDiscussionViewSet(
     permission_classes = [IsStaff, HasResourcePerm]
     perm_resource = "content"
     perm_actions = {"comments": "view"}
-    filterset_fields = ["status", "problem", "author", "is_pinned", "is_locked"]
+    filterset_fields = ["status", "author", "is_pinned", "is_locked"]
     search_fields = ["title", "body_md", "author__username"]
     ordering_fields = ["created_at", "upvotes", "comment_count", "flagged_count", "views"]
     ordering = ["-created_at"]
@@ -48,7 +48,7 @@ class AdminDiscussionViewSet(
         return (
             super()
             .get_queryset()
-            .select_related("author", "problem")
+            .select_related("author")
             .annotate(live_comment_count=Count("comments", distinct=True))
         )
 
@@ -83,7 +83,7 @@ class AdminCommentViewSet(
     serializer_class = CommentSerializer
     permission_classes = [IsStaff, HasResourcePerm]
     perm_resource = "content"
-    filterset_fields = ["status", "discussion", "author"]
+    filterset_fields = ["status", "discussion", "problem", "author"]
     search_fields = ["body_md", "author__username"]
     ordering_fields = ["created_at", "upvotes", "flagged_count"]
     ordering = ["-created_at"]
@@ -91,7 +91,7 @@ class AdminCommentViewSet(
     bulk_allowed_actions = ("delete", "hide", "show")
 
     def get_queryset(self):
-        return super().get_queryset().select_related("author", "discussion")
+        return super().get_queryset().select_related("author", "discussion", "problem")
 
     def handle_bulk_action(self, request, action_name, queryset, payload):
         if action_name == "hide":

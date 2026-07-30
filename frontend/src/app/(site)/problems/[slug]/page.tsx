@@ -42,7 +42,7 @@ import {
   Stat,
 } from "@/components/kit";
 import { useAuth, useI18n, useLocalized, useToast } from "@/components/providers";
-import { DiscussionList } from "@/components/site/discussions";
+import { CommentThread } from "@/components/site/discussions";
 import { CodeEditor } from "@/components/ui/code-editor";
 import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
@@ -76,7 +76,7 @@ const langKey = "codearena-language";
 const POLL_INTERVAL = 1200;
 const POLL_TIMEOUT = 90_000;
 
-type LeftTab = "description" | "hint" | "editorial" | "discussion" | "submissions";
+type LeftTab = "description" | "hint" | "editorial" | "comments" | "submissions";
 
 /** Mobil ko'rinishda uch bo'lim almashinadi; desktopda ikkalasi yonma-yon. */
 type MobilePane = "task" | "code" | "result";
@@ -397,8 +397,8 @@ export default function ProblemDetailPage() {
         ),
       });
     items.push({
-      value: "discussion",
-      label: t.site.problem.tabDiscussion,
+      value: "comments",
+      label: t.site.problem.tabComments,
       icon: <MessageSquare className="size-3.5" />,
     });
     if (user) {
@@ -568,13 +568,7 @@ export default function ProblemDetailPage() {
             <Segmented size="sm" value={tab} onChange={setTab} items={tabs} />
           </div>
 
-          {/* Muhokama bo'limi o'z kartalarini chizadi — karta ichida karta
-              bo'lmasligi uchun bu yerda o'ram berilmaydi. */}
-          <Pane
-            tone={tab === "discussion" ? "bare" : "solid"}
-            inset={tab === "discussion" ? "none" : "lg"}
-            className="enter"
-          >
+          <Pane tone="solid" inset="lg" className="enter">
             {tab === "description" ? (
               <>
                 {/* Matn o'qish kengligi bilan cheklanadi (72ch): uzun qatorda
@@ -644,11 +638,11 @@ export default function ProblemDetailPage() {
               )
             ) : null}
 
-            {tab === "discussion" ? (
-              <DiscussionList
+            {tab === "comments" ? (
+              <CommentThread
                 problemSlug={slug}
                 problemId={problem.id}
-                emptyHint={t.site.problem.firstQuestion}
+                emptyHint={t.site.problem.firstComment}
               />
             ) : null}
 

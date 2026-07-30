@@ -9,7 +9,6 @@ router.register("comments", views.CommentViewSet, basename="comment")
 router.register("reports", views.ReportViewSet, basename="report")
 
 urlpatterns = [
-    path("discussions/problem/<uuid:problem_id>/", views.problem_discussions, name="problem-discussions"),
     path("contact/", views.contact_submit, name="contact-submit"),
     path("", include(router.urls)),
 ]

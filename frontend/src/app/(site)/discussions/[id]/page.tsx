@@ -26,12 +26,12 @@ import {
   LinkButton,
   Pane,
   PaneHead,
-  Textarea,
   TextLines,
 } from "@/components/kit";
 import { useAuth, useToast } from "@/components/providers";
 import { CommentThread, ReportButton, UserAvatar } from "@/components/site/discussions";
 import { Markdown } from "@/components/ui/markdown";
+import { RichEditor } from "@/components/ui/rich-editor";
 import { ApiError } from "@/lib/api";
 import { publicApi } from "@/lib/public-api";
 import { cn, formatRelative } from "@/lib/utils";
@@ -123,14 +123,14 @@ export default function DiscussionDetailPage() {
       <Pane inset="lg" className="enter">
         {/* Orqaga qaytish — karta ichida, sahifada yalang'och qolmasin */}
         <Link
-          href={data.problem_slug ? `/problems/${data.problem_slug}` : "/discussions"}
+          href="/discussions"
           className={cn(
             "mb-5 inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] px-1 py-0.5 text-[13.5px]",
             "text-[var(--ink-3)] transition-colors hover:text-[var(--ink)] focus-ring",
           )}
         >
           <ArrowLeft className="size-4" />
-          {data.problem_slug ? data.problem_title : "Muhokamalar"}
+          Muhokamalar
         </Link>
 
         {editing ? (
@@ -142,13 +142,8 @@ export default function DiscussionDetailPage() {
                 onChange={(event) => setTitle(event.target.value)}
               />
             </Field>
-            <Field label="Matn" htmlFor="edit-body">
-              <Textarea
-                id="edit-body"
-                rows={8}
-                value={body}
-                onChange={(event) => setBody(event.target.value)}
-              />
+            <Field label="Matn">
+              <RichEditor value={body} onChange={setBody} minRows={10} />
             </Field>
             <div className="flex gap-2">
               <Button
@@ -197,7 +192,7 @@ export default function DiscussionDetailPage() {
             </div>
 
             <div className="min-w-0 flex-1">
-              {data.is_pinned || data.is_locked || data.problem_slug ? (
+              {data.is_pinned || data.is_locked ? (
                 <div className="flex flex-wrap items-center gap-2">
                   {data.is_pinned ? (
                     <Chip tone="brand" icon={<Pin className="size-3" />}>
@@ -206,18 +201,6 @@ export default function DiscussionDetailPage() {
                   ) : null}
                   {data.is_locked ? (
                     <Chip icon={<Lock className="size-3" />}>Yopilgan</Chip>
-                  ) : null}
-                  {data.problem_slug ? (
-                    <Link
-                      href={`/problems/${data.problem_slug}`}
-                      className={cn(
-                        "inline-flex items-center rounded-[var(--r-chip)] bg-[var(--pane-sunken)] px-2.5 py-1",
-                        "text-[12px] font-medium text-[var(--ink-3)] transition-colors",
-                        "hover:text-[var(--brand-ink)] focus-ring",
-                      )}
-                    >
-                      {data.problem_title}
-                    </Link>
                   ) : null}
                 </div>
               ) : null}

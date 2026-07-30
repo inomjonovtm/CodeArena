@@ -368,9 +368,6 @@ export type ModerationState = "visible" | "hidden" | "flagged" | "deleted";
 
 export interface Discussion {
   id: string;
-  problem: string | null;
-  problem_title: string | null;
-  problem_slug: string | null;
   author: string | null;
   author_username: string | null;
   title: string;
@@ -389,8 +386,12 @@ export interface Discussion {
 
 export interface Comment {
   id: string;
-  discussion: string;
-  discussion_title: string;
+  /** Izoh mavzuga yoki masalaga tegishli — aynan bittasi to'ldirilgan. */
+  discussion: string | null;
+  discussion_title: string | null;
+  problem: string | null;
+  problem_title: string | null;
+  problem_slug: string | null;
   parent: string | null;
   author: string | null;
   author_username: string | null;
@@ -1303,9 +1304,6 @@ export interface RunResponse {
 
 export interface PublicDiscussion {
   id: string;
-  problem: string | null;
-  problem_slug: string | null;
-  problem_title: string | null;
   author_username: string | null;
   author_avatar: string | null;
   author_rank: RankInfo | null;
@@ -1324,7 +1322,9 @@ export interface PublicDiscussion {
 
 export interface PublicComment {
   id: string;
-  discussion: string;
+  /** Izoh mavzuga yoki masalaga tegishli — aynan bittasi to'ldirilgan. */
+  discussion: string | null;
+  problem: string | null;
   parent: string | null;
   author_username: string | null;
   author_avatar: string | null;

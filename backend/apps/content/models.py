@@ -23,11 +23,15 @@ class ModerationStatus(models.TextChoices):
 
 
 class Discussion(SoftDeleteModel, BaseModel):
-    """Masala muhokamasi (Bosqich 3)."""
+    """Umumiy muhokama mavzusi.
 
-    problem = models.ForeignKey(
-        Problem, null=True, blank=True, on_delete=models.CASCADE, related_name="discussions"
-    )
+    Ilgari muhokama masalaga bog'lanardi va masala sahifasida ham shu ro'yxat
+    chiqardi. Natijada bitta joyda ikki xil suhbat aralashib ketardi: masala
+    haqida qisqa savol berish uchun ham «mavzu ochish» kerak bo'lardi.
+    Endi masala ostida oddiy izohlar turadi (`Comment.problem`), muhokamalar
+    esa mustaqil bo'lim.
+    """
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="discussions"
     )
@@ -58,7 +62,19 @@ class Discussion(SoftDeleteModel, BaseModel):
 
 
 class Comment(SoftDeleteModel, BaseModel):
-    discussion = models.ForeignKey(Discussion, on_delete=models.CASCADE, related_name="comments")
+    """Izoh — muhokama mavzusiga YOKI masalaga tegishli.
+
+    Alohida `ProblemComment` modeli yasalmadi: ovoz berish (`ContentVote`),
+    shikoyat (`ContentReport`), moderatsiya va tarmoqli javoblar bir xil
+    ishlaydi. Ikki model bo'lsa, shularning hammasi ikki nusxada yozilardi.
+    """
+
+    discussion = models.ForeignKey(
+        Discussion, null=True, blank=True, on_delete=models.CASCADE, related_name="comments"
+    )
+    problem = models.ForeignKey(
+        Problem, null=True, blank=True, on_delete=models.CASCADE, related_name="comments"
+    )
     parent = models.ForeignKey("self", null=True, blank=True, on_delete=models.CASCADE, related_name="replies")
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="comments"
@@ -73,6 +89,18 @@ class Comment(SoftDeleteModel, BaseModel):
     class Meta:
         db_table = "comments"
         ordering = ["created_at"]
+        indexes = [models.Index(fields=["problem", "status", "created_at"])]
+        constraints = [
+            # Egasiz yoki ikki egali izoh bo'lmasin — aks holda u hech qaysi
+            # sahifada ko'rinmay qolardi yoki ikkalasida takrorlanardi.
+            models.CheckConstraint(
+                name="comment_belongs_to_one_target",
+                condition=(
+                    models.Q(discussion__isnull=False, problem__isnull=True)
+                    | models.Q(discussion__isnull=True, problem__isnull=False)
+                ),
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.author} — {self.body_md[:40]}"

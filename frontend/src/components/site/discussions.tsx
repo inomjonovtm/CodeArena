@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
   ChevronUp,
   CornerDownRight,
   Flag,
@@ -14,7 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Alert,
@@ -35,6 +36,7 @@ import {
 } from "@/components/kit";
 import { useAuth, useToast } from "@/components/providers";
 import { Markdown } from "@/components/ui/markdown";
+import { RichEditor } from "@/components/ui/rich-editor";
 import { ApiError } from "@/lib/api";
 import { publicApi } from "@/lib/public-api";
 import { ringStyle, ringWidth } from "@/lib/rank";
@@ -242,15 +244,25 @@ export function ReportButton({
 
 type SortKey = "new" | "top" | "active";
 
-export function DiscussionList({
-  problemSlug,
-  problemId,
-  emptyHint,
-}: {
-  problemSlug?: string;
-  problemId?: string;
-  emptyHint?: string;
-}) {
+/** Yarim yozilgan mavzu sahifa yopilsa yo'qolmasin. */
+const DRAFT_KEY = "codearena:discussion-draft";
+
+/** Kompozitordagi talab qatori — bajarilgani yashil belgi oladi. */
+function Requirement({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <li
+      className={cn(
+        "flex items-center gap-1.5 text-[11.5px]",
+        ok ? "text-[var(--good)]" : "text-[var(--ink-4)]",
+      )}
+    >
+      <Check className={cn("size-3", !ok && "opacity-40")} />
+      {label}
+    </li>
+  );
+}
+
+export function DiscussionList({ emptyHint }: { emptyHint?: string }) {
   const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -263,31 +275,51 @@ export function DiscussionList({
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("new");
 
+  /* Qoralamani tiklash — brauzer yopilib ketsa ham matn qolsin. Faqat
+     birinchi renderda o'qiladi, keyin holat o'zi manba bo'ladi. */
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(DRAFT_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as { title?: string; body?: string };
+      if (parsed.title || parsed.body) {
+        setTitle(parsed.title ?? "");
+        setBody(parsed.body ?? "");
+        setComposerOpen(true);
+      }
+    } catch {
+      // Buzilgan qoralama sahifani ishdan chiqarmasin
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!title && !body) {
+      window.localStorage.removeItem(DRAFT_KEY);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ title, body }));
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [title, body]);
+
   // Muhokamalar ko'payib ketmasligi uchun 10 tadan sahifalanadi
-  const queryKey = ["discussions", problemSlug ?? "all", page];
+  const queryKey = ["discussions", page];
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey,
-    queryFn: () =>
-      publicApi.discussions.list({
-        page,
-        page_size: 10,
-        ...(problemSlug ? { problem_slug: problemSlug } : {}),
-      }),
+    queryFn: () => publicApi.discussions.list({ page, page_size: 10 }),
     placeholderData: (previous) => previous,
   });
 
   const createMutation = useMutation({
     mutationFn: () =>
-      publicApi.discussions.create({
-        title: title.trim(),
-        body_md: body.trim(),
-        problem: problemId ?? null,
-      }),
+      publicApi.discussions.create({ title: title.trim(), body_md: body.trim() }),
     onSuccess: () => {
       setTitle("");
       setBody("");
       setComposerOpen(false);
       setError(null);
+      window.localStorage.removeItem(DRAFT_KEY);
       toast.success("Mavzu qo'shildi");
       void queryClient.invalidateQueries({ queryKey });
     },
@@ -343,20 +375,30 @@ export function DiscussionList({
             </Field>
             <Field
               label="Matn"
-              htmlFor="discussion-body"
               required
-              hint="Markdown qo'llab-quvvatlanadi. Tayyor yechim tashlash taqiqlanadi."
+              hint="Formatlash, jonli ko'rinish va to'liq ekran mavjud. Tayyor yechim tashlash taqiqlanadi."
             >
-              <Textarea
-                id="discussion-body"
-                rows={5}
-                placeholder="Savolingizni yoki fikringizni yozing..."
+              <RichEditor
                 value={body}
-                onChange={(event) => setBody(event.target.value)}
+                onChange={setBody}
+                minRows={10}
+                placeholder="Savolingizni yoki fikringizni yozing. Kod uchun ``` dan foydalaning..."
               />
             </Field>
 
             {error ? <Alert tone="bad">{error}</Alert> : null}
+
+            {/* Talablar yozishdan oldin ko'rinsin — «Joylash» bosgandan keyin
+                server xatosini o'qib, matnni qayta tuzatish noqulay. */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <Requirement ok={title.trim().length >= 5} label="Sarlavha: 5+ belgi" />
+                <Requirement ok={body.trim().length >= 10} label="Matn: 10+ belgi" />
+              </ul>
+              <span className="t-num text-[11.5px] text-[var(--ink-4)]">
+                {body.length} belgi
+              </span>
+            </div>
 
             <div className="flex flex-wrap justify-end gap-2">
               <Button
@@ -366,7 +408,19 @@ export function DiscussionList({
                   setError(null);
                 }}
               >
-                Bekor qilish
+                Yopish
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={!title && !body}
+                onClick={() => {
+                  setTitle("");
+                  setBody("");
+                  setError(null);
+                }}
+              >
+                Tozalash
               </Button>
               <Button
                 variant="primary"
@@ -374,7 +428,7 @@ export function DiscussionList({
                 icon={<Send className="size-4" />}
                 onClick={() => createMutation.mutate()}
                 loading={createMutation.isPending}
-                disabled={!title.trim() || !body.trim()}
+                disabled={title.trim().length < 5 || body.trim().length < 10}
               >
                 Joylash
               </Button>
@@ -576,11 +630,6 @@ function DiscussionRow({ discussion }: { discussion: PublicDiscussion }) {
             <MessageSquare className="size-3" />
             <span className="t-num">{discussion.comment_count}</span>
           </span>
-          {discussion.problem_title ? (
-            <Chip tone="neutral" className="max-w-48">
-              <span className="truncate">{discussion.problem_title}</span>
-            </Chip>
-          ) : null}
         </div>
       </div>
     </Link>
@@ -608,17 +657,32 @@ function buildTree(rows: PublicComment[]): CommentNode[] {
   return roots;
 }
 
+/**
+ * Izohlar oqimi — muhokama mavzusi uchun ham, masala uchun ham.
+ *
+ * Bitta komponent ikkalasiga xizmat qiladi: ovoz berish, javob, tahrirlash,
+ * o'chirish va shikoyat mantiqi ikki joyda takrorlanmasin. Farq faqat manba
+ * va yaratishdagi maydonda.
+ */
 export function CommentThread({
   discussionId,
+  problemSlug,
+  problemId,
   locked,
+  emptyHint,
 }: {
-  discussionId: string;
+  discussionId?: string;
+  problemSlug?: string;
+  problemId?: string;
   locked?: boolean;
+  emptyHint?: string;
 }) {
   const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const queryKey = ["discussion-comments", discussionId];
+  const queryKey = discussionId
+    ? ["discussion-comments", discussionId]
+    : ["problem-comments", problemSlug];
 
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -627,20 +691,26 @@ export function CommentThread({
 
   const { data, isLoading } = useQuery({
     queryKey,
-    queryFn: () => publicApi.discussions.comments(discussionId),
+    queryFn: () =>
+      discussionId
+        ? publicApi.discussions.comments(discussionId)
+        : publicApi.problems.comments(problemSlug!),
+    enabled: Boolean(discussionId || problemSlug),
   });
 
   const tree = useMemo(() => buildTree(data ?? []), [data]);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey });
-    void queryClient.invalidateQueries({ queryKey: ["discussion", discussionId] });
+    if (discussionId) {
+      void queryClient.invalidateQueries({ queryKey: ["discussion", discussionId] });
+    }
   };
 
   const createMutation = useMutation({
     mutationFn: (payload: { body: string; parent: string | null }) =>
       publicApi.comments.create({
-        discussion: discussionId,
+        ...(discussionId ? { discussion: discussionId } : { problem: problemId }),
         body_md: payload.body,
         parent: payload.parent,
       }),
@@ -718,12 +788,7 @@ export function CommentThread({
 
             {editing === node.id ? (
               <div className="mt-2 flex flex-col gap-2">
-                <Textarea
-                  rows={3}
-                  autoFocus
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                />
+                <RichEditor value={draft} onChange={setDraft} minRows={3} />
                 <div className="flex gap-2">
                   <Button
                     variant="primary"
@@ -794,12 +859,11 @@ export function CommentThread({
 
             {replyTo === node.id ? (
               <div className="enter mt-3 flex flex-col gap-2">
-                <Textarea
-                  rows={3}
-                  autoFocus
-                  placeholder={`${node.author_username ?? "foydalanuvchi"}ga javob...`}
+                <RichEditor
                   value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
+                  onChange={setDraft}
+                  minRows={3}
+                  placeholder={`${node.author_username ?? "foydalanuvchi"}ga javob...`}
                 />
                 <div className="flex gap-2">
                   <Button
@@ -834,14 +898,16 @@ export function CommentThread({
     <div className="flex flex-col gap-5">
       {user && !locked ? (
         <div className="flex flex-col gap-2.5">
-          <Textarea
-            rows={3}
-            placeholder="Izohingizni yozing..."
+          <RichEditor
             value={rootDraft}
-            onChange={(event) => setRootDraft(event.target.value)}
+            onChange={setRootDraft}
+            minRows={3}
+            placeholder="Izohingizni yozing..."
           />
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11.5px] text-[var(--ink-4)]">Markdown qo&apos;llab-quvvatlanadi</p>
+            <p className="text-[11.5px] text-[var(--ink-4)]">
+              Formatlash paneli va jonli ko&apos;rinish mavjud
+            </p>
             <Button
               variant="primary"
               size="sm"
@@ -869,7 +935,7 @@ export function CommentThread({
           compact
           icon={<MessageSquare className="size-5" />}
           title="Hali izoh yo'q"
-          description="Birinchi bo'lib fikringizni yozing."
+          description={emptyHint ?? "Birinchi bo'lib fikringizni yozing."}
         />
       ) : (
         <ul className="enter-stagger flex flex-col divide-y divide-[var(--edge-soft)] border-t border-[var(--edge)]">

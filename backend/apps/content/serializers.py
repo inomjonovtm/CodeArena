@@ -8,13 +8,11 @@ from .models import Comment, ContactMessage, ContentReport, Discussion
 
 class DiscussionSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source="author.username", read_only=True, default=None)
-    problem_title = serializers.CharField(source="problem.title_uz", read_only=True, default=None)
-    problem_slug = serializers.CharField(source="problem.slug", read_only=True, default=None)
 
     class Meta:
         model = Discussion
         fields = (
-            "id", "problem", "problem_title", "problem_slug", "author", "author_username",
+            "id", "author", "author_username",
             "title", "body_md", "status", "is_pinned", "is_locked", "upvotes", "views",
             "comment_count", "flagged_count", "moderation_note", "created_at", "updated_at",
         )
@@ -24,12 +22,15 @@ class DiscussionSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source="author.username", read_only=True, default=None)
-    discussion_title = serializers.CharField(source="discussion.title", read_only=True)
+    discussion_title = serializers.CharField(source="discussion.title", read_only=True, default=None)
+    problem_title = serializers.CharField(source="problem.title_uz", read_only=True, default=None)
+    problem_slug = serializers.CharField(source="problem.slug", read_only=True, default=None)
 
     class Meta:
         model = Comment
         fields = (
-            "id", "discussion", "discussion_title", "parent", "author", "author_username",
+            "id", "discussion", "discussion_title", "problem", "problem_title", "problem_slug",
+            "parent", "author", "author_username",
             "body_md", "status", "upvotes", "flagged_count", "created_at", "updated_at",
         )
         read_only_fields = ("id", "author", "upvotes", "flagged_count", "created_at", "updated_at")
@@ -59,16 +60,13 @@ class PublicDiscussionSerializer(serializers.ModelSerializer):
     author_username = serializers.CharField(source="author.username", read_only=True, default=None)
     author_avatar = serializers.CharField(source="author.avatar_url", read_only=True, default=None)
     author_rank = RankField("author.rating")
-    problem_slug = serializers.CharField(source="problem.slug", read_only=True, default=None)
-    problem_title = serializers.CharField(source="problem.title_uz", read_only=True, default=None)
     my_vote = serializers.SerializerMethodField()
     is_mine = serializers.SerializerMethodField()
 
     class Meta:
         model = Discussion
         fields = (
-            "id", "problem", "problem_slug", "problem_title",
-            "author_username", "author_avatar", "author_rank",
+            "id", "author_username", "author_avatar", "author_rank",
             "title", "body_md", "is_pinned", "is_locked", "upvotes", "views",
             "comment_count", "my_vote", "is_mine", "created_at", "updated_at",
         )
@@ -116,7 +114,8 @@ class PublicCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = (
-            "id", "discussion", "parent", "author_username", "author_avatar", "author_rank",
+            "id", "discussion", "problem", "parent",
+            "author_username", "author_avatar", "author_rank",
             "body_md", "upvotes", "my_vote", "is_mine", "created_at", "updated_at",
         )
         read_only_fields = ("id", "upvotes", "created_at", "updated_at")
@@ -136,6 +135,28 @@ class PublicCommentSerializer(serializers.ModelSerializer):
     def get_is_mine(self, obj) -> bool:
         user = self._user()
         return bool(user and obj.author_id == user.pk)
+
+    def validate(self, attrs):
+        """Izoh aynan bitta obyektga tegishli bo'lsin — mavzuga yoki masalaga.
+
+        Bazada ham `CheckConstraint` bor, lekin u faqat IntegrityError beradi
+        (500). Bu yerda tekshirish tushunarli 400 qaytaradi.
+        """
+        if self.instance is None:
+            parent = attrs.get("parent")
+            if parent is not None:
+                # Javob doim ota-izoh bilan bir joyda turadi. Aks holda javob
+                # boshqa sahifada paydo bo'lib qolardi.
+                attrs["discussion"] = parent.discussion
+                attrs["problem"] = parent.problem
+
+            has_discussion = attrs.get("discussion") is not None
+            has_problem = attrs.get("problem") is not None
+            if has_discussion == has_problem:
+                raise serializers.ValidationError(
+                    "Izoh mavzuga yoki masalaga tegishli bo'lishi kerak — aynan bittasiga."
+                )
+        return attrs
 
     def validate_body_md(self, value: str) -> str:
         value = value.strip()

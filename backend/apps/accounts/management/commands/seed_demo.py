@@ -491,7 +491,6 @@ class Command(BaseCommand):
             if Discussion.objects.filter(title=title).exists():
                 continue
             discussion = Discussion.objects.create(
-                problem=problems[index % len(problems)],
                 author=random.choice(users),
                 title=title, body_md=body,
                 upvotes=random.randint(0, 42),
@@ -504,6 +503,16 @@ class Command(BaseCommand):
                 )
             discussion.comment_count = discussion.comments.count()
             discussion.save(update_fields=["comment_count"])
+
+        # Masala ostidagi izohlar — muhokamalardan alohida oqim
+        for index, problem in enumerate(problems[:8]):
+            if Comment.objects.filter(problem=problem).exists():
+                continue
+            for _ in range(random.randint(1, 4)):
+                Comment.objects.create(
+                    problem=problem, author=random.choice(users),
+                    body_md=random.choice(COMMENTS), upvotes=random.randint(0, 12),
+                )
 
     def _create_groups(self, users: list[User]) -> None:
         if len(users) < 4:

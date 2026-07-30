@@ -80,14 +80,21 @@ export default function CommentsPage() {
         ),
     },
     {
-      key: "discussion",
-      header: "Mavzu",
+      // Izoh mavzuga yoki masalaga tegishli bo'lishi mumkin — ustun ikkalasini
+      // ko'rsatadi, aks holda masala izohlari egasiz bo'lib ko'rinardi.
+      key: "target",
+      header: "Qayerda",
       hideable: true,
-      csv: (row) => row.discussion_title,
+      csv: (row) => row.discussion_title ?? row.problem_title ?? "",
       render: (row) => (
-        <span className="line-clamp-1 max-w-[14rem] text-[13px] text-[var(--ink-4)]">
-          {row.discussion_title}
-        </span>
+        <div className="max-w-[14rem]">
+          <span className="line-clamp-1 text-[13px] text-[var(--ink-4)]">
+            {row.discussion_title ?? row.problem_title ?? "—"}
+          </span>
+          <span className="text-[11px] text-[var(--ink-4)] opacity-70">
+            {row.discussion_title ? "muhokama" : row.problem_title ? "masala" : ""}
+          </span>
+        </div>
       ),
     },
     {

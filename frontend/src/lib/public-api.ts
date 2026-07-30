@@ -65,6 +65,8 @@ export const publicApi = {
     /** Bitta tugma bilan xatcho'pni yoqish/o'chirish. */
     toggleBookmark: (slug: string, note?: string) =>
       api.post<{ bookmarked: boolean; detail: string }>(`/problems/${slug}/bookmark/`, { note }),
+    /** Masala ostidagi izohlar — tekis ro'yxat, daraxt frontendda yig'iladi. */
+    comments: (slug: string) => api.get<PublicComment[]>(`/problems/${slug}/comments/`),
   },
 
   tags: () => api.get<Tag[]>("/tags/"),
@@ -149,7 +151,7 @@ export const publicApi = {
   discussions: {
     list: (query?: Query) => api.get<Paginated<PublicDiscussion>>("/discussions/", query),
     retrieve: (id: string) => api.get<PublicDiscussion>(`/discussions/${id}/`),
-    create: (body: { title: string; body_md: string; problem?: string | null }) =>
+    create: (body: { title: string; body_md: string }) =>
       api.post<PublicDiscussion>("/discussions/", body),
     update: (id: string, body: { title?: string; body_md?: string }) =>
       api.patch<PublicDiscussion>(`/discussions/${id}/`, body),
@@ -160,8 +162,13 @@ export const publicApi = {
   },
 
   comments: {
-    create: (body: { discussion: string; body_md: string; parent?: string | null }) =>
-      api.post<PublicComment>("/comments/", body),
+    /** `discussion` yoki `problem` — aynan bittasi berilishi kerak. */
+    create: (body: {
+      discussion?: string;
+      problem?: string;
+      body_md: string;
+      parent?: string | null;
+    }) => api.post<PublicComment>("/comments/", body),
     update: (id: string, body: { body_md: string }) =>
       api.patch<PublicComment>(`/comments/${id}/`, body),
     remove: (id: string) => api.delete<void>(`/comments/${id}/`),

@@ -21,22 +21,12 @@ from .serializers import (
 )
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def problem_discussions(request, problem_id):
-    """`GET /api/discussions/problem/:problemId/` — eski (UUID bo'yicha) manzil."""
-    rows = (
-        Discussion.objects.filter(problem_id=problem_id, status=ModerationStatus.VISIBLE)
-        .select_related("author", "problem")
-        .order_by("-is_pinned", "-created_at")[:100]
-    )
-    return Response(
-        PublicDiscussionSerializer(rows, many=True, context={"request": request}).data
-    )
-
-
 class DiscussionViewSet(viewsets.ModelViewSet):
-    """`/api/discussions/` — masala muhokamalari va umumiy mavzular."""
+    """`/api/discussions/` — mustaqil muhokama mavzulari.
+
+    Masalaga oid qisqa savollar bu yerga tushmaydi: ular masala sahifasidagi
+    oddiy izohlar (`/api/problems/:slug/comments/`).
+    """
 
     serializer_class = PublicDiscussionSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -47,14 +37,8 @@ class DiscussionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = (
             Discussion.objects.filter(status=ModerationStatus.VISIBLE)
-            .select_related("author", "problem")
+            .select_related("author")
         )
-        slug = self.request.query_params.get("problem_slug")
-        if slug:
-            queryset = queryset.filter(problem__slug=slug)
-        problem_id = self.request.query_params.get("problem")
-        if problem_id:
-            queryset = queryset.filter(problem_id=problem_id)
         if self.request.query_params.get("mine") in {"1", "true"} and self.request.user.is_authenticated:
             queryset = queryset.filter(author=self.request.user)
         return queryset
@@ -106,13 +90,13 @@ class DiscussionViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = PublicCommentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filterset_fields = ["discussion", "parent"]
+    filterset_fields = ["discussion", "problem", "parent"]
     ordering = ["created_at"]
 
     def get_queryset(self):
         return (
             Comment.objects.filter(status=ModerationStatus.VISIBLE)
-            .select_related("author", "discussion", "parent")
+            .select_related("author", "discussion", "problem", "parent")
         )
 
     def get_serializer_context(self):
@@ -126,9 +110,10 @@ class CommentViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Bu mavzu yopilgan — yangi izoh qo'shib bo'lmaydi.")
 
         comment = serializer.save(author=self.request.user)
-        Discussion.objects.filter(pk=comment.discussion_id).update(
-            comment_count=F("comment_count") + 1
-        )
+        if comment.discussion_id:
+            Discussion.objects.filter(pk=comment.discussion_id).update(
+                comment_count=F("comment_count") + 1
+            )
         _notify_comment(comment, actor=self.request.user)
 
     def perform_update(self, serializer):
@@ -145,9 +130,10 @@ class CommentViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Faqat o'z izohingizni o'chira olasiz.")
         discussion_id = instance.discussion_id
         instance.delete()
-        Discussion.objects.filter(pk=discussion_id, comment_count__gt=0).update(
-            comment_count=F("comment_count") - 1
-        )
+        if discussion_id:
+            Discussion.objects.filter(pk=discussion_id, comment_count__gt=0).update(
+                comment_count=F("comment_count") - 1
+            )
 
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def vote(self, request, pk=None):
@@ -223,11 +209,18 @@ def _apply_vote(request, *, target, field: str):
 
 
 def _notify_comment(comment, *, actor) -> None:
-    """Izoh qoldirilganda muhokama egasiga va javob berilgan izoh egasiga xabar."""
+    """Javob berilgan izoh egasiga va (mavzu bo'lsa) mavzu egasiga xabar.
+
+    Masala izohida «mavzu egasi» tushunchasi yo'q — u yerda faqat javob
+    bildirishnomasi yuboriladi.
+    """
     from apps.notifications.models import NotificationKind
     from apps.notifications.services import notify
 
-    url = f"/discussions/{comment.discussion_id}"
+    if comment.discussion_id:
+        url = f"/discussions/{comment.discussion_id}"
+    else:
+        url = f"/problems/{comment.problem.slug}"
     excerpt = (comment.body_md or "")[:120]
 
     if comment.parent_id and comment.parent.author_id:
@@ -239,6 +232,9 @@ def _notify_comment(comment, *, actor) -> None:
             body=excerpt,
             url=url,
         )
+
+    if not comment.discussion_id:
+        return
 
     discussion_author = comment.discussion.author
     if discussion_author and (not comment.parent_id or comment.parent.author_id != discussion_author.pk):

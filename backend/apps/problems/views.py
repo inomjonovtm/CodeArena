@@ -95,6 +95,28 @@ class PublicProblemViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return Response(PublicSubmissionListSerializer(rows, many=True).data)
 
+    @action(detail=True, methods=["get"], url_path="comments")
+    def comments(self, request, slug=None):
+        """`GET /api/problems/:slug/comments/` — masala ostidagi izohlar.
+
+        Daraxt tuzilishi frontendda yig'iladi, shuning uchun tekis ro'yxat
+        qaytadi. Import funksiya ichida: `apps.content` allaqachon
+        `apps.problems` dan import qiladi, modul darajasida yozilsa
+        aylanma bog'liqlik chiqardi.
+        """
+        from apps.content.models import Comment, ModerationStatus
+        from apps.content.serializers import PublicCommentSerializer
+
+        problem = self.get_object()
+        rows = (
+            Comment.objects.filter(problem=problem, status=ModerationStatus.VISIBLE)
+            .select_related("author")
+            .order_by("created_at")
+        )
+        return Response(
+            PublicCommentSerializer(rows, many=True, context={"request": request}).data
+        )
+
     @action(detail=True, methods=["post"], url_path="bookmark", permission_classes=[IsAuthenticated])
     def toggle_bookmark(self, request, slug=None):
         """Xatcho'pni qo'shadi yoki olib tashlaydi (bitta tugma uchun)."""

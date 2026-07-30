@@ -139,14 +139,6 @@ export default function DiscussionsPage() {
               {row.title}
             </span>
           </button>
-          {row.problem_title ? (
-            <Link
-              href={`/admin/problems/${row.problem}`}
-              className="focus-ring block max-w-sm truncate rounded-[6px] text-[11px] text-[var(--ink-4)] transition-colors duration-[var(--t-fast)] hover:text-[var(--brand)]"
-            >
-              {row.problem_title}
-            </Link>
-          ) : null}
         </div>
       ),
     },
