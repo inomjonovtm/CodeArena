@@ -1,0 +1,50 @@
+# Lokal ishlab chiqish uchun faqat infratuzilma.
+#
+# Backend va frontend shu faylda ATAYLAB yo'q: ularni `runserver` va
+# `npm run dev` orqali ishga tushirgan ma'qul — hot reload va debugger
+# konteyner ichida ishlamaydi. Bu yerda faqat lokalda o'rnatish noqulay
+# bo'lgan xizmatlar turadi.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#   docker compose -f docker-compose.dev.yml down        # to'xtatish
+#   docker compose -f docker-compose.dev.yml down -v     # baza bilan o'chirish
+#
+# Portlar hostga ochilgan — `backend/.env` dagi POSTGRES_HOST=localhost
+# va REDIS_URL=redis://localhost:6379/0 shunga mos keladi.
+
+name: codearena-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-codearena}
+      POSTGRES_USER: ${POSTGRES_USER:-codearena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codearena}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codearena}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_dev:
+  redis_dev:

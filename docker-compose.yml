@@ -1,0 +1,157 @@
+name: codearena
+
+services:
+  # ------------------------------------------------------------ ma'lumotlar
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-codearena}
+      POSTGRES_USER: ${POSTGRES_USER:-codearena}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codearena}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codearena}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------------------- backend
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+      JUDGE0_URL: http://judge0-server:2358
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    expose:
+      - "8000"
+
+  celery:
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+      JUDGE0_URL: http://judge0-server:2358
+    depends_on:
+      - backend
+      - redis
+    command: celery -A config worker -l info --concurrency=4
+
+  celery-beat:
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      POSTGRES_HOST: postgres
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+    command: celery -A config beat -l info
+
+  # ---------------------------------------------------------------- frontend
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    depends_on:
+      - backend
+    expose:
+      - "3000"
+
+  # -------------------------------------------------- Judge0 (kod bajarish)
+  judge0-server:
+    image: judge0/judge0:1.13.1
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - ./infra/judge0.conf:/judge0.conf:ro
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    expose:
+      - "2358"
+
+  judge0-workers:
+    image: judge0/judge0:1.13.1
+    restart: unless-stopped
+    privileged: true
+    command: ["./scripts/workers"]
+    volumes:
+      - ./infra/judge0.conf:/judge0.conf:ro
+    depends_on:
+      - judge0-db
+      - judge0-redis
+
+  judge0-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: judge0
+      POSTGRES_USER: judge0
+      POSTGRES_PASSWORD: ${JUDGE0_DB_PASSWORD:-judge0}
+    volumes:
+      - judge0_db:/var/lib/postgresql/data
+
+  judge0-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --requirepass ${JUDGE0_REDIS_PASSWORD:-judge0}
+    volumes:
+      - judge0_redis:/data
+
+  # ------------------------------------------------------------------ nginx
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_data:/var/www/static:ro
+      - media_data:/var/www/media:ro
+      - ./infra/certbot/conf:/etc/letsencrypt:ro
+      - ./infra/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
+  static_data:
+  judge0_db:
+  judge0_redis:

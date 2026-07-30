@@ -1,0 +1,33 @@
+# --- Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.sqlite3
+db.sqlite3
+backend/media/
+backend/staticfiles/
+# Admin paneldan olingan baza zaxiralari — ma'lumot, kod emas
+backend/backups/
+.env
+!.env.example
+
+# --- Node / Next.js
+node_modules/
+.next/
+# Dev server ishlab turganda `NEXT_DIST_DIR` bilan qilingan tekshiruv buildlari
+.next-*/
+out/
+.turbo/
+*.tsbuildinfo
+.env.local
+.env*.local
+
+# --- IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Infra
+infra/certbot/

@@ -1,0 +1,177 @@
+name: Deploy
+
+# CI muvaffaqiyatli tugagandan keyin ishga tushadi. `push: [main]` qilib
+# qo'ymaslik ataylab: aks holda testlar tushgan commit ham serverga chiqib
+# ketardi. Zarur bo'lsa Actions sahifasidan qo'lda ham ishga tushiriladi.
+on:
+  workflow_run:
+    workflows: [CI]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    name: Image'larni qurish va GHCR'ga yuklash
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_prefix: ${{ steps.meta.outputs.prefix }}
+      image_tag: ${{ steps.meta.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run hodisasida sukut bo'yicha default branch olinadi;
+          # CI tekshirgan aynan o'sha commitni qurish uchun SHA beriladi.
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Image nomi va tegini hisoblash
+        id: meta
+        run: |
+          # GHCR faqat kichik harfli nomlarni qabul qiladi
+          prefix="${REGISTRY}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          tag="${{ github.event.workflow_run.head_sha || github.sha }}"
+          echo "prefix=${prefix}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag::12}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: GHCR'ga kirish
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-backend:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.prefix }}-backend:latest
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: Frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          # Brauzer `/api/...` ga so'raydi, Next uni konteyner tarmog'idagi
+          # backendga uzatadi — shuning uchun bu manzil ichki nom.
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://backend:8000
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-frontend:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.prefix }}-frontend:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,scope=frontend,mode=max
+
+  deploy:
+    name: Serverga yetkazish
+    runs-on: ubuntu-latest
+    needs: build
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: SSH kalitini tayyorlash
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          # Serverning kalitini oldindan yozamiz — StrictHostKeyChecking
+          # o'chirilsa MITM hujumiga yo'l ochilardi.
+          ssh-keyscan -p "${PORT:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Konfiguratsiya fayllarini nusxalash
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          # `.env` fayllari nusxalanmaydi — ular faqat serverda turadi.
+          scp -i ~/.ssh/id_deploy -P "${PORT:-22}" \
+            docker-compose.prod.yml \
+            "${USER}@${HOST}:${DEPLOY_PATH}/docker-compose.prod.yml"
+          scp -i ~/.ssh/id_deploy -P "${PORT:-22}" \
+            infra/nginx.conf \
+            "${USER}@${HOST}:${DEPLOY_PATH}/infra/nginx.conf"
+
+      - name: Pull va qayta ishga tushirish
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          IMAGE_PREFIX: ${{ needs.build.outputs.image_prefix }}
+          IMAGE_TAG: ${{ needs.build.outputs.image_tag }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "${PORT:-22}" "${USER}@${HOST}" \
+            IMAGE_PREFIX="$IMAGE_PREFIX" IMAGE_TAG="$IMAGE_TAG" \
+            GHCR_USER="$GHCR_USER" GHCR_TOKEN="$GHCR_TOKEN" \
+            DEPLOY_PATH="$DEPLOY_PATH" 'bash -se' <<'REMOTE'
+          set -euo pipefail
+          cd "$DEPLOY_PATH"
+
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          # IMAGE_* qiymatlari compose uchun `.env` orqali beriladi:
+          # `docker compose` faqat shu fayldan yoki muhitdan o'qiydi.
+          export IMAGE_PREFIX IMAGE_TAG
+
+          docker compose -f docker-compose.prod.yml pull backend frontend
+          # `migrate` xizmati alohida va bir martalik: u tugamaguncha
+          # backend ko'tarilmaydi (compose'dagi service_completed_successfully).
+          docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+          docker compose -f docker-compose.prod.yml ps
+          # Eski, hech qayerda ishlatilmayotgan image'lar diskni to'ldirmasin
+          docker image prune -f
+          docker logout ghcr.io
+          REMOTE
+
+      - name: Sog'liq tekshiruvi
+        env:
+          HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: |
+          if [ -z "${HEALTH_URL}" ]; then
+            echo "DEPLOY_HEALTH_URL sozlanmagan, tekshiruv tashlab ketildi."
+            exit 0
+          fi
+          for attempt in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL" || true)
+            if [ "$code" = "200" ]; then
+              echo "Sayt javob berdi (200)."
+              exit 0
+            fi
+            echo "urinish ${attempt}/12, javob kodi: ${code}"
+            sleep 10
+          done
+          echo "Sayt 2 daqiqada 200 qaytarmadi."
+          exit 1
