@@ -4,6 +4,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const nextConfig = {
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
+
+  // Tip tekshiruvi `next build` ichida ALOHIDA jarayonda ketadi va o'z heap'ini
+  // oladi. Xotirasi cheklangan build muhitlarida (hosting platformalarining
+  // konteynerlari) aynan shu jarayon "JavaScript heap out of memory" bilan
+  // tushadi — kompilyatsiyaning o'zi muammosiz o'tgan bo'lsa ham.
+  //
+  // Tiplar baribir tekshiriladi: CI da alohida `npm run typecheck` qadami bor
+  // va lokal `next build` ham bu bayroqsiz ishlaydi. Ya'ni bu yerda faqat
+  // TAKRORIY tekshiruv o'chiriladi, nazorat yo'qolmaydi.
+  ...(process.env.NEXT_SKIP_TYPE_CHECK === "1"
+    ? { typescript: { ignoreBuildErrors: true } }
+    : {}),
+
+  // Statik sahifalarni yaratish bir nechta parallel worker'da ketadi va
+  // har biri alohida xotira oladi. Tor muhitda ularni bittaga tushirish
+  // buildni sekinlashtiradi, lekin OOM'dan saqlaydi.
+  ...(process.env.NEXT_BUILD_CPUS
+    ? { experimental: { cpus: Number(process.env.NEXT_BUILD_CPUS) } }
+    : {}),
+
   // Dev server ishlab turganda `next build` bir xil `.next` katalogiga yozib,
   // sahifalarni topa olmay qolishi mumkin. `NEXT_DIST_DIR` bilan buildni
   // alohida katalogga yo'naltirish mumkin.

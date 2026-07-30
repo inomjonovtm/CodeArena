@@ -27,6 +27,13 @@ COPY frontend/ ./
 # baribir kerak: `next.config.mjs` uni build paytida o'qiydi.
 ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Xotirasi tor build muhitlari uchun (qarang: frontend/next.config.mjs).
+# Tip tekshiruvi alohida jarayonda ketib, ~400MB heap chegarasiga urilib
+# tushardi; tiplar CI dagi `npm run typecheck` qadamida tekshiriladi.
+ENV NEXT_SKIP_TYPE_CHECK=1 \
+    NEXT_BUILD_CPUS=1
+
 RUN npm run build
 
 # Build tugagach dev bog'liqliklari (typescript, tailwind, eslint) kerak emas.
