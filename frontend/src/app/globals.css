@@ -391,3 +391,155 @@
   color: var(--ink-4);
   border-bottom-color: var(--edge);
 }
+
+/* ==========================================================================
+   Bosh sahifa — to'q sahna
+   --------------------------------------------------------------------------
+   Landing YAGONA joy bo'lib, u yerda sahifa butunlay `--stage-*` sirtiga
+   o'tadi (DESIGN.md, 1-bo'lim: sahna doim to'q, temaga bo'ysunmaydi).
+   Shu sababli bu klasslar boshqa sahifalarda ishlatilmaydi.
+
+   Barcha animatsiyalar CSS'da: globals.css oxiridagi
+   `prefers-reduced-motion` bloki ularni bir joyda o'chiradi. Kanvasdagi
+   zarralar JS'da, u yerda `matchMedia` bilan alohida tekshiriladi.
+   ========================================================================== */
+
+.stage-surface {
+  background: var(--stage-2);
+  color: var(--stage-ink);
+}
+
+/* Sahna ustidagi yumshoq yorug'lik — gradient "tuman" emas, aniq markazli
+   radial manba: matn ortida kontrastni oshiradi. */
+.stage-glow::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 70%;
+  background: radial-gradient(
+    60% 60% at 50% 0%,
+    color-mix(in oklab, var(--stage-brand) 18%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------- 3D kub */
+.cube-scene {
+  --cube: clamp(9rem, 22vw, 15rem);
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  perspective: 1000px;
+  width: var(--cube);
+  height: var(--cube);
+}
+
+.cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  /* Sichqoncha burchagi tashqi qatlamda — aylanish bilan to'qnashmasin */
+  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 260ms var(--ease-soft);
+}
+
+.cube-spin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: ca-cube-spin 26s linear infinite;
+}
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in oklab, var(--stage-brand) 34%, transparent);
+  border-radius: var(--r-pane);
+  background: color-mix(in oklab, var(--stage) 88%, transparent);
+  font-family: var(--font-mono);
+  font-size: clamp(8px, 1.5vw, 11px);
+  line-height: 1.5;
+  color: var(--stage-ink-2);
+  box-shadow: inset 0 0 40px color-mix(in oklab, var(--stage-brand) 10%, transparent);
+}
+
+.cube-face-front  { transform: translateZ(calc(var(--cube) / 2)); }
+.cube-face-back   { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
+.cube-face-right  { transform: rotateY(90deg)  translateZ(calc(var(--cube) / 2)); }
+.cube-face-left   { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
+.cube-face-top    { transform: rotateX(90deg)  translateZ(calc(var(--cube) / 2)); }
+.cube-face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
+
+@keyframes ca-cube-spin {
+  from { transform: rotateX(-16deg) rotateY(0deg); }
+  to   { transform: rotateX(-16deg) rotateY(360deg); }
+}
+
+/* --------------------------------------------------- sahnadagi kartalar */
+.stage-card {
+  border: 1px solid var(--stage-edge);
+  border-radius: var(--r-pane);
+  background: var(--stage);
+  transition:
+    border-color var(--t-base) var(--ease-snap),
+    box-shadow var(--t-base) var(--ease-snap);
+}
+
+.stage-card:hover {
+  border-color: color-mix(in oklab, var(--stage-brand) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--stage-brand) 22%, transparent),
+              0 18px 46px -28px color-mix(in oklab, var(--stage-brand) 60%, transparent);
+}
+
+/* Qadamlar chizig'i — scrollda pastga "o'sadi" */
+.step-line {
+  transform-origin: top;
+  transform: scaleY(0);
+  transition: transform 900ms var(--ease-soft);
+}
+.reveal[data-visible="true"] .step-line { transform: scaleY(1); }
+
+/* Test qatori — tekshirilayotgan qator sekin pulsatsiya qiladi */
+@keyframes ca-test-run {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+.test-running { animation: ca-test-run 900ms ease-in-out infinite; }
+
+/* Landing butun balandligi bo'ylab to'q. Sirt/siyoh tokenlari SHU BLOK
+   ichida qayta belgilanadi — natijada umumiy futer va kit komponentlari
+   o'z kodiga tegmasdan sahnaga moslashadi.
+
+   `--brand` ataylab qayta belgilanmagan: u to'yingan ko'k bo'lib qoladi,
+   shuning uchun ustidagi oq matn kontrasti saqlanadi. Yorug'roq aksent
+   kerak bo'lganda `--stage-brand` to'g'ridan-to'g'ri ishlatiladi. */
+.landing-dark {
+  --canvas: var(--stage-2);
+  --canvas-deep: #06090c;
+  --pane: var(--stage);
+  --pane-solid: var(--stage);
+  --pane-hover: #161b22;
+  --pane-sunken: #0d1117;
+
+  --edge: var(--stage-edge);
+  --edge-soft: #1a1f27;
+  --edge-strong: #2b323d;
+
+  --ink: var(--stage-ink);
+  --ink-2: #c3cbd7;
+  --ink-3: var(--stage-ink-2);
+  --ink-4: var(--stage-ink-3);
+
+  --brand-wash: color-mix(in oklab, var(--stage-brand) 16%, transparent);
+  --brand-wash-strong: color-mix(in oklab, var(--stage-brand) 26%, transparent);
+  --brand-edge: color-mix(in oklab, var(--stage-brand) 40%, transparent);
+
+  background: var(--stage-2);
+  color: var(--stage-ink);
+}
