@@ -171,7 +171,7 @@ export function KeyboardShortcuts() {
                           key={key}
                           className={cn(
                             "rounded-[6px] border border-[var(--edge)] bg-[var(--pane-solid)] px-1.5 py-0.5",
-                            "font-mono text-[10.5px] font-semibold text-[var(--ink)]",
+                            "text-[11px] font-semibold text-[var(--ink)]",
                           )}
                         >
                           {key}

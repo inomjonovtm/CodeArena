@@ -189,7 +189,7 @@ export function CodeEditor({
         ? createPortal(
             <div className="fixed inset-0 z-[95] flex flex-col bg-[var(--canvas)] p-3 sm:p-4">
               <div className="mb-2.5 flex shrink-0 items-center justify-between gap-3">
-                <span className="t-eyebrow font-mono normal-case tracking-normal">
+                <span className="t-eyebrow normal-case tracking-normal">
                   {MONACO_LANGUAGE[language] ?? language}
                 </span>
                 <button

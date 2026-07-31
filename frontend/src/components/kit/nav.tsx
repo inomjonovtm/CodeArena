@@ -279,8 +279,7 @@ export function Breadcrumb({
                 {item.label}
               </span>
             )}
-            {/* Ajratgich monoshriftda — yo'l "manzil qatori" kabi o'qiladi */}
-            {!last ? <span className="font-mono text-[var(--ink-4)] opacity-45">/</span> : null}
+            {!last ? <span className="text-[var(--ink-4)] opacity-45">/</span> : null}
           </span>
         );
       })}
@@ -357,7 +356,7 @@ export function Pagination({
 
         <div className="flex h-8 items-center gap-1.5 border-x border-[var(--edge)] px-3">
           <span className="t-num text-[12px] font-semibold text-[var(--ink)]">{page}</span>
-          <span className="font-mono text-[11px] text-[var(--ink-4)]">/</span>
+          <span className="text-[11px] text-[var(--ink-4)]">/</span>
           <span className="t-num text-[12px] text-[var(--ink-3)]">{pageCount}</span>
         </div>
 

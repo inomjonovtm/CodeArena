@@ -134,7 +134,7 @@ export function CodeDemo() {
             }}
             aria-pressed={lang === item.key}
             className={cn(
-              "focus-ring rounded-[var(--r-ctl)] px-3 py-1.5 font-mono text-[12.5px] font-medium",
+              "focus-ring rounded-[var(--r-ctl)] px-3 py-1.5 text-[13.5px] font-semibold",
               "transition-colors duration-[var(--t-fast)]",
               lang === item.key
                 ? "bg-[color-mix(in_oklab,var(--stage-brand)_18%,transparent)] text-[var(--stage-brand)]"
@@ -215,7 +215,10 @@ export function CodeDemo() {
                     <span className="block truncate text-[13px] text-[var(--stage-ink)]">
                       {test.name}
                     </span>
-                    <span className="block truncate font-mono text-[11px] text-[var(--stage-ink-3)]">
+                    {/* Tavsif aralash: ba'zisi test ma'lumoti, ba'zisi oddiy
+                        izoh ("manfiy sonlar"). Ro'yxat ichida ikki shrift
+                        aralashmasligi uchun hammasi interfeys shriftida. */}
+                    <span className="block truncate text-[12px] text-[var(--stage-ink-3)]">
                       {test.detail}
                     </span>
                   </span>

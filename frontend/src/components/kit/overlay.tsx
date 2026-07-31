@@ -360,7 +360,7 @@ export function MenuItem({
       {icon ? <span className="shrink-0 opacity-70">{icon}</span> : null}
       <span className="min-w-0 flex-1 truncate">{children}</span>
       {shortcut ? (
-        <kbd className="rounded-[5px] border border-[var(--edge)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--ink-4)]">
+        <kbd className="rounded-[5px] border border-[var(--edge)] px-1.5 py-0.5 font-sans text-[11px] font-medium text-[var(--ink-3)]">
           {shortcut}
         </kbd>
       ) : null}

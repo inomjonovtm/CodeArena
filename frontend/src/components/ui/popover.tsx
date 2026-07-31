@@ -319,7 +319,7 @@ export function DropdownMenu({
                 {item.icon ? <span className="shrink-0 text-[var(--ink-4)]">{item.icon}</span> : null}
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
                 {item.hint ? (
-                  <kbd className="shrink-0 rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-mono text-[10.5px] text-[var(--ink-4)]">
+                  <kbd className="shrink-0 rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium text-[var(--ink-3)]">
                     {item.hint}
                   </kbd>
                 ) : null}

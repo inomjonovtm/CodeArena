@@ -280,7 +280,7 @@ export function KeyHint({ children, className }: { children: React.ReactNode; cl
     <kbd
       className={cn(
         "inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] px-1.5",
-        "border border-[var(--edge)] bg-[var(--pane)] font-mono text-[10.5px] text-[var(--ink-4)]",
+        "border border-[var(--edge)] bg-[var(--pane)] font-sans text-[11px] font-medium text-[var(--ink-3)]",
         className,
       )}
     >

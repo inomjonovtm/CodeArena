@@ -113,9 +113,7 @@ const LANGUAGE_LABEL: Record<string, string> = {
 
 export function LanguageBadge({ value }: { value: string }) {
   return (
-    <Badge tone="outline" className="font-mono">
-      {LANGUAGE_LABEL[value] ?? value}
-    </Badge>
+    <Badge tone="outline">{LANGUAGE_LABEL[value] ?? value}</Badge>
   );
 }
 

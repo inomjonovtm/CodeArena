@@ -311,7 +311,7 @@ export function CodeBlock({
     >
       {language ? (
         <div className="flex items-center justify-between border-b border-[var(--edge)] bg-[var(--pane-sunken)] px-3 py-1.5">
-          <span className="t-eyebrow font-mono normal-case">{language}</span>
+          <span className="t-eyebrow normal-case">{language}</span>
           <CopyButton value={code} />
         </div>
       ) : null}

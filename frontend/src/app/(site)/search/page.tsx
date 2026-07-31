@@ -223,9 +223,9 @@ function SearchInner() {
         {/* Klaviatura bilan ishlash eslatmasi */}
         {flat.length ? (
           <p className="t-meta mt-4 border-t border-[var(--edge)] pt-4 text-[var(--ink-4)]">
-            <kbd className="rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-mono text-[10.5px]">↑↓</kbd>{" "}
+            <kbd className="rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium">↑↓</kbd>{" "}
             tanlash ·{" "}
-            <kbd className="rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-mono text-[10.5px]">Enter</kbd>{" "}
+            <kbd className="rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium">Enter</kbd>{" "}
             o&apos;tish
           </p>
         ) : null}

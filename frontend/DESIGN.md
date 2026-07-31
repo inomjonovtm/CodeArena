@@ -39,8 +39,26 @@ OG'IRLIK bilan beriladi (pastda "Rangsiz semantika" bo'limiga qarang).
 
 ## 1. Tipografika
 
-**Bitta shrift — Inter.** Sarlavha ham, interfeys ham, raqam ham. JetBrains
-Mono faqat KOD uchun (muharrir, kod bloki, test chiqishi).
+**Bitta shrift — Inter.** Sarlavha ham, interfeys ham, raqam ham, yorliq ham.
+
+### Monoshrift qachon ruxsat etiladi
+
+JetBrains Mono faqat **mashina chiqargan yoki mashina o'qiydigan** matn uchun.
+Odam o'qiydigan HAR QANDAY yozuv — hatto eng kichigi ham — Inter'da:
+
+| ✅ Monoshrift | ❌ Inter (interfeys shrifti) |
+| --- | --- |
+| Kod bloki, muharrir, markdown manbasi | Yorliq, sarlavha, tugma, menyu |
+| Dastur chiqishi, `stderr`, kompilyator xatosi | Til nomi (`Python`, `C++`) va nishonlar |
+| Test kirish/chiqishi | Klaviatura ko'rsatkichi (`⌘K`, `Enter`) |
+| Fayl nomi va yo'li | Non ushoqlari (breadcrumb) ajratgichi `/` |
+| Belgima-belgi ko'chiriladigan kod: taklif kodi, 2FA, zaxira kaliti | Sahifalash, hisoblagich, statistika raqami |
+| Logotipdagi `>` belgisi (brend) | Jadval ustuni nomi, meta-matn |
+
+Sabab: raqamlar endi Inter'ning `tabular-nums` xususiyati bilan tekislanadi,
+shuning uchun jadval ustunlari monoshriftsiz ham tik turadi. Monoshrift esa
+"bu — mashina matni" degan ma'noni tashiydi; uni oddiy yorliqqa qo'ysak, shu
+ma'no yo'qoladi va sahifada ikkita shrift beso'naqay aralashadi.
 
 | Klass | O'lcham (mobil → desktop) | Weight | Qayerda |
 | --- | --- | --- | --- |

@@ -127,7 +127,7 @@ export function Topbar({
                 >
                   {crumb.label}
                 </Link>
-                <span className="shrink-0 font-mono text-[var(--ink-4)] opacity-45">/</span>
+                <span className="shrink-0 text-[var(--ink-4)] opacity-45">/</span>
               </>
             )}
           </span>

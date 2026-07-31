@@ -132,7 +132,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             className="h-13 flex-1 bg-transparent text-[14px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]"
           />
           {isFetching ? <Loader2 className="size-4 shrink-0 animate-spin text-[var(--brand)]" /> : null}
-          <kbd className="hidden shrink-0 rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--ink-4)] sm:block">
+          <kbd className="hidden shrink-0 rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium text-[var(--ink-3)] sm:block">
             ESC
           </kbd>
         </div>
@@ -207,4 +207,4 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 }
 
 const KBD =
-  "rounded-[5px] border border-[var(--edge)] bg-[var(--pane-solid)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--ink-3)]";
+  "rounded-[5px] border border-[var(--edge)] bg-[var(--pane-solid)] px-1.5 py-0.5 font-sans text-[11px] font-medium text-[var(--ink-3)]";
