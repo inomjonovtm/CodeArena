@@ -335,7 +335,7 @@ export function Sidebar({
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="enter-veil absolute inset-0 bg-[rgb(26_25_23/0.44)] backdrop-blur-[2px]"
+            className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]"
             onClick={onCloseMobile}
           />
           <aside className="enter relative flex h-full w-72 flex-col border-r border-[var(--edge)] bg-[var(--pane-solid)] shadow-[var(--lift-pop)]">

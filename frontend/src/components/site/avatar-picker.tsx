@@ -142,7 +142,7 @@ export function AvatarPicker({
         <AvatarFace src={shown} name={name} size={76} rank={user?.rank} />
         <span
           className={cn(
-            "absolute inset-0 flex items-center justify-center rounded-full bg-[rgb(26_25_23/0.5)] text-white",
+            "absolute inset-0 flex items-center justify-center rounded-full bg-[rgb(10_10_10/0.55)] text-white",
             "opacity-0 transition-opacity duration-[var(--t-fast)]",
             "group-hover:opacity-100 group-focus-visible:opacity-100",
             busy && "opacity-100",
@@ -233,7 +233,7 @@ export function AvatarPicker({
             <AvatarFace src={shown} name={name} size={120} rank={user?.rank} />
             <span
               className={cn(
-                "absolute inset-1.5 flex items-center justify-center rounded-full bg-[rgb(26_25_23/0.5)] text-white",
+                "absolute inset-1.5 flex items-center justify-center rounded-full bg-[rgb(10_10_10/0.55)] text-white",
                 "opacity-0 transition-opacity duration-[var(--t-fast)] group-hover:opacity-100",
                 busy && "opacity-100",
               )}

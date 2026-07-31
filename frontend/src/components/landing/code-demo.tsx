@@ -157,7 +157,7 @@ export function CodeDemo() {
             disabled={phase === "running"}
             className={cn(
               "focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--r-ctl)] px-3",
-              "bg-[var(--brand)] text-[13px] font-medium text-white",
+              "bg-[var(--brand)] text-[13px] font-medium text-[var(--ink-on-brand)]",
               "transition-colors duration-[var(--t-fast)] hover:bg-[var(--brand-hover)]",
               "disabled:cursor-not-allowed disabled:opacity-60",
             )}

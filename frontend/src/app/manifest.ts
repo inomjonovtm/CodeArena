@@ -19,11 +19,9 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait-primary",
     // Yuklanish ekrani sayt fonining o'zi bo'lsin — "miltillash" bo'lmaydi.
-    // Qiymat `--canvas` (iliq qog'oz) bilan bir xil: eski yashil-qora
-    // (#080b09) brend almashgandan keyin ham qolib ketgan edi va o'rnatilgan
-    // ilova boshqa mahsulotdek ochilardi.
-    background_color: "#f7f7f4",
-    theme_color: "#f7f7f4",
+    // Qiymat `--canvas` (sof oq) bilan bir xil.
+    background_color: "#ffffff",
+    theme_color: "#ffffff",
     lang: "uz",
     dir: "ltr",
     categories: ["education", "productivity", "developer"],

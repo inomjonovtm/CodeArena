@@ -38,7 +38,7 @@ export function Pane({
   inset?: "none" | "sm" | "md" | "lg";
 }) {
   const pad =
-    inset === "none" ? "" : inset === "sm" ? "p-3.5" : inset === "lg" ? "p-6" : "p-4.5";
+    inset === "none" ? "" : inset === "sm" ? "p-4" : inset === "lg" ? "p-8" : "p-6";
 
   return (
     <div
@@ -77,9 +77,9 @@ export function PaneHead({
   return (
     <div className={cn("flex items-start justify-between gap-4", className)}>
       <div className="min-w-0">
-        {eyebrow ? <p className="t-eyebrow mb-2">{eyebrow}</p> : null}
+        {eyebrow ? <p className="t-eyebrow mb-2.5">{eyebrow}</p> : null}
         <h2 className="t-section text-[var(--ink)]">{title}</h2>
-        {hint ? <p className="t-meta mt-1 text-[var(--ink-3)]">{hint}</p> : null}
+        {hint ? <p className="t-meta mt-1.5 text-[var(--ink-3)]">{hint}</p> : null}
       </div>
       {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
     </div>
@@ -114,23 +114,23 @@ export function PageHead({
 }) {
   return (
     <header className={cn("enter", className)}>
-      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
         <div className="min-w-0 max-w-2xl">
-          {eyebrow ? <Eyebrow index={index} className="mb-3">{eyebrow}</Eyebrow> : null}
+          {eyebrow ? <Eyebrow index={index} className="mb-4">{eyebrow}</Eyebrow> : null}
           <h1 className="t-title text-[var(--ink)]">{title}</h1>
-          {lead ? <p className="t-body mt-3 text-[var(--ink-3)]">{lead}</p> : null}
+          {lead ? <p className="t-body mt-4 text-[var(--ink-3)]">{lead}</p> : null}
         </div>
         {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>
         ) : null}
       </div>
 
       {/* Meta qatori — sahifa raqamlari. Ustidagi chiziq sarlavhani
           kontentdan ajratadi, lekin uni o'ramaydi. */}
       {meta ? (
-        <div className="rule mt-6 flex flex-wrap items-center gap-x-5 gap-y-2.5 pt-4">{meta}</div>
+        <div className="rule mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 pt-5">{meta}</div>
       ) : (
-        <div aria-hidden className="rule enter-draw mt-6" />
+        <div aria-hidden className="rule enter-draw mt-8" />
       )}
     </header>
   );
@@ -219,7 +219,7 @@ export function StatCell({
   className?: string;
 }) {
   return (
-    <div className={cn("bg-[var(--canvas)] px-5 py-5", className)}>{children}</div>
+    <div className={cn("bg-[var(--canvas)] px-6 py-7", className)}>{children}</div>
   );
 }
 
@@ -254,12 +254,12 @@ export function Section({
       {/* Sarlavhasiz ham `hint`/`action` ko'rinishi kerak — aks holda
           faqat izoh beruvchi bo'limlar jimgina yo'qolib qolardi. */}
       {hasHead ? (
-        <div className="mb-5 flex items-end justify-between gap-4 border-b border-[var(--edge)] pb-3">
+        <div className="mb-7 flex items-end justify-between gap-4 border-b border-[var(--edge)] pb-4">
           <div className="min-w-0">
-            {eyebrow ? <Eyebrow index={index} className="mb-2">{eyebrow}</Eyebrow> : null}
+            {eyebrow ? <Eyebrow index={index} className="mb-2.5">{eyebrow}</Eyebrow> : null}
             {title ? <h2 className="t-section text-[var(--ink)]">{title}</h2> : null}
             {hint ? (
-              <p className={cn("t-meta text-[var(--ink-3)]", title && "mt-1")}>{hint}</p>
+              <p className={cn("t-meta text-[var(--ink-3)]", title && "mt-1.5")}>{hint}</p>
             ) : null}
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}
@@ -288,7 +288,7 @@ export function SplitLayout({
   className?: string;
 }) {
   return (
-    <div className={cn("grid gap-6 lg:grid-cols-[minmax(0,1fr)_316px] lg:gap-8", className)}>
+    <div className={cn("grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12", className)}>
       <div className={cn("min-w-0", asideFirst && "order-2 lg:order-1")}>{children}</div>
       <aside className={cn("min-w-0", asideFirst && "order-1 lg:order-2")}>
         <div className="lg:sticky lg:top-[calc(var(--bar)+24px)]">{aside}</div>

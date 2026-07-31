@@ -1,56 +1,40 @@
 /* ==========================================================================
-   CODEARENA — dizayn tili "ARENA"
+   CODEARENA — dizayn tizimi "MONO"
    --------------------------------------------------------------------------
-   Musobaqa uch narsadan iborat: DARAJA, VAQT va DALIL. Interfeys ham shu
-   uchligini ko'rsatishi kerak — yaxshi terilgan natijalar taxtasi kabi:
-   iliq qog'oz, o'tkir siyoh, bitta qat'iy ko'k va monoshriftdagi raqamlar.
+   Butun sayt UCH rangdan quriladi va to'rtinchisi yo'q:
 
-   Butun tizimni to'rt qaror belgilaydi:
+     QORA  #0A0A0A — matn, asosiy tugma foni, futer, to'q bo'limlar
+     OQ    #FFFFFF — sahifa foni, karta foni, to'q fondagi matn
+     KO'K  #1E5EFF — CTA, havola, aksent chiziq, statistik raqam
 
-   1. ILIQ NEYTRAL + SOVUQ KO'K. Sahifa — iliq qog'oz (#f7f7f4), karta — sof
-      oq. Ko'k faqat amalda. Iliq va sovuq qarama-qarshiligi tufayli ko'k
-      kuchli yangraydi; ko'k fonda turgan ko'k esa yo'qoladi.
-   2. QUTI EMAS, CHIZIQ VA BO'SHLIQ. Sarlavha, statistika, bo'lim nomi —
-      kanvasda, o'ramsiz. Karta faqat MA'LUMOTGA beriladi (ro'yxat, jadval,
-      forma, panel). Hamma narsani qutilash ierarxiyani o'ldiradi.
-   3. UCH OVOZ. Sarlavha — Space Grotesk, interfeys — Inter, raqam va kod —
-      JetBrains Mono. Raqamlar monoshriftda bo'lgani uchun ustunlar tik turadi
-      va ma'lumot "o'lchangan" ko'rinadi.
-   4. O'TKIR GEOMETRIYA. Burchaklar kichik va aniq (8/10/14/20px), soya
-      deyarli yo'q. Yumshoq katta burchaklar hamma narsani bir xil "mayin"
-      qiladi va boshqaruv elementini bezakdan ajratmaydi.
+   Kulrang shkala RANG hisoblanmaydi: u faqat chegara, ajratgich va
+   ikkinchi darajali matn uchun neytral. Yashil/sariq/qizil YO'Q — holat
+   farqi rang bilan emas, SHAKL, YORLIQ va OG'IRLIK bilan beriladi.
+
+   To'rtta qaror butun tizimni belgilaydi:
+
+   1. KO'K KAM VA QIMMAT. Sahifaning ~10% dan ortig'i ko'k bo'lmaydi. Ko'k
+      ko'rinsa — u yerda harakat bor: bosiladigan joy yoki muhim raqam.
+   2. BO'SH JOY — MATERIAL. Bo'limlar orasida 120px, sarlavhalar yirik.
+      Element qo'shishdan oldin bo'shliqni kengaytirish tekshiriladi.
+   3. SOYA FAQAT HOVERDA. Tinch holatda sirt tekis: karta 1px kulrang
+      chegara bilan turadi. Soya — javob, bezak emas.
+   4. YUMALOQ, LEKIN QAT'IY. Tugma 10px, karta 16px, katta panel 24px.
+      Bitta shkala, o'rtasida tasodifiy qiymat yo'q.
+
+   MUHIM: token va utility NOMLARI ataylab saqlangan (`--ink`, `--brand`,
+   `pane`, `t-title` ...). Sayt bo'ylab 300 dan ortiq joyda ishlatiladi —
+   nom o'zgarsa hamma fayl siniydi. Bu yerda faqat QIYMATLAR o'zgardi.
    ========================================================================== */
 
 @theme {
-  /* Shriftlar `app/layout.tsx` da next/font orqali ulanadi. */
+  /* Shriftlar `app/layout.tsx` da next/font orqali ulanadi.
+     Sarlavha ham, interfeys ham BITTA shriftda — Inter. Ikkinchi sarlavha
+     shrifti tizimga xarakter bermaydi, faqat ohangni ikkiga bo'ladi.
+     Monoshrift faqat KOD uchun qoladi (muharrir, kod bloki). */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: var(--font-grotesk), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jet), ui-monospace, "SF Mono", Consolas, monospace;
-
-  /* Ko'k shkala — amal rangi */
-  --color-arena-50: #f0f5ff;
-  --color-arena-100: #dfeafe;
-  --color-arena-200: #c3d8fd;
-  --color-arena-300: #98bcfb;
-  --color-arena-400: #6598f7;
-  --color-arena-500: #3d78f0;
-  --color-arena-600: #1f6feb;
-  --color-arena-700: #1a56c4;
-  --color-arena-800: #1a479c;
-  --color-arena-900: #1a3e7c;
-  --color-arena-950: #14274c;
-
-  /* Iliq neytral shkala — sahifa, chegara, siyoh */
-  --color-paper-50: #fbfbfa;
-  --color-paper-100: #f7f7f4;
-  --color-paper-200: #efeeea;
-  --color-paper-300: #e2e1db;
-  --color-paper-400: #c9c7bf;
-  --color-paper-500: #a3a096;
-  --color-paper-600: #78756b;
-  --color-paper-700: #56544c;
-  --color-paper-800: #33322d;
-  --color-paper-900: #1c1b19;
 }
 
 /* --------------------------------------------------------------------------
@@ -59,176 +43,199 @@
 :root,
 .aurora {
   /* --- sirtlar ----------------------------------------------------------
-     Uchta pog'ona, ko'pi emas: KANVAS (iliq qog'oz) → KARTA (sof oq) →
-     BOTIQ (kanvasdan bir tonna quyuq). Karta ichida karta bo'lmaydi. */
-  --canvas: #f7f7f4;
-  --canvas-deep: #efeeea;
+     Ikkita asosiy pog'ona: OQ (sahifa va karta) va JUDA OCH KULRANG
+     (bo'limlarni ajratuvchi lenta). Karta oq sahifada chegara bilan
+     ajraladi — soya bilan emas. */
+  --canvas: #ffffff;
+  --canvas-deep: #f5f5f5;
   --pane: #ffffff;
   --pane-solid: #ffffff;
-  /* Boshqaruv sirti — OQ karta ustida ko'rinishi kerak, shuning uchun
-     oqdan quyuqroq iliq kul. */
-  --pane-hover: #f1f0ec;
-  --pane-sunken: #f7f7f4;
+  --pane-hover: #fafafa;
+  --pane-sunken: #f5f5f5;
   --pane-blur: 0px;
 
   /* --- chegaralar --------------------------------------------------------
-     Iliq va qat'iy. `hair` — butun tizim bo'ylab yagona 1px qiymati. */
-  --edge: #e5e4de;
-  --edge-soft: #eeede8;
-  --edge-strong: #cdcbc2;
+     Sof neytral kulrang. `hair` — tizim bo'ylab yagona 1px qiymati. */
+  --edge: #e5e5e5;
+  --edge-soft: #efefef;
+  --edge-strong: #d4d4d4;
   --hair: 1px solid var(--edge);
   --hair-soft: 1px solid var(--edge-soft);
 
   /* --- siyoh -------------------------------------------------------------
-     Iliq qora: iliq qog'ozda sof qora ko'kish va "yopishmagan" ko'rinadi. */
-  --ink: #1a1917;
-  --ink-2: #4a4842;
-  --ink-3: #736f66;
-  --ink-4: #a09c92;
+     Sof qora shkala. `ink-4` matn uchun EMAS — faqat ikonka va ajratgich:
+     oq fonda kontrasti 3.45:1, ya'ni AA dan past. */
+  --ink: #0a0a0a;
+  --ink-2: #4a4a4a;
+  --ink-3: #737373;
+  --ink-4: #a3a3a3;
   --ink-on-brand: #ffffff;
 
   /* --- brend: amal ko'ki -------------------------------------------------
-     Logotipdagi ko'kdan bir pog'ona quyuqroq — oq matn ustida AA kontrast
-     beradi. Ochroq variantda tugmadagi matn o'qilmay qolar edi. */
-  --brand: #1f6feb;
-  --brand-hover: #1a5ecb;
-  --brand-press: #164da7;
-  --brand-ink: #17509f;
-  --brand-wash: #eaf1fe;
-  --brand-wash-strong: #d6e5fd;
-  --brand-edge: #b3ccfa;
+     #1E5EFF oq ustida 5.12:1 — oq matnli tugma uchun AA. `brand-light`
+     faqat TO'Q fonda ishlatiladi: to'q ustida #1E5EFF 3.8:1 berib,
+     matn uchun yetarli bo'lmay qoladi. */
+  --brand: #1e5eff;
+  --brand-hover: #4c7fff;
+  --brand-press: #0b3fc4;
+  --brand-light: #5b8cff;
+  --brand-ink: #1e5eff;
+  --brand-wash: #eef3ff;
+  --brand-wash-strong: #dce6ff;
+  --brand-edge: #b9ccff;
 
-  /* --- ikkinchi aksent: energiya -----------------------------------------
-     Seriya, kunlik masala, jonli hodisa. Ko'k "amal" bo'lsa, kehribar
-     "harakat" — ikki hue butun tizimga yetadi, uchinchisi shovqin. */
-  --flare: #b45309;
-  --flare-wash: #fdf2e3;
-  --flare-edge: #f0d5aa;
+  /* --- ikkinchi aksent ---------------------------------------------------
+     Tizimda ikkinchi hue YO'Q. Nom mavjud kod bilan moslik uchun qolgan,
+     qiymati esa siyoh: "diqqat" ko'k emas, qora bilan beriladi. */
+  --flare: #0a0a0a;
+  --flare-wash: #f5f5f5;
+  --flare-edge: #d4d4d4;
 
-  /* --- semantik --------------------------------------------------------- */
-  --ok: #14804a;
-  --ok-wash: #e7f4ec;
-  --warn: #b45309;
-  --warn-wash: #fdf2e3;
-  --bad: #c2323c;
-  --bad-wash: #fcecec;
-  --note: #4f46e5;
-  --note-wash: #eeedfe;
+  /* --- semantik ----------------------------------------------------------
+     Rangsiz semantika. Ijobiy natija — KO'K (tizimda ko'k = "ishladi,
+     davom et"), salbiy va ogohlantirish — SIYOH pog'onalari. Har bir holat
+     yonida DOIM matnli yorliq yoki ikonka turadi, shuning uchun ma'no
+     rangga bog'liq qolmaydi. */
+  --ok: #1e5eff;
+  --ok-wash: #eef3ff;
+  --warn: #4a4a4a;
+  --warn-wash: #f5f5f5;
+  --bad: #0a0a0a;
+  --bad-wash: #f0f0f0;
+  --note: #1e5eff;
+  --note-wash: #eef3ff;
 
-  /* --- qiyinlik pog'onalari --------------------------------------------- */
-  --easy: #14804a;
-  --medium: #b45309;
-  --hard: #c2323c;
+  /* --- qiyinlik pog'onalari ---------------------------------------------
+     Uch pog'ona uch TONDA: ochdan quyuqqa. Yoniga uchta ustunli belgi
+     qo'yiladi (`DifficultyMark`) — daraja shakl orqali ham o'qiladi. */
+  --easy: #a3a3a3;
+  --medium: #4a4a4a;
+  --hard: #0a0a0a;
 
-  /* --- burchaklar: kichik va aniq --------------------------------------- */
+  /* --- burchaklar: bitta shkala ----------------------------------------- */
   --r-chip: 999px;
-  --r-ctl: 8px;
+  --r-ctl: 10px;
   --r-field: 10px;
-  --r-pane: 14px;
-  --r-pane-lg: 20px;
+  --r-pane: 16px;
+  --r-pane-lg: 24px;
 
-  /* --- balandlik: sirt tekis, soya faqat suzuvchi qatlamda -------------- */
+  /* --- balandlik ---------------------------------------------------------
+     Tinch holatda soya YO'Q. `lift-2` — hover javobi, `lift-pop` — suzuvchi
+     qatlam (menyu, modal). Soya sof qoradan, rangsiz. */
   --lift-0: none;
-  --lift-1: 0 1px 2px rgb(26 25 23 / 0.04);
-  --lift-2: 0 2px 8px -2px rgb(26 25 23 / 0.07), 0 1px 2px rgb(26 25 23 / 0.04);
-  --lift-3: 0 8px 24px -8px rgb(26 25 23 / 0.13);
-  --lift-pop: 0 16px 48px -12px rgb(26 25 23 / 0.2), 0 1px 3px rgb(26 25 23 / 0.07);
-  --lift-brand: 0 6px 16px -6px rgb(31 111 235 / 0.42);
+  --lift-1: 0 1px 2px rgb(10 10 10 / 0.04);
+  --lift-2: 0 8px 24px -6px rgb(10 10 10 / 0.1), 0 2px 6px -2px rgb(10 10 10 / 0.05);
+  --lift-3: 0 16px 40px -12px rgb(10 10 10 / 0.14);
+  --lift-pop: 0 16px 48px -12px rgb(10 10 10 / 0.18), 0 2px 8px -2px rgb(10 10 10 / 0.08);
+  --lift-brand: 0 10px 28px -10px rgb(30 94 255 / 0.45);
 
   /* --- fokus halqasi ---------------------------------------------------- */
-  --focus: rgb(31 111 235 / 0.32);
+  --focus: rgb(30 94 255 / 0.3);
   --focus-w: 3px;
 
-  /* --- tartib o'lchamlari ---------------------------------------------- */
+  /* --- tartib o'lchamlari ----------------------------------------------
+     Konteyner 1200px, matn ustuni 720px (~68 belgi). Panel balandligi
+     72px — B2B SaaS uslubidagi "havodor" sarlavha paneli. */
   --rail: 68px;
   --rail-open: 240px;
-  --bar: 60px;
+  --bar: 72px;
   --tabbar: 62px;
-  --page: 1240px;
-  --page-tight: 780px;
-  --gutter: 32px;
+  --page: 1200px;
+  --page-tight: 720px;
+  --gutter: 40px;
 
-  /* --- harakat ---------------------------------------------------------- */
-  --ease-snap: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --t-fast: 130ms;
-  --t-base: 220ms;
-  --t-slow: 420ms;
+  /* Bo'limlar orasidagi vertikal nafas — sahifa ritmi shu uchta qiymatda */
+  --sec: 120px;
+  --sec-md: 88px;
+  --sec-sm: 64px;
+
+  /* --- harakat -----------------------------------------------------------
+     Hech bir animatsiya 0.6s dan uzoq emas. `t-fast` — hover/rang,
+     `t-base` — tugma va menyu, `t-slow` — akkordeon, `t-reveal` — scroll. */
+  --ease-snap: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 200ms;
+  --t-base: 250ms;
+  --t-slow: 300ms;
+  --t-reveal: 500ms;
 
   /* --- sahna: DOIM to'q sirt -------------------------------------------
-     Kod paneli, kirish sahifasidagi brend ustuni, natija banneri. Bu
-     qiymatlar temaga qarab o'zgarmaydi: to'q sirt ataylab to'q qoladi,
-     shuning uchun ikki rejimda ham bir xil "ekran" tuyg'usini beradi. */
-  --stage: #101318;
-  --stage-2: #0a0d11;
-  --stage-edge: #212630;
-  --stage-ink: #e9edf3;
-  --stage-ink-2: #8b95a5;
-  --stage-ink-3: #58616f;
-  --stage-brand: #6ba3fa;
-  --stage-ok: #3fb950;
+     Kalkulyator/interaktiv bo'lim, kod paneli, kirish sahifasidagi brend
+     ustuni. Temaga bo'ysunmaydi: to'q sirt ikki rejimda ham to'q qoladi. */
+  --stage: #171717;
+  --stage-2: #0a0a0a;
+  --stage-edge: #262626;
+  --stage-ink: #ffffff;
+  --stage-ink-2: #a3a3a3;
+  --stage-ink-3: #737373;
+  --stage-brand: #5b8cff;
+  --stage-ok: #5b8cff;
 
-  /* --- tekstura --------------------------------------------------------- */
-  --grid-line: rgb(26 25 23 / 0.055);
-  --shimmer-line: rgb(26 25 23 / 0.07);
-  --shimmer-peak: rgb(26 25 23 / 0.02);
+  /* --- tekstura ---------------------------------------------------------- */
+  --grid-line: rgb(10 10 10 / 0.045);
+  --shimmer-line: rgb(10 10 10 / 0.07);
+  --shimmer-peak: rgb(10 10 10 / 0.02);
 }
 
 /* --------------------------------------------------------------------------
    Tokenlar — qorong'i rejim
-   Bir xil mantiq, teskari yo'nalishda: kanvas deyarli qora neytral, karta
-   undan bir pog'ona ochroq. Ko'k bu yerda yorug'lik manbaiga aylanadi.
+   Bir xil uch rang, teskari yo'nalishda: kanvas qora, karta bir pog'ona
+   ochroq, ko'k esa yorug'roq darajaga o'tadi (to'q fonda AA uchun).
    -------------------------------------------------------------------------- */
 .dark {
-  --canvas: #0b0b0c;
-  --canvas-deep: #070708;
-  --pane: #131315;
-  --pane-solid: #131315;
-  --pane-hover: #1e1e21;
-  --pane-sunken: #0f0f11;
+  --canvas: #0a0a0a;
+  --canvas-deep: #000000;
+  --pane: #171717;
+  --pane-solid: #171717;
+  --pane-hover: #1f1f1f;
+  --pane-sunken: #111111;
 
-  --edge: #26262a;
-  --edge-soft: #1d1d20;
-  --edge-strong: #3a3a40;
+  --edge: #262626;
+  --edge-soft: #1f1f1f;
+  --edge-strong: #3d3d3d;
 
-  --ink: #f5f4f1;
-  --ink-2: #c2c0ba;
-  --ink-3: #918e87;
-  --ink-4: #67645e;
-  --ink-on-brand: #ffffff;
+  --ink: #fafafa;
+  --ink-2: #d4d4d4;
+  --ink-3: #a3a3a3;
+  --ink-4: #737373;
+  /* Qorong'i rejimda ko'k yorug'roq (#4c7fff), shuning uchun ustidagi matn
+     QORA bo'lishi kerak: oq matn u yerda 3.6:1 berib, AA dan pastga
+     tushardi. Qora esa 5.4:1 — o'qish qulay. */
+  --ink-on-brand: #0a0a0a;
 
-  --brand: #4d8ef8;
-  --brand-hover: #6ba3fa;
-  --brand-press: #8cb8fb;
-  --brand-ink: #9cc2fb;
-  --brand-wash: #12203a;
-  --brand-wash-strong: #1a2f52;
-  --brand-edge: #2b4a7d;
+  --brand: #4c7fff;
+  --brand-hover: #7fa5ff;
+  --brand-press: #1e5eff;
+  --brand-light: #7fa5ff;
+  --brand-ink: #8fb1ff;
+  --brand-wash: #11203f;
+  --brand-wash-strong: #172c56;
+  --brand-edge: #26437d;
 
-  --flare: #e0a458;
-  --flare-wash: #2a1f10;
-  --flare-edge: #4a3617;
+  --flare: #fafafa;
+  --flare-wash: #1f1f1f;
+  --flare-edge: #3d3d3d;
 
-  --ok: #35c07d;
-  --ok-wash: #0e2419;
-  --warn: #e0a458;
-  --warn-wash: #2a1f10;
-  --bad: #f0656f;
-  --bad-wash: #2c1214;
-  --note: #9b95f7;
-  --note-wash: #1a1830;
+  --ok: #7fa5ff;
+  --ok-wash: #11203f;
+  --warn: #d4d4d4;
+  --warn-wash: #1f1f1f;
+  --bad: #fafafa;
+  --bad-wash: #262626;
+  --note: #7fa5ff;
+  --note-wash: #11203f;
 
-  --easy: #35c07d;
-  --medium: #e0a458;
-  --hard: #f0656f;
+  --easy: #737373;
+  --medium: #a3a3a3;
+  --hard: #fafafa;
 
   --lift-1: 0 1px 2px rgb(0 0 0 / 0.5);
-  --lift-2: 0 2px 8px -2px rgb(0 0 0 / 0.6), 0 1px 2px rgb(0 0 0 / 0.4);
-  --lift-3: 0 8px 24px -8px rgb(0 0 0 / 0.7);
-  --lift-pop: 0 16px 48px -12px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.05);
-  --lift-brand: 0 6px 16px -6px rgb(77 142 248 / 0.38);
+  --lift-2: 0 8px 24px -6px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --lift-3: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --lift-pop: 0 16px 48px -12px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --lift-brand: 0 10px 28px -10px rgb(76 127 255 / 0.4);
 
-  --focus: rgb(77 142 248 / 0.42);
+  --focus: rgb(76 127 255 / 0.42);
 
   --grid-line: rgb(255 255 255 / 0.05);
   --shimmer-line: rgb(255 255 255 / 0.06);
@@ -254,6 +261,7 @@
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-press: var(--brand-press);
+  --color-brand-light: var(--brand-light);
   --color-brand-ink: var(--brand-ink);
   --color-brand-wash: var(--brand-wash);
   --color-brand-wash-strong: var(--brand-wash-strong);
@@ -293,83 +301,111 @@
 }
 
 /* ==========================================================================
-   Tipografika — uch ovoz
+   Tipografika — bitta shrift, aniq shkala
    --------------------------------------------------------------------------
-   Sarlavha yirik va zich terilgan (display shrift), interfeys matni tinch
-   (Inter), raqam esa monoshriftda. Oxirgisi eng muhim qaror: reyting,
-   foiz va vaqt bir xil kenglikdagi raqamlarda bo'lsa, ro'yxat "hisoblangan"
-   ko'rinadi va ko'z ustunni pastga bir tekis o'qiydi.
+   Sarlavhalar YIRIK va zich terilgan (700), matn tinch (400), yorliqlar
+   qat'iy (600). Raqamlar `tabular-nums` bilan: reyting va jadval ustunlari
+   tik turadi, lekin ko'rinishi qolgan matn bilan bir oilada qoladi.
    ========================================================================== */
 @layer components {
+  /* Hero sarlavhasi — 36px (mobil) → 64px (desktop) */
   .t-display {
     font-family: var(--font-display);
-    font-size: clamp(2.6rem, 1.5rem + 3.6vw, 4.4rem);
-    line-height: 0.98;
-    letter-spacing: -0.042em;
-    font-weight: 600;
+    font-size: clamp(2.25rem, 1.15rem + 4.4vw, 4rem);
+    line-height: 1.04;
+    letter-spacing: -0.032em;
+    font-weight: 700;
   }
+  /* Sahifa va bo'lim sarlavhasi — 28px → 40px */
   .t-title {
     font-family: var(--font-display);
-    font-size: clamp(1.7rem, 1.2rem + 1.6vw, 2.4rem);
-    line-height: 1.08;
-    letter-spacing: -0.032em;
-    font-weight: 600;
+    font-size: clamp(1.75rem, 1.3rem + 1.9vw, 2.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.026em;
+    font-weight: 700;
   }
+  /* Panel/karta sarlavhasi — 20px */
   .t-section {
     font-family: var(--font-display);
-    font-size: 1.125rem;
-    line-height: 1.28;
-    letter-spacing: -0.022em;
+    font-size: 1.25rem;
+    line-height: 1.3;
+    letter-spacing: -0.018em;
     font-weight: 600;
   }
   .t-body {
-    font-size: 0.9375rem;
-    line-height: 1.68;
-    letter-spacing: -0.006em;
+    font-size: 1rem;
+    line-height: 1.65;
+    letter-spacing: -0.003em;
   }
   .t-meta {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     line-height: 1.55;
-    letter-spacing: -0.002em;
   }
-  /* Bo'lim yorlig'i — monoshriftda, keng oraliq bilan. Texnik hujjatdagi
-     ustun nomiga o'xshaydi: kichik, jimgina, lekin aniq. */
+  /* Bo'lim yorlig'i — katta harflarda, keng oraliq bilan.
+     Tinch, KULRANG: bu yorliq mahsulot ichida yuzlab joyda uchraydi
+     (statistika nomi, panel yorlig'i, jadval sarlavhasi). Hammasini ko'k
+     qilsak, sahifa ko'kka to'lib, "ko'k = harakat" qoidasi buziladi. */
   .t-eyebrow {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
     line-height: 1.4;
-    letter-spacing: 0.11em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    font-weight: 500;
-    color: var(--ink-4);
-  }
-  /* Raqam — monoshrift + tabular. Butun mahsulotdagi HAR BIR son shu bilan. */
-  .t-num {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1, "zero" 1;
-    letter-spacing: -0.03em;
-  }
-  /* Yirik ko'rsatkich — statistika va natijalar taxtasi uchun */
-  .t-metric {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum" 1, "zero" 1;
-    font-size: clamp(1.6rem, 1.2rem + 1vw, 2.1rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
     font-weight: 600;
+    color: var(--ink-3);
+  }
+  /* MARKETING bo'limining yorlig'i — ko'k. Faqat bosh sahifa va shunga
+     o'xshash tanishtiruv sahifalarida: u yerda yorliqlar kam va har biri
+     yangi bo'lim boshlanganini e'lon qiladi. */
+  .t-eyebrow-brand {
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--brand);
+  }
+  /* Raqam — interfeys shriftida, lekin ustunlar tik turadi */
+  .t-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.015em;
+  }
+  /* Interfeys ichidagi ko'rsatkich — profil, natijalar taxtasi, admin KPI.
+     28px → 36px: to'rtta ustunli lentada o'qiladi, lekin sahifani bosmaydi.
+     Rang komponentda beriladi (odatda siyoh). */
+  .t-metric {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-size: clamp(1.75rem, 1.45rem + 1.2vw, 2.25rem);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+  }
+  /* Marketing statistikasi — 40px → 56px, DOIM ko'k rangda.
+     "+3 000" kabi raqam sahifadagi eng yirik element bo'lib, e'tiborni
+     birinchi bo'lib o'ziga tortadi. */
+  .t-metric-lg {
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-size: clamp(2.5rem, 1.9rem + 2.6vw, 3.5rem);
+    line-height: 1;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+    color: var(--brand);
   }
 }
 
 /* ==========================================================================
-   Sirtlar — uchta pog'ona
+   Sirtlar
    ========================================================================== */
 
 /**
- * Karta — MA'LUMOT uchun sirt: ro'yxat, jadval, forma, panel.
- * Soya yo'q, faqat iliq soch chizig'i. Iliq qog'ozda sof oq o'zi ajralib
- * turadi; soya qo'shsak, sahifa "suzuvchi qutilar" to'plamiga aylanadi.
+ * Karta — oq sirt, 1px kulrang chegara, soyasiz.
+ * Soya tinch holatda YO'Q: o'nlab "suzuvchi" quti sahifani og'irlashtiradi.
  */
 @utility pane {
   background-color: var(--pane);
@@ -388,7 +424,7 @@
   border: 1px solid var(--edge-soft);
 }
 
-/** Suzuvchi qatlam — menyu, popover, modal. Faqat shu yerda soya bor. */
+/** Suzuvchi qatlam — menyu, popover, modal. Faqat shu yerda doimiy soya. */
 @utility pane-float {
   background-color: var(--pane-solid);
   border: 1px solid var(--edge);
@@ -396,27 +432,29 @@
 }
 
 /**
- * Interaktiv sirt. `transform` ataylab ishlatilmaydi: ro'yxatdagi kartalar
- * sakrasa, ko'z butun ustunni qayta o'qishga majbur bo'ladi. O'rniga
- * chegara brend rangiga o'tadi va nozik soya paydo bo'ladi.
+ * Interaktiv karta — hoverda 4px yuqoriga ko'tariladi va soya kuchayadi.
+ * Aynan shu ikki o'zgarish "bosiladigan" tuyg'usini beradi; chegara rangi
+ * ham ko'kka o'tadi, shuning uchun sichqonchasiz ham (klaviatura) seziladi.
  */
 @utility pane-interactive {
   transition:
-    background-color var(--t-base) var(--ease-soft),
-    border-color var(--t-base) var(--ease-soft),
-    box-shadow var(--t-base) var(--ease-soft);
+    transform var(--t-slow) var(--ease-snap),
+    border-color var(--t-slow) var(--ease-snap),
+    box-shadow var(--t-slow) var(--ease-snap);
 }
 .pane-interactive:hover {
+  transform: translateY(-4px);
   border-color: var(--brand-edge);
   box-shadow: var(--lift-2);
 }
 .pane-interactive:active {
-  box-shadow: none;
+  transform: translateY(-1px);
+  box-shadow: var(--lift-1);
 }
 
 /**
- * To'yingan ko'k blok — sahifadagi bitta asosiy chaqiriq uchun (hero, CTA).
- * Ichidagi matn oq. Sahifada bittadan ko'p bo'lmasligi kerak.
+ * To'yingan ko'k blok — sahifadagi bitta asosiy chaqiriq uchun.
+ * Sahifada bittadan ko'p bo'lmasligi kerak.
  */
 @utility pane-brand {
   background-color: var(--brand);
@@ -425,22 +463,19 @@
 }
 
 /**
- * Siyoh blok — ko'kdan ham kuchli urg'u. Qorong'i sirt oq sahifada
- * "muhr" kabi turadi: hero vizuali, natija banneri, admin KPI paneli.
+ * Siyoh blok — ko'kdan ham kuchli urg'u: hero vizuali, CTA lentasi,
+ * kalkulyator bo'limi. Oq sahifada "muhr" kabi turadi.
  */
 @utility pane-ink {
   background-color: var(--ink);
-  color: #fbfbfa;
+  color: #ffffff;
   border: 1px solid transparent;
 }
 
 /* ==========================================================================
-   Chiziqlar — tizimning asosiy ajratgichi
-   Quti o'rniga chiziq: bo'lim boshlanishini bildiradi, lekin kontentni
-   o'ramaydi va sahifaga yana bitta chegara qo'shmaydi.
+   Chiziqlar — quti o'rniga ajratgich
    ========================================================================== */
 
-/** Bo'lim ustidagi soch chizig'i — kontent kengligi bo'ylab. */
 @utility rule {
   border-top: 1px solid var(--edge);
 }
@@ -448,10 +483,7 @@
   border-top: 1px solid var(--edge-soft);
 }
 
-/**
- * Chap qirradagi brend chizig'i — tanlangan yoki faol element.
- * Butun blokni bo'yashdan ko'ra tinchroq va aniqroq.
- */
+/** Chap qirradagi ko'k chiziq — tanlangan yoki ochiq element. */
 @utility edge-brand {
   position: relative;
 }
@@ -466,11 +498,7 @@
   background: var(--brand);
 }
 
-/**
- * Ro'yxat qatori — hoverda chap qirradan brend chizig'i "o'sib chiqadi".
- * Bu bitta detal ro'yxatga jonlilik beradi, lekin tartibni surmaydi:
- * chiziq qatorning ichida, oqimdan tashqarida.
- */
+/** Ro'yxat qatori — hoverda chap qirradan ko'k chiziq "o'sib chiqadi". */
 @utility row-mark {
   position: relative;
 }
@@ -496,6 +524,69 @@
 }
 
 /* ==========================================================================
+   Sahifa ritmi — bo'lim va konteyner
+   --------------------------------------------------------------------------
+   Marketing sahifalari shu ikki utility ustida quriladi: `shell` gorizontal
+   kenglikni, `band` esa vertikal nafasni beradi. Qiymatlar bitta joyda —
+   sahifalar orasida ritm og'ishmaydi.
+   ========================================================================== */
+
+@utility shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--page);
+  padding-inline: 20px;
+}
+@media (min-width: 640px) {
+  .shell {
+    padding-inline: 32px;
+  }
+}
+@media (min-width: 1024px) {
+  .shell {
+    padding-inline: var(--gutter);
+  }
+}
+
+/** Matn ustuni — huquqiy sahifa, maqola, FAQ (~68 belgi). */
+@utility shell-tight {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--page-tight);
+  padding-inline: 20px;
+}
+@media (min-width: 640px) {
+  .shell-tight {
+    padding-inline: 32px;
+  }
+}
+
+/** Bo'lim — 64px (mobil) → 88px → 120px */
+@utility band {
+  padding-block: var(--sec-sm);
+}
+@media (min-width: 768px) {
+  .band {
+    padding-block: var(--sec-md);
+  }
+}
+@media (min-width: 1280px) {
+  .band {
+    padding-block: var(--sec);
+  }
+}
+
+/** Zich bo'lim — ketma-ket kelgan ikki blok orasida */
+@utility band-sm {
+  padding-block: 48px;
+}
+@media (min-width: 768px) {
+  .band-sm {
+    padding-block: 64px;
+  }
+}
+
+/* ==========================================================================
    Fon va tekstura
    ========================================================================== */
 .aurora-canvas {
@@ -504,15 +595,12 @@
   overflow-x: clip;
 }
 
-/**
- * Millimetrli qog'oz — faqat hero va bo'sh maydonlarda. Juda xira: u fonni
- * "material" qiladi, lekin matn ustida sezilmaydi.
- */
+/** Millimetrli qog'oz — faqat hero va bo'sh maydonlarda, juda xira. */
 .grid-paper {
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-size: 40px 40px;
   background-position: center center;
 }
 
@@ -520,7 +608,7 @@
 .aurora-dots,
 .dot-paper {
   background-image: radial-gradient(var(--grid-line) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-size: 24px 24px;
 }
 
 /** Teksturani chekkalarga qarab so'ndiradi — chegarasi ko'rinmaydi. */
@@ -550,8 +638,6 @@
 
 /* ==========================================================================
    Yuklanish — chapdan o'ngga o'tuvchi yorug'lik
-   Pulsatsiya "buzuq" tuyg'usini beradi (element o'chib-yonadi); siljuvchi
-   yorug'lik esa yo'nalishga ega va "kelayotgan" ma'lumotni ko'rsatadi.
    ========================================================================== */
 @keyframes arena-sweep {
   from { background-position: -160% 0; }
@@ -576,13 +662,17 @@
 
 /* ==========================================================================
    Kirish animatsiyalari
+   --------------------------------------------------------------------------
+   Bitta qonun: 20px pastdan + shaffoflikdan. Masshtab YO'Q — masshtablangan
+   blok kirish paytida matnni bir zumda xiralashtiradi (sub-piksel qayta
+   terish). Ro'yxatlarda har bir element 100ms kechikadi (stagger).
    ========================================================================== */
 @keyframes arena-enter {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes arena-pop {
-  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  from { opacity: 0; transform: translateY(-6px); }
   to { opacity: 1; transform: none; }
 }
 @keyframes arena-sheet {
@@ -593,29 +683,29 @@
   from { opacity: 0; }
   to { opacity: 1; }
 }
-/* Chiziq chapdan o'ngga tortiladi — bo'lim "ochilgani"ni bildiradi. */
 @keyframes arena-draw {
   from { transform: scaleX(0); }
   to { transform: scaleX(1); }
 }
 
-.enter { animation: arena-enter var(--t-base) var(--ease-snap) both; }
+.enter { animation: arena-enter var(--t-reveal) var(--ease-soft) both; }
 .enter-pop { animation: arena-pop var(--t-fast) var(--ease-snap) both; }
 .enter-sheet { animation: arena-sheet var(--t-base) var(--ease-snap) both; }
 .enter-veil { animation: arena-veil var(--t-fast) linear both; }
 .enter-draw {
   transform-origin: left;
-  animation: arena-draw var(--t-slow) var(--ease-snap) both;
+  animation: arena-draw var(--t-reveal) var(--ease-snap) both;
 }
 
-/* Ro'yxatdagi elementlar ketma-ket kiradi — 6 tadan keyin kechikish to'xtaydi. */
-.enter-stagger > * { animation: arena-enter var(--t-base) var(--ease-snap) both; }
+/* Ketma-ket kirish — 100ms qadam, 6 tadan keyin kechikish to'xtaydi
+   (aks holda uzun ro'yxat oxiri juda kech ko'rinadi). */
+.enter-stagger > * { animation: arena-enter var(--t-reveal) var(--ease-soft) both; }
 .enter-stagger > *:nth-child(1) { animation-delay: 0ms; }
-.enter-stagger > *:nth-child(2) { animation-delay: 26ms; }
-.enter-stagger > *:nth-child(3) { animation-delay: 52ms; }
-.enter-stagger > *:nth-child(4) { animation-delay: 78ms; }
-.enter-stagger > *:nth-child(5) { animation-delay: 104ms; }
-.enter-stagger > *:nth-child(n + 6) { animation-delay: 130ms; }
+.enter-stagger > *:nth-child(2) { animation-delay: 100ms; }
+.enter-stagger > *:nth-child(3) { animation-delay: 200ms; }
+.enter-stagger > *:nth-child(4) { animation-delay: 300ms; }
+.enter-stagger > *:nth-child(5) { animation-delay: 400ms; }
+.enter-stagger > *:nth-child(n + 6) { animation-delay: 500ms; }
 
 @media (prefers-reduced-motion: reduce) {
   .enter,

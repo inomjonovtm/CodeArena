@@ -1,29 +1,17 @@
 "use client";
 
-import {
-  Briefcase,
-  CalendarDays,
-  Check,
-  GraduationCap,
-  Loader2,
-  Repeat,
-  Rocket,
-  Swords,
-  Target,
-  TrendingUp,
-  Users,
-  Zap,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { LinkButton } from "@/components/kit";
 import { useAuth } from "@/components/providers";
 import { LogoLink } from "@/components/shell/logo";
 import { NavMenu } from "@/components/shell/nav-menu";
 import { useNavModel } from "@/components/shell/nav-model";
 import { PrefsMenu } from "@/components/shell/prefs-menu";
 import { SiteFooter } from "@/components/shell/site-footer";
+import { cn } from "@/lib/utils";
 
 import { CodeDemo } from "./code-demo";
 import { Community } from "./community";
@@ -32,28 +20,24 @@ import { Faq } from "./faq";
 import { Features } from "./features";
 import { Hero } from "./hero";
 import { HowItWorks } from "./how-it-works";
-import { Marquee } from "./marquee";
+import { Planner } from "./planner";
 import { Reveal } from "./reveal";
+import { Testimonials } from "./testimonials";
+import { TrustStrip } from "./trust-strip";
 
-/* -------------------------------------------------------------- ma'lumot */
+/* ==========================================================================
+   Bosh sahifa
+   --------------------------------------------------------------------------
+   SAHIFA RITMI. Bo'limlar fon bo'yicha almashinadi, shuning uchun uzun
+   sahifa "nafas oladi" va bloklar bir-biriga qo'shilib ketmaydi:
 
-const AUDIENCE_ROW_1 = [
-  { label: "Talaba", icon: <GraduationCap /> },
-  { label: "Ish qidirayotgan dasturchi", icon: <Briefcase /> },
-  { label: "Intervyuga tayyorlanayotgan", icon: <Target /> },
-  { label: "Olimpiada ishtirokchisi", icon: <Swords /> },
-  { label: "Bootcamp o'quvchisi", icon: <Rocket /> },
-  { label: "Yangi til o'rganayotgan", icon: <Repeat /> },
-];
+     oq → oq → oq → OCH KULRANG → oq → QORA → oq → OCH KULRANG → oq → oq → QORA(futer)
 
-const AUDIENCE_ROW_2 = [
-  { label: "Dasturlashni endi boshlagan", icon: <Zap /> },
-  { label: "Darajasini sinamoqchi", icon: <TrendingUp /> },
-  { label: "Kundalik odat qurmoqchi", icon: <CalendarDays /> },
-  { label: "Do'stlari bilan bellashuvchi", icon: <Users /> },
-  { label: "Maktab o'quvchisi", icon: <GraduationCap /> },
-  { label: "O'zini sinovdan o'tkazuvchi", icon: <Check /> },
-];
+   To'q bo'lim sahifada BITTA (kalkulyator) — ikkinchisi futer. Ilgari
+   butun bosh sahifa to'q edi; endi u ichki sahifalar bilan bir tilda
+   gapiradi, ya'ni bosh sahifadan katalogga o'tganda "boshqa saytga
+   tushdim" tuyg'usi qolmaydi.
+   ========================================================================== */
 
 const FAQ_ITEMS = [
   {
@@ -88,7 +72,22 @@ const FAQ_ITEMS = [
   },
 ];
 
-/* --------------------------------------------------------------- sahifa */
+/* Bosh sahifa paneli sayt panelining aynan o'zi qoidalarda: oq fon, pastda
+   ingichka chiziq, qora logotip, hoverda ko'k menyu. Farqi faqat shunda —
+   bu yerda qidiruv va bildirishnoma yo'q (mehmon uchun ular ma'nosiz). */
+const NAV_SIGN_IN = [
+  "focus-ring hidden h-10 items-center rounded-[var(--r-ctl)] px-4 sm:flex",
+  "border border-[var(--ink)] text-[14px] font-semibold text-[var(--ink)]",
+  "transition-[color,border-color,transform] duration-[var(--t-base)] ease-[var(--ease-snap)]",
+  "hover:border-[var(--brand)] hover:text-[var(--brand)] active:scale-[0.97]",
+].join(" ");
+
+const NAV_CTA = [
+  "focus-ring inline-flex h-10 items-center rounded-[var(--r-ctl)] px-4",
+  "bg-[var(--ink)] text-[14px] font-semibold text-[var(--canvas)]",
+  "transition-[background-color,transform] duration-[var(--t-base)] ease-[var(--ease-snap)]",
+  "hover:bg-[var(--brand)] active:scale-[0.97]",
+].join(" ");
 
 export function Landing() {
   const { user, loading } = useAuth();
@@ -103,91 +102,78 @@ export function Landing() {
 
   if (loading || user) {
     return (
-      <div className="landing-dark flex min-h-screen items-center justify-center">
-        <Loader2 className="size-5 animate-spin text-[var(--stage-brand)]" />
+      <div className="flex min-h-screen items-center justify-center bg-[var(--canvas)]">
+        <Loader2 className="size-5 animate-spin text-[var(--brand)]" />
       </div>
     );
   }
 
   return (
-    /* `landing-dark` sirt tokenlarini sahnaga ko'chiradi — shu tufayli
-       umumiy futer va kit komponentlari o'zgarishsiz to'q ko'rinadi. */
-    <div className="landing-dark min-h-screen">
+    <div className="aurora-canvas min-h-screen">
       {/* ==================================================== SARLAVHA */}
-      <header className="sticky top-0 z-50 h-[var(--bar)] border-b border-[var(--stage-edge)] bg-[var(--stage-2)]">
-        <div className="mx-auto flex h-full w-full max-w-[var(--page)] items-center gap-2 px-4 sm:px-6 lg:px-[var(--gutter)]">
+      <header className="sticky top-0 z-50 h-[var(--bar)] border-b border-[var(--edge)] bg-[var(--pane)]">
+        <div className="shell flex h-full items-center gap-2">
           <LogoLink size="sm" />
 
-          <nav aria-label="Asosiy" className="ml-4 hidden items-center gap-0.5 lg:flex">
+          <nav aria-label="Asosiy" className="ml-6 hidden items-center gap-1 lg:flex">
             {navGroups.map((group) => (
               <NavMenu key={group.key} label={group.label} links={group.links} authed={false} />
             ))}
             <NavMenu label="Yordam" links={navSupport} authed={false} />
           </nav>
 
-          <div className="flex flex-1 items-center justify-end gap-2">
+          <div className="flex flex-1 items-center justify-end gap-2.5">
             <PrefsMenu />
-            <LinkButton href="/login" variant="ghost" size="sm" className="hidden sm:inline-flex">
+            <Link href="/login" className={NAV_SIGN_IN}>
               Kirish
-            </LinkButton>
-            <LinkButton href="/register" variant="primary" size="sm">
+            </Link>
+            <Link href="/register" className={NAV_CTA}>
               Boshlash
-            </LinkButton>
+            </Link>
           </div>
         </div>
       </header>
 
       <Hero />
+      <TrustStrip />
+      <Features />
+      <HowItWorks />
 
       {/* ==================================================== KOD DEMOSI */}
-      <section className="mx-auto w-full max-w-[var(--page)] px-4 py-20 sm:px-6 sm:py-28 lg:px-[var(--gutter)]">
+      <section className="band shell">
         <Reveal className="max-w-2xl">
-          <p className="t-eyebrow text-[var(--stage-ink-3)]">Sinab ko&apos;ring</p>
-          <h2 className="t-title mt-3 text-[var(--stage-ink)]">
+          <p className="t-eyebrow-brand">Sinab ko&apos;ring</p>
+          <h2 className="t-title mt-4 text-[var(--ink)]">
             Tekshiruv qanday ketishini shu yerda ko&apos;ring.
           </h2>
-          <p className="mt-4 text-[15.5px] leading-[1.65] text-[var(--stage-ink-2)]">
-            Tilni tanlang va tugmani bosing — yechim namunaviy va yashirin testlardan
-            ketma-ket o&apos;tadi.
+          <p className="mt-5 text-[18px] leading-[1.6] text-[var(--ink-2)]">
+            Tilni tanlang va tugmani bosing — yechim namunaviy va yashirin testlardan ketma-ket
+            o&apos;tadi.
           </p>
         </Reveal>
 
-        <Reveal delay={120} className="mt-10">
+        {/* Panelning o'zi to'q: u mahsulot oynasini ko'rsatadi, shuning
+            uchun oq bo'lim ichida "ekran" bo'lib turadi. */}
+        <Reveal delay={120} className={cn("mt-12")}>
           <CodeDemo />
         </Reveal>
       </section>
 
-      <Features />
-      <HowItWorks />
+      <Planner />
       <Community />
-
-      {/* ==================================================== KIMGA MOS */}
-      <section className="pb-20 sm:pb-28">
-        <div className="mx-auto max-w-[var(--page)] px-4 sm:px-6 lg:px-[var(--gutter)]">
-          <Reveal className="mx-auto max-w-2xl text-center">
-            <p className="t-eyebrow text-[var(--stage-ink-3)]">Kimga mos</p>
-            <h2 className="t-title mt-3 text-[var(--stage-ink)]">CodeArena kimga mos?</h2>
-            <p className="mt-4 text-[15.5px] leading-[1.65] text-[var(--stage-ink-2)]">
-              Quyidagilardan birortasi siz haqingizda bo&apos;lsa — bemalol boshlayvering.
-            </p>
-          </Reveal>
-        </div>
-
-        <Reveal delay={100} className="mt-12 flex flex-col gap-2.5">
-          <Marquee items={AUDIENCE_ROW_1} direction="left" duration={54} />
-          <Marquee items={AUDIENCE_ROW_2} direction="right" duration={60} />
-        </Reveal>
-      </section>
+      <Testimonials />
 
       {/* ==================================================== SAVOL-JAVOB */}
-      <section className="mx-auto w-full max-w-[var(--page-tight)] px-4 pb-20 sm:px-6 sm:pb-28 lg:px-[var(--gutter)]">
-        <Reveal>
-          <p className="t-eyebrow text-[var(--stage-ink-3)]">Savol-javob</p>
-          <h2 className="t-title mt-3 text-[var(--stage-ink)]">Qo&apos;shimcha savollar</h2>
-        </Reveal>
-        <Reveal delay={100} className="mt-10">
-          <Faq items={FAQ_ITEMS} />
-        </Reveal>
+      <section className="band">
+        <div className="shell-tight">
+          <Reveal>
+            <p className="t-eyebrow-brand">Savol-javob</p>
+            <h2 className="t-title mt-4 text-[var(--ink)]">Qo&apos;shimcha savollar</h2>
+          </Reveal>
+          <Reveal delay={100} className="mt-12">
+            <Faq items={FAQ_ITEMS} />
+          </Reveal>
+        </div>
       </section>
 
       <CTA />

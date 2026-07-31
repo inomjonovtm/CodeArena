@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { Divider, Pane } from "@/components/kit";
 import { cn, formatDate } from "@/lib/utils";
 
 export interface LegalSection {
@@ -32,7 +31,7 @@ function useActiveSection(count: number): number {
         const index = Number(visible.target.id.replace("section-", ""));
         if (Number.isFinite(index) && index > 0) setActive(index);
       },
-      { rootMargin: "-88px 0px -66% 0px" },
+      { rootMargin: "-100px 0px -66% 0px" },
     );
 
     for (let index = 1; index <= count; index += 1) {
@@ -46,13 +45,20 @@ function useActiveSection(count: number): number {
   return active;
 }
 
-/**
- * Huquqiy hujjatlar uchun umumiy tartib.
- *
- * Uch karta: mundarija, kirish va matnning o'zi. Uzun matn bitta oq varaqda
- * qoladi — har bir bo'limni alohida kartaga solish o'qishni uzib qo'yardi.
- * Mundarija katta ekranda o'ngda yopishib turadi, mobilda matndan oldin chiqadi.
- */
+/* ==========================================================================
+   Huquqiy hujjatlar uchun umumiy tartib
+   --------------------------------------------------------------------------
+   Bu sahifalarda MATN ustuvor, shuning uchun u kartaga solinmaydi: matn
+   to'g'ridan-to'g'ri oq varaqda turadi, xuddi bosma hujjatdagidek. Karta
+   ichidagi uzun matn ikki chegara orasida siqilib, o'qishni og'irlashtiradi.
+
+   Ustun kengligi ~68 belgi bilan cheklangan — bu ko'z bir qatordan
+   ikkinchisiga adashmasdan o'tadigan maksimal kenglik.
+
+   O'ngda yopishqoq mundarija: qaysi bo'lim o'qilayotgani ko'k rang va chap
+   qirradagi chiziq bilan belgilanadi.
+   ========================================================================== */
+
 export function LegalDocument({
   updatedAt,
   intro,
@@ -65,13 +71,13 @@ export function LegalDocument({
   const active = useActiveSection(sections.length);
 
   return (
-    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
-      {/* --------------------------------------------------- mundarija kartasi */}
-      <aside className="order-1 w-full shrink-0 lg:sticky lg:top-[calc(var(--bar)+16px)] lg:order-2 lg:w-64">
-        <nav aria-label="Mundarija" className="pane enter rounded-[var(--r-pane)] p-4">
-          <p className="t-eyebrow px-2.5">Mundarija</p>
+    <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
+      {/* --------------------------------------------------------- mundarija */}
+      <aside className="order-1 w-full shrink-0 lg:sticky lg:top-[calc(var(--bar)+32px)] lg:order-2 lg:w-64">
+        <nav aria-label="Mundarija" className="enter border-t border-[var(--edge)] pt-6">
+          <p className="t-eyebrow">Mundarija</p>
 
-          <ol className="mt-2 flex flex-col gap-0.5">
+          <ol className="mt-5 flex flex-col">
             {sections.map((section, index) => {
               const number = index + 1;
               const current = number === active;
@@ -81,21 +87,14 @@ export function LegalDocument({
                     href={`#section-${number}`}
                     aria-current={current ? "true" : undefined}
                     className={cn(
-                      "focus-ring flex gap-2 rounded-[var(--r-ctl)] px-2.5 py-1.5 text-[13px]",
+                      "focus-ring flex gap-3 border-l-2 py-2 pl-4 text-[14px]",
                       "transition-colors duration-[var(--t-fast)]",
                       current
-                        ? "bg-[var(--brand-wash)] font-medium text-[var(--brand-ink)]"
-                        : "text-[var(--ink-3)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                        ? "border-[var(--brand)] font-semibold text-[var(--brand)]"
+                        : "border-transparent text-[var(--ink-3)] hover:text-[var(--brand)]",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "t-num shrink-0",
-                        current ? "text-[var(--brand)]" : "text-[var(--ink-4)]",
-                      )}
-                    >
-                      {number}
-                    </span>
+                    <span className="t-num shrink-0">{number}</span>
                     <span className="min-w-0">{section.title}</span>
                   </a>
                 </li>
@@ -103,47 +102,44 @@ export function LegalDocument({
             })}
           </ol>
 
-          <Divider className="my-3" />
-
-          <p className="t-meta px-2.5 text-[var(--ink-4)]">
+          <p className="mt-6 border-t border-[var(--edge)] pt-5 text-[13px] text-[var(--ink-3)]">
             Oxirgi yangilanish:{" "}
-            <span className="t-num text-[var(--ink-2)]">{formatDate(updatedAt, false)}</span>
+            <span className="t-num font-semibold text-[var(--ink)]">
+              {formatDate(updatedAt, false)}
+            </span>
           </p>
         </nav>
       </aside>
 
       {/* --------------------------------------------------------------- matn */}
-      <div className="order-2 flex min-w-0 flex-1 flex-col gap-5 lg:order-1">
-        {/* Kirish — yetakchi karta */}
-        <Pane inset="lg" className="enter">
-          <p className="t-body text-[var(--ink-2)]">{intro}</p>
-        </Pane>
+      <div className="order-2 min-w-0 flex-1 lg:order-1">
+        {/* Kirish — qolgan matndan yirikroq, "yetakchi paragraf" */}
+        <p className="enter max-w-[68ch] border-l-2 border-[var(--brand)] pl-6 text-[19px] leading-[1.6] text-[var(--ink-2)]">
+          {intro}
+        </p>
 
-        {/* Butun matn bitta oq varaqda — o'qish oqimi uzilmasin */}
-        <Pane inset="lg" className="sm:p-9">
-          <div className="enter-stagger flex flex-col gap-9">
-            {sections.map((section, index) => (
-              <section
-                key={section.title}
-                id={`section-${index + 1}`}
-                className="scroll-mt-[calc(var(--bar)+24px)]"
-              >
-                <h2 className="t-section flex gap-2.5 text-[var(--ink)]">
-                  <span className="t-num shrink-0 text-[var(--brand)]">{index + 1}.</span>
-                  <span className="min-w-0">{section.title}</span>
-                </h2>
+        <div className="enter-stagger mt-16 flex flex-col gap-14">
+          {sections.map((section, index) => (
+            <section
+              key={section.title}
+              id={`section-${index + 1}`}
+              className="max-w-[68ch] scroll-mt-[calc(var(--bar)+32px)]"
+            >
+              <h2 className="flex gap-3 text-[24px] leading-[1.3] font-bold text-[var(--ink)]">
+                <span className="t-num shrink-0 text-[var(--brand)]">{index + 1}.</span>
+                <span className="min-w-0">{section.title}</span>
+              </h2>
 
-                <div className="prose-ca mt-2">
-                  {section.body.map((paragraph, pIndex) => (
-                    <p key={pIndex} className="text-[var(--ink-2)]">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        </Pane>
+              <div className="mt-4 flex flex-col gap-4">
+                {section.body.map((paragraph, pIndex) => (
+                  <p key={pIndex} className="text-[16px] leading-[1.7] text-[var(--ink-2)]">
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );

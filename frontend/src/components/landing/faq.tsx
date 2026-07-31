@@ -14,11 +14,12 @@ export interface FaqItem {
  * Bir vaqtda bitta savol ochiq turadigan akkordeon.
  *
  * Har bir savol alohida kartada EMAS — bu bitta ro'yxat, savollar orasida
- * soch chizig'i. Sakkizta karta sahifada sakkizta chegara demak, savollar
- * esa bir turkumga tegishli: ular birga o'qiladi.
+ * ingichka kulrang chiziq. Sakkizta karta sahifada sakkizta chegara demak,
+ * savollar esa bir turkumga tegishli: ular birga o'qiladi.
  *
- * Tartib raqami monoshriftda chapda turadi — ro'yxat sanab o'tilgan, ya'ni
- * uzunligi ko'rinadi va foydalanuvchi qayerda turganini biladi.
+ * Ochiq savolning uch belgisi bor: matni KO'K, chap qirrasida ko'k vertikal
+ * chiziq va o'ngdagi "+" 45 gradusga burilib "×" ga aylanadi. Javob esa
+ * pastga ochiladi (grid 0fr → 1fr, 300ms).
  */
 export function Faq({ items }: { items: FaqItem[] }) {
   const [open, setOpen] = useState(0);
@@ -32,7 +33,17 @@ export function Faq({ items }: { items: FaqItem[] }) {
         const buttonId = `${baseId}-button-${index}`;
 
         return (
-          <div key={item.question} className="border-b border-[var(--edge)]">
+          <div key={item.question} className="relative border-b border-[var(--edge)]">
+            {/* Chap qirradagi ko'k chiziq — faqat ochiq savolda */}
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-0 left-0 w-[3px] rounded-full bg-[var(--brand)]",
+                "transition-[height,opacity] duration-[var(--t-slow)] ease-[var(--ease-snap)]",
+                isOpen ? "h-full opacity-100" : "h-0 opacity-0",
+              )}
+            />
+
             <h3>
               <button
                 id={buttonId}
@@ -40,30 +51,24 @@ export function Faq({ items }: { items: FaqItem[] }) {
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => setOpen(isOpen ? -1 : index)}
-                className="focus-ring group flex w-full items-start gap-4 py-5 text-left"
+                className="focus-ring group flex w-full items-start gap-5 py-7 pl-6 text-left"
               >
                 <span
                   className={cn(
-                    "t-num mt-0.5 w-6 shrink-0 text-[12px] font-medium transition-colors",
-                    isOpen ? "text-[var(--brand)]" : "text-[var(--ink-4)]",
-                  )}
-                >
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <span
-                  className={cn(
-                    "min-w-0 flex-1 text-[15.5px] font-medium transition-colors duration-[var(--t-fast)]",
+                    "min-w-0 flex-1 text-[18px] font-semibold",
+                    "transition-colors duration-[var(--t-base)]",
                     isOpen
-                      ? "text-[var(--ink)]"
-                      : "text-[var(--ink-2)] group-hover:text-[var(--ink)]",
+                      ? "text-[var(--brand)]"
+                      : "text-[var(--ink)] group-hover:text-[var(--brand)]",
                   )}
                 >
                   {item.question}
                 </span>
                 <Plus
                   className={cn(
-                    "mt-1 size-4 shrink-0 transition-transform duration-[var(--t-base)] ease-[var(--ease-snap)]",
-                    isOpen ? "rotate-45 text-[var(--brand)]" : "text-[var(--ink-4)]",
+                    "mt-1 size-5 shrink-0",
+                    "transition-[transform,color] duration-[var(--t-slow)] ease-[var(--ease-snap)]",
+                    isOpen ? "rotate-45 text-[var(--brand)]" : "text-[var(--ink-3)]",
                   )}
                 />
               </button>
@@ -80,8 +85,9 @@ export function Faq({ items }: { items: FaqItem[] }) {
               )}
             >
               <div className="overflow-hidden">
-                {/* Javob savol matni bilan bir chiziqda boshlanadi */}
-                <p className="t-body max-w-2xl pb-6 pl-10 text-[var(--ink-3)]">{item.answer}</p>
+                <p className="max-w-2xl pr-10 pb-8 pl-6 text-[16px] leading-[1.7] text-[var(--ink-2)]">
+                  {item.answer}
+                </p>
               </div>
             </div>
           </div>

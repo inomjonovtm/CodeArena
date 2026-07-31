@@ -112,8 +112,9 @@ export default function ContactPage() {
       : null;
 
   return (
-    /* Har bir mazmun bloki alohida kartada, orasi bir tekis 20px */
-    <div className="flex flex-col gap-7">
+    /* Sarlavha kanvasda, forma va yordamchi ustun kartada. Bloklar orasi
+       keng — forma "havodor" bo'lsa to'ldirish osonroq seziladi. */
+    <div className="flex flex-col gap-12">
       {/* ------------------------------------------------- sarlavha kartasi */}
       <PageHead
         eyebrow="Aloqa"
@@ -122,9 +123,9 @@ export default function ContactPage() {
         meta={
           <a
             href={`mailto:${siteEmail}`}
-            className="focus-ring t-meta flex items-center gap-1.5 rounded-[6px] text-[var(--ink-3)] transition-colors hover:text-[var(--brand-ink)]"
+            className="focus-ring flex items-center gap-2 rounded-[6px] text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--brand)]"
           >
-            <Mail className="size-3.5" />
+            <Mail className="size-4" />
             {siteEmail}
           </a>
         }
@@ -167,7 +168,7 @@ export default function ContactPage() {
               <Divider />
 
               <div>
-                <span className="flex size-9 items-center justify-center rounded-[var(--r-ctl)] bg-[var(--ok-wash)] text-[var(--ok)]">
+                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
                   <Clock className="size-4" />
                 </span>
                 <p className="mt-3 text-[13.5px] font-semibold text-[var(--ink)]">
@@ -265,15 +266,16 @@ export default function ContactPage() {
               />
             </Field>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="t-meta flex items-center gap-1.5 text-[var(--ink-4)]">
-                <Clock className="size-3.5" />
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
+              <p className="flex items-center gap-2 text-[13.5px] text-[var(--ink-3)]">
+                <Clock className="size-4" />
                 {t.site.contact.responseBody}
               </p>
               <Button
                 type="submit"
                 variant="primary"
-                icon={<Send className="size-4" />}
+                size="lg"
+                icon={<Send className="size-[18px]" />}
                 loading={mutation.isPending}
               >
                 {mutation.isPending ? t.common.saving : t.site.contact.send}

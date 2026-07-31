@@ -9,72 +9,96 @@ import { cn } from "@/lib/utils";
 /* ==========================================================================
    Tugma
    --------------------------------------------------------------------------
-   Burchak 8px — kapsula emas va yumshoq karta ham emas. Kapsula tugmalar
-   o'lchamdan qat'i nazar bir xil "mayin" ko'rinadi va ierarxiyani yo'qotadi;
-   o'tkir radius esa tugmani boshqaruv elementiga o'xshatadi.
+   Ikkita qoida butun tizimni ushlab turadi:
 
-   `quiet` variantida OQ sirt + soch chizig'i ishlatiladi, kul fon emas: iliq
-   qog'oz ustida chegarali oq tugma "bosiladigan predmet" kabi ko'rinadi,
-   kul to'ldirma esa o'chirilgan holat bilan chalkashadi.
+     1. ASOSIY (primary) — QORA fon, oq matn. Hoverda fon KO'KGA o'tadi.
+     2. IKKINCHI DARAJALI (quiet) — shaffof fon, qora chegara va matn.
+        Hoverda chegara ham, matn ham ko'kka o'tadi.
+
+   Ya'ni ko'k tugmaning tinch holati EMAS, balki javobi: sichqoncha kelganda
+   element "yonadi". Shu tufayli sahifada ko'k faqat foydalanuvchi qaragan
+   joyda paydo bo'ladi va e'tibor tarqalmaydi.
+
+   Burchak 10px, o'tish 250ms — rang hech qachon to'satdan almashmaydi.
+   Bosilganda tugma 0.97 ga siqiladi: bu jismoniy "bosildi" tuyg'usi.
+
+   Yirik o'lchamlar (`lg`, `xl`) hoverda 2px yuqoriga siljiydi — ular
+   marketing CTA'lari. Zich interfeysdagi kichik tugmalar siljimaydi: jadval
+   ichida sakraydigan tugmalar qatorni "titratadi".
    ========================================================================== */
 
-type Variant = "primary" | "quiet" | "ghost" | "danger" | "brand-soft" | "ink";
-type Size = "sm" | "md" | "lg";
+type Variant = "primary" | "quiet" | "ghost" | "danger" | "brand" | "brand-soft" | "ink";
+type Size = "sm" | "md" | "lg" | "xl";
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 gap-1.5 px-2.5 text-[12.5px]",
-  md: "h-9 gap-2 px-3.5 text-[13.5px]",
-  lg: "h-11 gap-2 px-5 text-[14.5px]",
+  sm: "h-9 gap-1.5 px-3.5 text-[13px]",
+  md: "h-10 gap-2 px-4 text-[14px]",
+  // 14px/28px — dizayn tizimidagi CTA o'lchami
+  lg: "h-12 gap-2.5 px-7 text-[15px] hover:-translate-y-0.5",
+  xl: "h-14 gap-2.5 px-8 text-[16px] hover:-translate-y-0.5",
 };
 
 const ICON_SIZES: Record<Size, string> = {
-  sm: "size-8",
-  md: "size-9",
-  lg: "size-11",
+  sm: "size-9",
+  md: "size-10",
+  lg: "size-12",
+  xl: "size-14",
 };
 
 const VARIANTS: Record<Variant, string> = {
+  // 1-qoida: qora → ko'k
   primary: [
-    "bg-[var(--brand)] text-[var(--ink-on-brand)] font-semibold",
-    // Ichki yuqori yorug'lik — tugmaga jismoniy, bosiladigan tus beradi
-    "shadow-[inset_0_1px_0_rgb(255_255_255/0.2)]",
-    "hover:bg-[var(--brand-hover)] hover:shadow-[var(--lift-brand),inset_0_1px_0_rgb(255_255_255/0.2)]",
-    "active:bg-[var(--brand-press)] active:shadow-[inset_0_1px_2px_rgb(0_0_0/0.2)]",
+    "bg-[var(--ink)] text-[var(--canvas)] font-semibold border border-transparent",
+    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)]",
+    "active:bg-[var(--brand-press)]",
   ].join(" "),
+  // 2-qoida: shaffof + qora chegara → ko'k chegara va ko'k matn
   quiet: [
-    "bg-[var(--pane)] text-[var(--ink)] border border-[var(--edge)]",
-    "hover:border-[var(--edge-strong)] hover:bg-[var(--pane-hover)]",
-    "active:bg-[var(--canvas-deep)]",
+    "bg-transparent text-[var(--ink)] border border-[var(--ink)] font-semibold",
+    "hover:border-[var(--brand)] hover:text-[var(--brand)]",
+    "active:bg-[var(--brand-wash)]",
   ].join(" "),
   ghost: [
     "text-[var(--ink-2)] border border-transparent",
-    "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+    "hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
     "active:bg-[var(--canvas-deep)]",
   ].join(" "),
-  danger: [
-    "bg-[var(--bad)] text-white font-semibold",
-    "shadow-[inset_0_1px_0_rgb(255_255_255/0.18)]",
-    "hover:brightness-110 active:brightness-95",
+  /* To'q fondagi CTA — to'yingan ko'k, hoverda bir pog'ona ochroq.
+     Kalkulyator/interaktiv bo'lim va hero ustidagi asosiy chaqiriq. */
+  brand: [
+    "bg-[var(--brand)] text-[var(--ink-on-brand)] font-semibold border border-transparent",
+    "hover:bg-[var(--brand-hover)]",
+    "active:bg-[var(--brand-press)]",
   ].join(" "),
   "brand-soft": [
-    "bg-[var(--brand-wash)] text-[var(--brand-ink)] border border-[var(--brand-edge)] font-medium",
-    "hover:bg-[var(--brand-wash-strong)]",
+    "bg-[var(--brand-wash)] text-[var(--brand-ink)] border border-[var(--brand-edge)] font-semibold",
+    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)] hover:border-transparent",
   ].join(" "),
+  /* Xavfli amal. Palitrada qizil YO'Q, shuning uchun farq RANG bilan emas
+     xulq bilan beriladi: bu yagona qora tugma bo'lib, hoverda ko'kka
+     O'TMAYDI — quyuqroq bo'ladi. Ma'noni esa har doim yorliq va tasdiq
+     oynasining matni tashiydi. */
+  danger: [
+    "bg-[var(--bad)] text-[var(--canvas)] font-semibold border border-transparent",
+    "hover:bg-[var(--ink-2)] active:bg-[var(--bad)]",
+  ].join(" "),
+  // `ink` — `primary` bilan bir xil qoida (eski chaqiruvlar uchun nom)
   ink: [
     "bg-[var(--ink)] text-[var(--canvas)] font-semibold border border-transparent",
-    "shadow-[inset_0_1px_0_rgb(255_255_255/0.12)]",
-    "hover:bg-[var(--ink-2)] active:bg-[var(--ink)]",
+    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)]",
+    "active:bg-[var(--brand-press)]",
   ].join(" "),
 };
 
 const BASE = [
   "relative inline-flex items-center justify-center rounded-[var(--r-ctl)]",
   "font-medium whitespace-nowrap select-none focus-ring",
+  // Barcha xususiyatlar bitta ohangda — rang to'satdan sakramaydi
   "transition-[background-color,border-color,box-shadow,transform,color,opacity]",
-  "duration-[var(--t-fast)] ease-[var(--ease-snap)]",
-  // Bosilganda arzimas siqilish — bosishni tasdiqlaydi, tartibni buzmaydi
-  "active:scale-[0.985]",
-  "disabled:pointer-events-none disabled:opacity-45",
+  "duration-[var(--t-base)] ease-[var(--ease-snap)]",
+  // Bosilganda siqilish — "bosildi" tuyg'usini beradi
+  "active:scale-[0.97]",
+  "disabled:pointer-events-none disabled:opacity-40",
 ].join(" ");
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -332,8 +356,14 @@ export function Eyebrow({
 
 /* ==========================================================================
    Qiyinlik belgisi — uch pog'onali ustun
-   Rangli so'z o'rniga uchta vertikal chiziq: bir qarashda o'qiladi va
-   rang ko'rmaydigan foydalanuvchi uchun ham shakl orqali farqlanadi.
+   --------------------------------------------------------------------------
+   Palitrada yashil/sariq/qizil yo'q, shuning uchun daraja RANG bilan emas
+   ikki signal bilan beriladi: nechta ustun to'lgani (shakl) va ustunlar
+   qanchalik quyuq ekani (ton). Bu yondashuv rang ko'rmaydigan foydalanuvchi
+   uchun ham baravar ishlaydi.
+
+   Yorliq matni doim `--ink-2`: eng och ton (`--easy`) 12px matnda oq fonda
+   AA kontrast bermaydi, ustun belgisi uchun esa yetarli.
    ========================================================================== */
 export function DifficultyMark({
   value,
@@ -364,9 +394,7 @@ export function DifficultyMark({
         ))}
       </span>
       {showLabel ? (
-        <span className="text-[12.5px] font-medium" style={{ color }}>
-          {label ?? value}
-        </span>
+        <span className="text-[13px] font-medium text-[var(--ink-2)]">{label ?? value}</span>
       ) : null}
     </span>
   );

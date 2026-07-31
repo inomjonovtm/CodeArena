@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { themeInitScript } from "@/components/providers/theme-provider";
@@ -7,27 +7,20 @@ import { themeInitScript } from "@/components/providers/theme-provider";
 import "./globals.css";
 
 /* ==========================================================================
-   Shriftlar — uchta ovoz, uchta vazifa
+   Shriftlar — bitta ovoz, bitta istisno
    --------------------------------------------------------------------------
-   Bitta shriftda qurilgan interfeys tekis eshitiladi: sarlavha ham, jadval
-   ham, raqam ham bir xil ohangda gapiradi. Shu yerda uchta rol ajratilgan:
-
-   · Space Grotesk — SARLAVHA. Tor apertura va o'ziga xos `a`/`g` harflari
-     mahsulotga xarakter beradi; faqat yirik o'lchamda ishlatiladi.
-   · Inter — INTERFEYS. Zich jadval, yorliq va uzun matnda eng o'qishli.
-   · JetBrains Mono — RAQAM va KOD. Reyting, vaqt, foiz, ball — hammasi
-     bir xil kenglikdagi raqamlarda, shuning uchun ustunlar tik turadi.
+   · Inter — HAMMASI. Sarlavha ham, interfeys ham, raqam ham. Ikkinchi
+     sarlavha shrifti (ilgari Space Grotesk) tizimga xarakter bermay, ohangni
+     ikkiga bo'lardi: sarlavha bir oilada, matn boshqasida "gapirardi".
+     Yirik o'lchamdagi 700 og'irlik va zich harf oralig'i xarakterni
+     shriftni almashtirmasdan beradi.
+   · JetBrains Mono — faqat KOD. Muharrir, kod bloki, test chiqishi. Raqamlar
+     endi Inter'ning `tabular-nums` xususiyati bilan tekislanadi, shuning
+     uchun jadval ustunlari monoshriftsiz ham tik turadi.
    ========================================================================== */
 
 /* O'zgaruvchi nomlari ataylab shrift nomidan olingan: `--font-sans` kabi
    umumiy nomlar Tailwind `@theme` chiqaradigan tokenlar bilan to'qnashadi. */
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-grotesk",
-  display: "swap",
-});
-
 const sans = Inter({
   subsets: ["latin", "cyrillic-ext"],
   variable: "--font-inter",
@@ -62,8 +55,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     // Kanvas ranglari — brauzer chrome sahifa foniga mos tushadi
-    { media: "(prefers-color-scheme: light)", color: "#f7f7f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0c" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -76,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="uz"
       suppressHydrationWarning
-      className={`${sans.variable} ${display.variable} ${mono.variable}`}
+      className={`${sans.variable} ${mono.variable}`}
     >
       <head>
         {/* Sahifa yuklanishida tema "miltillamasligi" uchun */}

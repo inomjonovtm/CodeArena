@@ -1,73 +1,152 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { Bell, BookOpen, ShieldCheck, Trophy, Users, Zap } from "lucide-react";
 
+import { publicApi } from "@/lib/public-api";
+import { cn, formatNumber } from "@/lib/utils";
+
+import { useCountUp, useInView } from "./count-up";
 import { Reveal } from "./reveal";
 
-/* Ikonka rangli plitkada TURMAYDI (DESIGN.md, 0-bo'lim) — soch chizig'idagi
-   doirada, sokin rangda. Hover'da karta chegarasi brendga o'tadi. */
-const FEATURES = [
+/* ==========================================================================
+   Imkoniyatlar
+   --------------------------------------------------------------------------
+   Ikki qatlam:
+
+   1. UCHTA YIRIK KARTA — har birida katta KO'K raqam. Raqamlar backenddan
+      keladi (`site.stats`), ya'ni ular haqiqiy. Ma'lumot kelmasa raqam
+      o'rni bo'sh qoladi, karta esa baribir ko'rinadi: o'ylab topilgan
+      statistika eng arzon va eng zararli yolg'on.
+   2. QOLGAN XUSUSIYATLAR — raqamsiz, sokinroq ro'yxat. Hammasiga bir xil
+      og'irlik bersak, ko'z qayerdan boshlashni bilmay qoladi.
+
+   Karta hoverda 4px yuqoriga ko'tariladi va soyasi kuchayadi (`pane-interactive`).
+   ========================================================================== */
+
+const HIGHLIGHTS = [
   {
-    icon: Zap,
-    title: "Avtomatik va tezkor judge",
+    key: "problems" as const,
+    title: "Masalalar katalogi",
     body:
-      "Judge0 va sandbox izolyatsiyasi: kodingiz soniyalar ichida yashirin test-case'lar orqali xavfsiz va xolis tekshiriladi.",
+      "Oson, o'rta va qiyin darajalarga ajratilgan masalalar. Har biri uchun Python, JavaScript va C++ da tayyor boshlang'ich kod beriladi.",
   },
   {
-    icon: Trophy,
-    title: "Real-time contest va Elo reyting",
+    key: "submissions" as const,
+    title: "Avtomatik tekshiruv",
     body:
-      "SSE orqali soniya sayin yangilanadigan jonli leaderboard va har bir musobaqadan keyin qayta hisoblanadigan adolatli Elo ballari.",
+      "Judge0 va sandbox izolyatsiyasi: yechimingiz soniyalar ichida yashirin testlardan o'tadi, natijada vaqt va xotira sarfi ko'rsatiladi.",
   },
   {
-    icon: ShieldCheck,
-    title: "Ilg'or anti-plagiat",
+    key: "users" as const,
+    title: "Elo reyting va jamoa",
     body:
-      "Winnowing algoritmi o'zgartirilgan nusxalarni ham topadi. Avtomatik jazo yo'q: shubhali juftlikni moderator qo'lda ko'rib chiqadi.",
-  },
-  {
-    icon: BookOpen,
-    title: "Editorial va tahlillar",
-    body:
-      "Har bir masalaning chuqur tahlili — murakkablik, muqobil yondashuvlar va tipik xatolar. Masalani yechgandan keyin ochiladi.",
-  },
-  {
-    icon: Users,
-    title: "Guruhlar va yopiq reyting",
-    body:
-      "Do'stlaringiz yoki o'quv markazingiz uchun alohida guruh, ichki leaderboard va taklif kodi bilan qo'shilish.",
-  },
-  {
-    icon: Bell,
-    title: "PWA va push bildirishnomalar",
-    body:
-      "Musobaqa boshlanishi, yechim natijasi va javoblar haqida brauzer bildirishnomasi. Ilovani telefon ekraniga o'rnatib qo'yish mumkin.",
+      "Musobaqadan keyin reyting raqiblar kuchiga qarab qayta hisoblanadi. Guruhlar, yopiq leaderboard va taklif kodi bilan qo'shilish.",
   },
 ];
 
-export function Features() {
+const FEATURES = [
+  {
+    icon: Zap,
+    title: "Tezkor judge",
+    body: "Namuna testlarda darhol sinang, so'ng to'liq to'plamga yuboring.",
+  },
+  {
+    icon: Trophy,
+    title: "Jonli musobaqalar",
+    body: "SSE orqali soniya sayin yangilanadigan natijalar taxtasi.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Anti-plagiat",
+    body: "Winnowing algoritmi o'zgartirilgan nusxalarni ham topadi.",
+  },
+  {
+    icon: BookOpen,
+    title: "Editorial",
+    body: "Murakkablik tahlili, muqobil yondashuvlar va tipik xatolar.",
+  },
+  {
+    icon: Users,
+    title: "Guruhlar",
+    body: "O'quv markazi yoki do'stlar uchun alohida ichki reyting.",
+  },
+  {
+    icon: Bell,
+    title: "PWA va bildirishnoma",
+    body: "Ilovani ekranga o'rnating, natijadan xabardor bo'ling.",
+  },
+];
+
+/**
+ * Katta ko'k raqam — ko'rinishga kirganda 0 dan sanaydi.
+ *
+ * Qiymat yo'q yoki nol bo'lsa raqam umuman chizilmaydi. "0+" degan yozuv
+ * bo'sh bazani ko'rsatib turadi va kartani ishonchsiz qiladi; balandlik
+ * esa `min-h` orqali saqlanadi, shuning uchun kartalar tekis turadi.
+ */
+function HighlightNumber({ value }: { value?: number }) {
+  const { ref, inView } = useInView<HTMLParagraphElement>(0.4);
+  const hasValue = typeof value === "number" && value > 0;
+  const shown = useCountUp(value ?? 0, inView && hasValue);
+
   return (
-    <section className="mx-auto w-full max-w-[var(--page)] px-4 py-20 sm:px-6 sm:py-28 lg:px-[var(--gutter)]">
-      <Reveal>
-        <p className="t-eyebrow text-[var(--stage-ink-3)]">Imkoniyatlar</p>
-        <h2 className="t-title mt-3 max-w-2xl text-[var(--stage-ink)]">
+    <p ref={ref} className="t-metric-lg t-num min-h-[1em]">
+      {hasValue ? `${formatNumber(shown)}+` : ""}
+    </p>
+  );
+}
+
+export function Features() {
+  /* Statistika kelmasa ham bo'lim ko'rinadi — faqat raqamlar o'rni bo'sh
+     qoladi. `retry: false`: bosh sahifa backend javob bermasa ham ochilishi
+     kerak. */
+  const { data } = useQuery({
+    queryKey: ["site-stats"],
+    queryFn: () => publicApi.site.stats(),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+
+  return (
+    <section className="band shell">
+      <Reveal className="max-w-2xl">
+        <p className="t-eyebrow-brand">Imkoniyatlar</p>
+        <h2 className="t-title mt-4 text-[var(--ink)]">
           Mashqdan musobaqagacha — hammasi bitta joyda.
         </h2>
+        <p className="mt-5 text-[18px] leading-[1.6] text-[var(--ink-2)]">
+          Masalani tanlashdan tortib reyting o&apos;sishigacha bo&apos;lgan yo&apos;lning har bir
+          qadami platformaning ichida.
+        </p>
       </Reveal>
 
-      <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* --------------------------------------------- uchta yirik karta */}
+      <ul className="mt-14 grid gap-8 md:grid-cols-3">
+        {HIGHLIGHTS.map((item, index) => (
+          <Reveal as="li" key={item.key} delay={index * 100} className="min-w-0">
+            <div className="pane pane-interactive h-full rounded-[var(--r-pane)] p-8">
+              <HighlightNumber value={data?.[item.key]} />
+              <h3 className="mt-6 text-[19px] font-semibold text-[var(--ink)]">{item.title}</h3>
+              <p className="mt-3 text-[15px] leading-[1.65] text-[var(--ink-2)]">{item.body}</p>
+            </div>
+          </Reveal>
+        ))}
+      </ul>
+
+      {/* ------------------------------------------ qolgan xususiyatlar */}
+      <ul className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature, index) => {
           const Icon = feature.icon;
           return (
-            <Reveal as="li" key={feature.title} delay={index * 60}>
-              <div className="stage-card h-full p-6">
-                <span className="grid size-10 place-items-center rounded-full border border-[var(--stage-edge)] text-[var(--stage-ink-2)]">
-                  <Icon className="size-[18px]" />
-                </span>
-                <h3 className="mt-5 text-[15px] font-semibold text-[var(--stage-ink)]">
+            <Reveal as="li" key={feature.title} delay={index * 60} className="min-w-0">
+              <div className={cn("h-full border-t border-[var(--edge)] pt-6")}>
+                {/* Ikonka rangli plitkada emas — minimalist chiziqli belgi */}
+                <Icon className="size-6 text-[var(--ink)]" strokeWidth={1.5} />
+                <h3 className="mt-5 text-[16px] font-semibold text-[var(--ink)]">
                   {feature.title}
                 </h3>
-                <p className="mt-2.5 text-[13.5px] leading-[1.65] text-[var(--stage-ink-2)]">
+                <p className="mt-2 text-[14.5px] leading-[1.65] text-[var(--ink-3)]">
                   {feature.body}
                 </p>
               </div>

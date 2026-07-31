@@ -8,108 +8,106 @@
    --------------------------------------------------------------------------
    Admin panelning bir qismi hali `bg-surface`, `text-fg-muted`, `--danger`
    kabi eski nomlardan foydalanadi. Bu blok ularni YANGI palitraga ulaydi:
-   nomlar eski, ranglar esa sof oq + ko'k tizimidan. Shu tufayli hali qayta
-   qurilmagan ekranlar ham to'g'ri rangda chiqadi.
+   nomlar eski, ranglar esa qora + oq + ko'k tizimidan. Shu tufayli admin
+   ekranlariga tegmasdan ular ham yangi rangda chiqadi.
 
-   Har bir admin sahifasi qayta qurilgach shu yerdan tegishli qism olib
-   tashlanadi; migratsiya tugagach butun blok o'chadi.
-
-   Yangi kod bu nomlardan FOYDALANMAYDI — `styles/aurora.css` ga qarang.
+   Semantik nomlar (`--success`, `--danger`) ataylab rangsiz: butun sayt
+   bo'ylab yashil/qizil yo'q, ma'no yorliq va ikonka bilan beriladi.
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* Sirtlar — iliq qog'oz sahifa, sof oq kartalar */
-  --bg: #f7f7f4;
-  --bg-subtle: #f7f7f4;
-  --bg-muted: #efeeea;
+  /* Sirtlar — oq sahifa, oq kartalar, och kulrang lenta */
+  --bg: #ffffff;
+  --bg-subtle: #fafafa;
+  --bg-muted: #f5f5f5;
   --surface: #ffffff;
-  --surface-hover: #f7f7f4;
-  --surface-active: #f1f0ec;
+  --surface-hover: #fafafa;
+  --surface-active: #f5f5f5;
 
-  /* Matn — iliq qora */
-  --fg: #1a1917;
-  --fg-muted: #736f66;
-  --fg-subtle: #a09c92;
+  /* Matn — sof qora shkala */
+  --fg: #0a0a0a;
+  --fg-muted: #737373;
+  --fg-subtle: #a3a3a3;
   --fg-inverse: #ffffff;
 
-  /* Chegara — iliq soch chizig'i */
-  --border: #e5e4de;
-  --border-strong: #cdcbc2;
-  --ring: #1f6feb;
+  /* Chegara */
+  --border: #e5e5e5;
+  --border-strong: #d4d4d4;
+  --ring: #1e5eff;
 
   /* Aksent — amal ko'ki */
-  --accent: #1f6feb;
-  --accent-hover: #1a5ecb;
-  --accent-active: #164da7;
+  --accent: #1e5eff;
+  --accent-hover: #4c7fff;
+  --accent-active: #0b3fc4;
   --accent-fg: #ffffff;
-  --accent-soft: #eaf1fe;
-  --accent-soft-fg: #17509f;
+  --accent-soft: #eef3ff;
+  --accent-soft-fg: #1e5eff;
 
-  /* Holat ranglari */
-  --success: #14804a;
-  --success-soft: #e7f4ec;
-  --warning: #b45309;
-  --warning-soft: #fdf2e3;
-  --danger: #c2323c;
-  --danger-soft: #fcecec;
-  --info: #1f6feb;
-  --info-soft: #eaf1fe;
-  --neutral: #736f66;
-  --neutral-soft: #f7f7f4;
+  /* Holat — rangsiz semantika */
+  --success: #1e5eff;
+  --success-soft: #eef3ff;
+  --warning: #4a4a4a;
+  --warning-soft: #f5f5f5;
+  --danger: #0a0a0a;
+  --danger-soft: #f0f0f0;
+  --info: #1e5eff;
+  --info-soft: #eef3ff;
+  --neutral: #737373;
+  --neutral-soft: #f5f5f5;
 
-  --shadow-sm: 0 1px 2px rgb(26 25 23 / 0.04);
-  --shadow: 0 1px 3px rgb(26 25 23 / 0.06);
-  --shadow-md: 0 2px 8px -2px rgb(26 25 23 / 0.07);
-  --shadow-lg: 0 8px 24px -8px rgb(26 25 23 / 0.13);
+  --shadow-sm: 0 1px 2px rgb(10 10 10 / 0.04);
+  --shadow: 0 1px 3px rgb(10 10 10 / 0.06);
+  --shadow-md: 0 8px 24px -6px rgb(10 10 10 / 0.1);
+  --shadow-lg: 0 16px 48px -12px rgb(10 10 10 / 0.18);
 
   --radius: 0.625rem;
-  --header-h: 3.75rem;
-  --shimmer: rgb(26 25 23 / 0.07);
+  --header-h: 4.5rem;
+  --shimmer: rgb(10 10 10 / 0.07);
 }
 
 .dark {
   color-scheme: dark;
 
-  --bg: #0b0b0c;
-  --bg-subtle: #0b0b0c;
-  --bg-muted: #0f0f11;
-  --surface: #131315;
-  --surface-hover: #1e1e21;
-  --surface-active: #1e1e21;
+  --bg: #0a0a0a;
+  --bg-subtle: #0a0a0a;
+  --bg-muted: #111111;
+  --surface: #171717;
+  --surface-hover: #1f1f1f;
+  --surface-active: #1f1f1f;
 
-  --fg: #f5f4f1;
-  --fg-muted: #918e87;
-  --fg-subtle: #67645e;
-  --fg-inverse: #0b0b0c;
+  --fg: #fafafa;
+  --fg-muted: #a3a3a3;
+  --fg-subtle: #737373;
+  --fg-inverse: #0a0a0a;
 
-  --border: #26262a;
-  --border-strong: #3a3a40;
-  --ring: #4d8ef8;
+  --border: #262626;
+  --border-strong: #3d3d3d;
+  --ring: #4c7fff;
 
-  --accent: #4d8ef8;
-  --accent-hover: #6ba3fa;
-  --accent-active: #8cb8fb;
-  --accent-fg: #0b0b0c;
-  --accent-soft: #12203a;
-  --accent-soft-fg: #9cc2fb;
+  --accent: #4c7fff;
+  --accent-hover: #7fa5ff;
+  --accent-active: #1e5eff;
+  --accent-fg: #ffffff;
+  --accent-soft: #11203f;
+  --accent-soft-fg: #8fb1ff;
 
-  --success: #35c07d;
-  --success-soft: #0e2419;
-  --warning: #e0a458;
-  --warning-soft: #2a1f10;
-  --danger: #f0656f;
-  --danger-soft: #2c1214;
-  --info: #4d8ef8;
-  --info-soft: #12203a;
-  --neutral: #918e87;
-  --neutral-soft: #0f0f11;
+  --success: #7fa5ff;
+  --success-soft: #11203f;
+  --warning: #d4d4d4;
+  --warning-soft: #1f1f1f;
+  --danger: #fafafa;
+  --danger-soft: #262626;
+  --info: #7fa5ff;
+  --info-soft: #11203f;
+  --neutral: #a3a3a3;
+  --neutral-soft: #111111;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow: 0 1px 3px rgb(0 0 0 / 0.5);
-  --shadow-md: 0 2px 8px -2px rgb(0 0 0 / 0.6);
-  --shadow-lg: 0 8px 24px -8px rgb(0 0 0 / 0.7);
+  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.6);
+  --shadow-lg: 0 16px 48px -12px rgb(0 0 0 / 0.8);
   --shimmer: rgb(255 255 255 / 0.06);
 }
 
@@ -158,31 +156,32 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* Sahifa ichidagi havolalar bosilganda silliq siljish. Yopishqoq panel
+       maqsad sarlavhani yopib qo'ymasligi uchun tepadan chekinish. */
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--bar) + 24px);
   }
 
   body {
     background-color: var(--canvas);
     color: var(--ink);
     font-family: var(--font-sans);
-    /* Inter'ning muqobil shakllari: bir qavatli `a`, to'g'ri `l`, ochiq `1`.
-       Zich jadval va yorliqlarda harflar bir-biriga qorishmaydi. */
+    /* Inter'ning muqobil shakllari: bir qavatli `a`, to'g'ri `l`, ochiq `1`. */
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss03";
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  /* Sarlavhalar display shriftda — `t-*` klassi qo'yilmagan joyda ham */
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.022em;
+    letter-spacing: -0.026em;
   }
 
   ::selection {
     background-color: var(--brand);
-    color: var(--ink-on-brand);
+    color: #ffffff;
   }
 
-  /* Fokus halqasi — klaviatura bilan boshqarish uchun */
   :focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
@@ -218,11 +217,11 @@
   to { opacity: 1; }
 }
 @keyframes ca-slide-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes ca-scale-in {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
 }
 @keyframes ca-countdown {
@@ -230,13 +229,26 @@
   to { width: 0%; }
 }
 
-.animate-fade-in { animation: ca-fade-in 0.18s ease-out; }
-.animate-slide-up { animation: ca-slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1); }
-.animate-scale-in { animation: ca-scale-in 0.16s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-fade-in { animation: ca-fade-in var(--t-fast) ease-out; }
+.animate-slide-up { animation: ca-slide-up var(--t-slow) var(--ease-soft); }
+.animate-scale-in { animation: ca-scale-in var(--t-fast) var(--ease-snap); }
+
+/* ==========================================================================
+   Sahifa almashuvi — yengil fade
+   --------------------------------------------------------------------------
+   Sahifa o'zgarganda kontent 220ms ichida paydo bo'ladi. Siljish YO'Q:
+   navigatsiyada gorizontal/vertikal siljish tarkibni "sakragan" ko'rsatadi
+   va yopishqoq panel bilan to'qnashadi. Faqat shaffoflik — tinch va tez.
+   ========================================================================== */
+@keyframes ca-page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.page-in {
+  animation: ca-page-in 220ms var(--ease-soft) both;
+}
 
 /* --------------------------------------------------------------- ranklar */
-/* Eng yuqori ranklarda avatar halqasi sekin aylanadi va nishon nafas oladi.
-   Faqat ikki rank uchun — hamma joyda bo'lsa sahifa bezovta ko'rinardi. */
 @keyframes ca-rank-spin {
   to { transform: rotate(360deg); }
 }
@@ -260,18 +272,18 @@
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background-size: 40px 40px;
 }
 
 /* ---------------------------------------------- scroll bo'yicha paydo bo'lish
-   Faqat vertikal siljish, masshtab yo'q: masshtablangan blok kirish paytida
-   matnni bir zumda xiralashtiradi (sub-piksel qayta terish). */
+   20px pastdan + shaffoflikdan, 500ms. Masshtab yo'q: masshtablangan blok
+   kirish paytida matnni bir zumda xiralashtiradi. */
 .reveal {
   opacity: 0;
-  transform: translateY(22px);
+  transform: translateY(20px);
   transition:
-    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--t-reveal) var(--ease-soft),
+    transform var(--t-reveal) var(--ease-soft);
   will-change: opacity, transform;
 }
 .reveal[data-visible="true"] {
@@ -279,40 +291,104 @@
   transform: none;
 }
 
-/* -------------------------------------------------------------- marquee */
-@keyframes ca-marquee-left {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-@keyframes ca-marquee-right {
-  from { transform: translateX(-50%); }
-  to { transform: translateX(0); }
+/* ==========================================================================
+   Slayder (range) — interaktiv bo'lim uchun
+   --------------------------------------------------------------------------
+   Yo'l kulrang, bosib o'tilgan qismi KO'K, tugmasi (thumb) oq va ko'k
+   halqali. Bosib o'tilgan qism `--progress` o'zgaruvchisi orqali gradient
+   bilan chiziladi: `::-moz-range-progress` faqat Firefox'da bor, gradient
+   esa hamma joyda bir xil ishlaydi.
+   ========================================================================== */
+.slider-blue {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--brand) 0%,
+    var(--brand) var(--progress, 0%),
+    color-mix(in oklab, var(--stage-ink-3) 45%, transparent) var(--progress, 0%),
+    color-mix(in oklab, var(--stage-ink-3) 45%, transparent) 100%
+  );
+  outline: none;
+  cursor: pointer;
 }
 
-.marquee-mask {
-  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+.slider-blue::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid var(--brand);
+  cursor: grab;
+  transition:
+    transform var(--t-fast) var(--ease-snap),
+    box-shadow var(--t-fast) ease;
 }
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: ca-marquee-left var(--marquee-duration, 46s) linear infinite;
+.slider-blue::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid var(--brand);
+  cursor: grab;
+  transition:
+    transform var(--t-fast) var(--ease-snap),
+    box-shadow var(--t-fast) ease;
 }
-.marquee-track[data-direction="right"] {
-  animation-name: ca-marquee-right;
+
+.slider-blue:hover::-webkit-slider-thumb {
+  transform: scale(1.1);
 }
-.marquee-row:hover .marquee-track {
-  animation-play-state: paused;
+.slider-blue:hover::-moz-range-thumb {
+  transform: scale(1.1);
+}
+
+.slider-blue:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 var(--focus-w) var(--focus);
+}
+.slider-blue:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 var(--focus-w) var(--focus);
+}
+
+.slider-blue:active::-webkit-slider-thumb {
+  cursor: grabbing;
+}
+.slider-blue:active::-moz-range-thumb {
+  cursor: grabbing;
+}
+
+/* ==========================================================================
+   Mijoz logotiplari lentasi
+   --------------------------------------------------------------------------
+   Monoxrom holatda logotiplar sahifadan ajralib turmaydi va e'tiborni
+   sarlavhadan tortmaydi; sichqoncha kelganda esa "jonlanadi".
+   ========================================================================== */
+.logo-strip-item {
+  filter: grayscale(1);
+  opacity: 0.55;
+  transition:
+    filter var(--t-slow) ease,
+    opacity var(--t-slow) ease;
+}
+.logo-strip-item:hover {
+  filter: grayscale(0);
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-    transform: none;
-  }
   .reveal {
     opacity: 1;
     transform: none;
+  }
+  .page-in {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
   }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -321,30 +397,30 @@
 }
 
 /* ------------------------------------------------------------ markdown
-   Havola/iqtibos — ko'k brend, kod — botiq sirt. */
+   Havola/iqtibos — ko'k, kod — botiq sirt. */
 .prose-ca {
   color: var(--ink-2);
-  font-size: 0.9375rem;
+  font-size: 1rem;
   line-height: 1.72;
 }
 .prose-ca h1, .prose-ca h2, .prose-ca h3 {
   font-family: var(--font-display);
-  font-weight: 600;
-  margin: 1.6em 0 0.5em;
+  font-weight: 700;
+  margin: 1.7em 0 0.5em;
   line-height: 1.2;
   letter-spacing: -0.026em;
   color: var(--ink);
 }
-.prose-ca h1 { font-size: 1.5rem; }
-.prose-ca h2 { font-size: 1.25rem; }
-.prose-ca h3 { font-size: 1.0625rem; }
+.prose-ca h1 { font-size: 1.75rem; }
+.prose-ca h2 { font-size: 1.375rem; }
+.prose-ca h3 { font-size: 1.125rem; }
 .prose-ca > :first-child { margin-top: 0; }
-.prose-ca p { margin: 0.8em 0; }
+.prose-ca p { margin: 0.9em 0; }
 .prose-ca strong { color: var(--ink); font-weight: 600; }
-.prose-ca ul, .prose-ca ol { margin: 0.8em 0; padding-left: 1.3em; }
+.prose-ca ul, .prose-ca ol { margin: 0.9em 0; padding-left: 1.3em; }
 .prose-ca ul { list-style: disc; }
 .prose-ca ol { list-style: decimal; }
-.prose-ca li { margin: 0.3em 0; }
+.prose-ca li { margin: 0.35em 0; }
 .prose-ca li::marker { color: var(--ink-4); }
 .prose-ca code {
   font-family: var(--font-mono);
@@ -353,15 +429,15 @@
   background: var(--pane-sunken);
   border: 1px solid var(--edge-soft);
   padding: 0.1em 0.36em;
-  border-radius: 5px;
+  border-radius: 6px;
 }
 .prose-ca pre {
   background: var(--pane-sunken);
   border: 1px solid var(--edge-soft);
-  padding: 1rem 1.1rem;
+  padding: 1.1rem 1.2rem;
   border-radius: var(--r-field);
   overflow-x: auto;
-  margin: 1.1em 0;
+  margin: 1.2em 0;
 }
 .prose-ca pre code { background: transparent; border: 0; padding: 0; font-size: 0.8125rem; }
 .prose-ca a {
@@ -374,34 +450,29 @@
 .prose-ca a:hover { text-decoration-color: var(--brand); }
 .prose-ca blockquote {
   border-left: 2px solid var(--brand);
-  padding-left: 1.1rem;
+  padding-left: 1.2rem;
   color: var(--ink-3);
-  margin: 1.2em 0;
+  margin: 1.3em 0;
 }
-.prose-ca hr { border: 0; border-top: 1px solid var(--edge); margin: 2em 0; }
-.prose-ca table { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 0.875rem; }
-.prose-ca th, .prose-ca td { border-bottom: 1px solid var(--edge-soft); padding: 0.6rem 0.85rem; text-align: left; }
+.prose-ca hr { border: 0; border-top: 1px solid var(--edge); margin: 2.2em 0; }
+.prose-ca table { width: 100%; border-collapse: collapse; margin: 1.3em 0; font-size: 0.9375rem; }
+.prose-ca th, .prose-ca td { border-bottom: 1px solid var(--edge-soft); padding: 0.7rem 0.9rem; text-align: left; }
 .prose-ca td { font-variant-numeric: tabular-nums; }
 .prose-ca th {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 0.6875rem;
-  letter-spacing: 0.09em;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--ink-4);
+  color: var(--ink-3);
   border-bottom-color: var(--edge);
 }
 
 /* ==========================================================================
-   Bosh sahifa — to'q sahna
+   To'q sahna — kalkulyator/interaktiv bo'lim va kod paneli
    --------------------------------------------------------------------------
-   Landing YAGONA joy bo'lib, u yerda sahifa butunlay `--stage-*` sirtiga
-   o'tadi (DESIGN.md, 1-bo'lim: sahna doim to'q, temaga bo'ysunmaydi).
-   Shu sababli bu klasslar boshqa sahifalarda ishlatilmaydi.
-
-   Barcha animatsiyalar CSS'da: globals.css oxiridagi
-   `prefers-reduced-motion` bloki ularni bir joyda o'chiradi. Kanvasdagi
-   zarralar JS'da, u yerda `matchMedia` bilan alohida tekshiriladi.
+   Sahifa oq, ammo BITTA bo'lim to'q bo'ladi: kontrast sahifa ritmini
+   ochadi va o'sha bo'limni "boshqacha" qilib ko'rsatadi. Sahifada bunday
+   bo'lim ikkitadan ortiq bo'lmasligi kerak.
    ========================================================================== */
 
 .stage-surface {
@@ -409,8 +480,7 @@
   color: var(--stage-ink);
 }
 
-/* Sahna ustidagi yumshoq yorug'lik — gradient "tuman" emas, aniq markazli
-   radial manba: matn ortida kontrastni oshiradi. */
+/* Sahna ustidagi yumshoq yorug'lik — aniq markazli radial manba. */
 .stage-glow::before {
   content: "";
   position: absolute;
@@ -418,67 +488,10 @@
   height: 70%;
   background: radial-gradient(
     60% 60% at 50% 0%,
-    color-mix(in oklab, var(--stage-brand) 18%, transparent),
+    color-mix(in oklab, var(--stage-brand) 16%, transparent),
     transparent 70%
   );
   pointer-events: none;
-}
-
-/* ------------------------------------------------------------- 3D kub */
-.cube-scene {
-  --cube: clamp(9rem, 22vw, 15rem);
-  --tilt-x: 0deg;
-  --tilt-y: 0deg;
-  perspective: 1000px;
-  width: var(--cube);
-  height: var(--cube);
-}
-
-.cube {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  /* Sichqoncha burchagi tashqi qatlamda — aylanish bilan to'qnashmasin */
-  transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
-  transition: transform 260ms var(--ease-soft);
-}
-
-.cube-spin {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  animation: ca-cube-spin 26s linear infinite;
-}
-
-.cube-face {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0.9rem;
-  border: 1px solid color-mix(in oklab, var(--stage-brand) 34%, transparent);
-  border-radius: var(--r-pane);
-  background: color-mix(in oklab, var(--stage) 88%, transparent);
-  font-family: var(--font-mono);
-  font-size: clamp(8px, 1.5vw, 11px);
-  line-height: 1.5;
-  color: var(--stage-ink-2);
-  box-shadow: inset 0 0 40px color-mix(in oklab, var(--stage-brand) 10%, transparent);
-}
-
-.cube-face-front  { transform: translateZ(calc(var(--cube) / 2)); }
-.cube-face-back   { transform: rotateY(180deg) translateZ(calc(var(--cube) / 2)); }
-.cube-face-right  { transform: rotateY(90deg)  translateZ(calc(var(--cube) / 2)); }
-.cube-face-left   { transform: rotateY(-90deg) translateZ(calc(var(--cube) / 2)); }
-.cube-face-top    { transform: rotateX(90deg)  translateZ(calc(var(--cube) / 2)); }
-.cube-face-bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube) / 2)); }
-
-@keyframes ca-cube-spin {
-  from { transform: rotateX(-16deg) rotateY(0deg); }
-  to   { transform: rotateX(-16deg) rotateY(360deg); }
 }
 
 /* --------------------------------------------------- sahnadagi kartalar */
@@ -487,21 +500,22 @@
   border-radius: var(--r-pane);
   background: var(--stage);
   transition:
-    border-color var(--t-base) var(--ease-snap),
-    box-shadow var(--t-base) var(--ease-snap);
+    transform var(--t-slow) var(--ease-snap),
+    border-color var(--t-slow) var(--ease-snap),
+    box-shadow var(--t-slow) var(--ease-snap);
 }
 
 .stage-card:hover {
+  transform: translateY(-4px);
   border-color: color-mix(in oklab, var(--stage-brand) 55%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--stage-brand) 22%, transparent),
-              0 18px 46px -28px color-mix(in oklab, var(--stage-brand) 60%, transparent);
+  box-shadow: 0 18px 46px -22px rgb(0 0 0 / 0.9);
 }
 
 /* Qadamlar chizig'i — scrollda pastga "o'sadi" */
 .step-line {
   transform-origin: top;
   transform: scaleY(0);
-  transition: transform 900ms var(--ease-soft);
+  transition: transform 600ms var(--ease-soft);
 }
 .reveal[data-visible="true"] .step-line { transform: scaleY(1); }
 
@@ -512,34 +526,40 @@
 }
 .test-running { animation: ca-test-run 900ms ease-in-out infinite; }
 
-/* Landing butun balandligi bo'ylab to'q. Sirt/siyoh tokenlari SHU BLOK
-   ichida qayta belgilanadi — natijada umumiy futer va kit komponentlari
-   o'z kodiga tegmasdan sahnaga moslashadi.
-
-   `--brand` ataylab qayta belgilanmagan: u to'yingan ko'k bo'lib qoladi,
-   shuning uchun ustidagi oq matn kontrasti saqlanadi. Yorug'roq aksent
-   kerak bo'lganda `--stage-brand` to'g'ridan-to'g'ri ishlatiladi. */
-.landing-dark {
+/* To'q bo'lim ichida sirt/siyoh tokenlari qayta belgilanadi — natijada
+   umumiy komponentlar (tugma, karta, forma) o'z kodiga tegmasdan to'q
+   sirtga moslashadi. */
+.on-dark {
   --canvas: var(--stage-2);
-  --canvas-deep: #06090c;
+  --canvas-deep: #000000;
   --pane: var(--stage);
   --pane-solid: var(--stage);
-  --pane-hover: #161b22;
-  --pane-sunken: #0d1117;
+  --pane-hover: #1f1f1f;
+  --pane-sunken: #111111;
 
   --edge: var(--stage-edge);
-  --edge-soft: #1a1f27;
-  --edge-strong: #2b323d;
+  --edge-soft: #1f1f1f;
+  --edge-strong: #3d3d3d;
 
   --ink: var(--stage-ink);
-  --ink-2: #c3cbd7;
+  --ink-2: #d4d4d4;
   --ink-3: var(--stage-ink-2);
   --ink-4: var(--stage-ink-3);
 
+  --brand: var(--stage-brand);
+  --brand-hover: #7fa5ff;
+  --brand-ink: var(--stage-brand);
+  /* To'q bo'limda ko'k ochroq — ustidagi matn qora bo'lgandagina AA */
+  --ink-on-brand: #0a0a0a;
   --brand-wash: color-mix(in oklab, var(--stage-brand) 16%, transparent);
   --brand-wash-strong: color-mix(in oklab, var(--stage-brand) 26%, transparent);
   --brand-edge: color-mix(in oklab, var(--stage-brand) 40%, transparent);
 
-  background: var(--stage-2);
   color: var(--stage-ink);
+}
+
+/* Eski nom — bosh sahifaning to'q variantidan qolgan. Yangi kod `on-dark`
+   ishlatadi; bu qator hali yangilanmagan joylarni ushlab turadi. */
+.landing-dark {
+  background: var(--stage-2);
 }

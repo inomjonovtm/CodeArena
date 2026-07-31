@@ -7,9 +7,16 @@ import { cn } from "@/lib/utils";
 
 import { Reveal } from "./reveal";
 
-/* Kalendar — oxirgi 5 hafta. Uzluksiz seriya g'oyasini bir qarashda
-   ko'rsatish uchun naqsh qat'iy: tasodifiy raqam har renderda o'zgarib,
-   "jonli ma'lumot" degan noto'g'ri taassurot qoldirardi. */
+/* ==========================================================================
+   Kunlik masala va hamjamiyat — ikkita yirik karta
+   --------------------------------------------------------------------------
+   Oq sirt, ingichka kulrang chegara, hoverda 4px ko'tarilish. Ikkalasi ham
+   mahsulotning "har kuni qaytib kelish" sababini ko'rsatadi.
+   ========================================================================== */
+
+/* Kalendar — oxirgi 5 hafta. Naqsh QAT'IY: tasodifiy raqam har renderda
+   o'zgarib, "jonli ma'lumot" degan noto'g'ri taassurot qoldirardi. Bu —
+   g'oyani tushuntiruvchi illyustratsiya, statistika emas. */
 const WEEKS = [
   [1, 1, 0, 1, 1, 1, 0],
   [1, 1, 1, 1, 0, 1, 1],
@@ -24,93 +31,91 @@ const TOPICS = [
   { title: "Grafda eng qisqa yo'l — BFS yetarlimi?", replies: 21 },
 ];
 
+const CARD_LINK = [
+  "focus-ring inline-flex items-center gap-2 rounded-[var(--r-ctl)]",
+  "text-[15px] font-semibold text-[var(--ink)]",
+  "transition-colors duration-[var(--t-fast)] hover:text-[var(--brand)]",
+].join(" ");
+
 export function Community() {
   return (
-    <section className="mx-auto w-full max-w-[var(--page)] px-4 pb-20 sm:px-6 sm:pb-28 lg:px-[var(--gutter)]">
-      <div className="grid gap-4 lg:grid-cols-2">
+    <section className="band shell">
+      <div className="grid gap-8 lg:grid-cols-2">
         {/* ------------------------------------------------ kunlik masala */}
         <Reveal>
-          <div className="stage-card h-full p-6 sm:p-8">
-            <span className="inline-flex items-center gap-2 text-[var(--flare)]">
-              <Flame className="size-4" />
-              <span className="t-eyebrow">Kunlik masala</span>
+          <div className="pane pane-interactive h-full rounded-[var(--r-pane)] p-8 sm:p-10">
+            <span className="inline-flex items-center gap-2.5">
+              <Flame className="size-[18px] text-[var(--brand)]" strokeWidth={1.5} />
+              <span className="t-eyebrow-brand">Kunlik masala</span>
             </span>
 
-            <h3 className="t-section mt-4 text-[var(--stage-ink)]">
+            <h3 className="mt-5 text-[24px] leading-[1.25] font-bold text-[var(--ink)]">
               Har kuni bitta masala — seriyangizni uzmang.
             </h3>
-            <p className="mt-3 text-[13.5px] leading-[1.65] text-[var(--stage-ink-2)]">
+            <p className="mt-4 text-[15px] leading-[1.65] text-[var(--ink-2)]">
               Kuniga bitta masala yechsangiz seriya o&apos;sadi va qo&apos;shimcha ball beriladi.
               Bir kun o&apos;tkazib yuborsangiz — noldan boshlanadi.
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-1.5">
+            <div className="mt-8 flex flex-wrap items-center gap-1.5">
               {WEEKS.map((week, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-1.5">
                   {week.map((filled, dayIndex) => (
                     <span
                       key={dayIndex}
                       className={cn(
-                        "size-3 rounded-[3px]",
-                        filled
-                          ? "bg-[color-mix(in_oklab,var(--stage-ok)_70%,transparent)]"
-                          : "bg-[var(--stage-edge)]",
+                        "size-3.5 rounded-[4px]",
+                        filled ? "bg-[var(--brand)]" : "bg-[var(--canvas-deep)]",
                       )}
                     />
                   ))}
                 </div>
               ))}
-              <span className="t-num ml-3 text-[13px] font-semibold text-[var(--stage-ink)]">
+              <span className="t-num ml-4 text-[15px] font-bold text-[var(--ink)]">
                 32 kunlik seriya
               </span>
             </div>
 
-            <Link
-              href="/daily"
-              className="focus-ring mt-7 inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] text-[13.5px] font-medium text-[var(--stage-brand)] transition-opacity hover:opacity-80"
-            >
-              <CalendarDays className="size-4" />
+            <Link href="/daily" className={cn(CARD_LINK, "mt-9")}>
+              <CalendarDays className="size-[18px]" strokeWidth={1.5} />
               Bugungi masalani ochish
-              <ArrowRight className="size-3.5" />
+              <ArrowRight className="size-4" />
             </Link>
           </div>
         </Reveal>
 
         {/* -------------------------------------------------- muhokamalar */}
         <Reveal delay={100}>
-          <div className="stage-card flex h-full flex-col p-6 sm:p-8">
-            <span className="inline-flex items-center gap-2 text-[var(--stage-ink-2)]">
-              <MessageSquare className="size-4" />
-              <span className="t-eyebrow">Hamjamiyat</span>
+          <div className="pane pane-interactive flex h-full flex-col rounded-[var(--r-pane)] p-8 sm:p-10">
+            <span className="inline-flex items-center gap-2.5">
+              <MessageSquare className="size-[18px] text-[var(--brand)]" strokeWidth={1.5} />
+              <span className="t-eyebrow-brand">Hamjamiyat</span>
             </span>
 
-            <h3 className="t-section mt-4 text-[var(--stage-ink)]">
+            <h3 className="mt-5 text-[24px] leading-[1.25] font-bold text-[var(--ink)]">
               Tiqilib qolsangiz — so&apos;rang.
             </h3>
-            <p className="mt-3 text-[13.5px] leading-[1.65] text-[var(--stage-ink-2)]">
+            <p className="mt-4 text-[15px] leading-[1.65] text-[var(--ink-2)]">
               Muhokamalarda g&apos;oya almashinadi, tayyor yechim tarqatilmaydi. Masala ostida
               esa oddiy izohlar — qisqa savol berish uchun.
             </p>
 
-            <ul className="mt-6 flex-1 divide-y divide-[var(--stage-edge)]">
+            <ul className="mt-8 flex-1 divide-y divide-[var(--edge)] border-t border-[var(--edge)]">
               {TOPICS.map((topic) => (
-                <li key={topic.title} className="flex items-start gap-3 py-3">
-                  <span className="min-w-0 flex-1 text-[13.5px] text-[var(--stage-ink)]">
+                <li key={topic.title} className="flex items-start gap-4 py-4">
+                  <span className="min-w-0 flex-1 text-[15px] text-[var(--ink)]">
                     {topic.title}
                   </span>
-                  <span className="t-num shrink-0 text-[12px] text-[var(--stage-ink-3)]">
+                  <span className="t-num shrink-0 text-[13px] text-[var(--ink-3)]">
                     {topic.replies}
                   </span>
                 </li>
               ))}
             </ul>
 
-            <Link
-              href="/discussions"
-              className="focus-ring mt-6 inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] text-[13.5px] font-medium text-[var(--stage-brand)] transition-opacity hover:opacity-80"
-            >
+            <Link href="/discussions" className={cn(CARD_LINK, "mt-8")}>
               Muhokamalarga o&apos;tish
-              <ArrowRight className="size-3.5" />
+              <ArrowRight className="size-4" />
             </Link>
           </div>
         </Reveal>

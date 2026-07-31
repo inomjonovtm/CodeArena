@@ -50,7 +50,7 @@ export function AuthShell({
     <div className="aurora-canvas min-h-screen">
       <div className="grid min-h-screen lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1fr)]">
         {/* --------------------------- chap: to'q brend ustuni */}
-        <aside className="relative hidden overflow-hidden bg-[var(--stage)] lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
+        <aside className="on-dark relative hidden overflow-hidden bg-[var(--stage-2)] lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
           {/* Millimetrli qog'oz — to'q sirtga "material" beradi */}
           <span
             aria-hidden
@@ -69,32 +69,32 @@ export function AuthShell({
           >
             <span className="flex items-center gap-3">
               <LogoMark size="lg" />
-              <span className="font-[family-name:var(--font-display)] text-[20px] font-bold tracking-[-0.035em] text-[var(--stage-ink)]">
-                Code<span className="text-[var(--stage-brand)]">Arena</span>
+              <span className="font-[family-name:var(--font-display)] text-[22px] font-bold tracking-[-0.035em] text-white">
+                CodeArena
               </span>
             </span>
           </Link>
 
           <div className="enter relative max-w-md">
-            <p className="t-eyebrow text-[var(--stage-ink-3)]">Mashq maydoni</p>
-            <h2 className="t-title mt-4 text-[var(--stage-ink)]">
-              Algoritmlarni{" "}
-              <span className="text-[var(--stage-brand)]">amalda</span> o&apos;rganing
+            <p className="t-eyebrow text-[var(--stage-brand)]">Mashq maydoni</p>
+            <h2 className="t-title mt-4 text-white">
+              Algoritmlarni <span className="text-[var(--stage-brand)]">amalda</span>{" "}
+              o&apos;rganing
             </h2>
-            <p className="t-body mt-5 text-[15px] text-[var(--stage-ink-2)]">
-              O&apos;zbek tilidagi masalalar, jonli musobaqalar va shaffof reyting —
-              hammasi bitta platformada.
+            <p className="mt-5 text-[17px] leading-[1.6] text-[var(--stage-ink-2)]">
+              O&apos;zbek tilidagi masalalar, jonli musobaqalar va shaffof reyting — hammasi
+              bitta platformada.
             </p>
 
-            <ul className="enter-stagger mt-9 flex flex-col gap-3.5">
+            <ul className="enter-stagger mt-10 flex flex-col gap-4">
               {HIGHLIGHTS.map((row) => (
                 <li
                   key={row}
-                  className="flex items-start gap-3 text-[14px] text-[var(--stage-ink-2)]"
+                  className="flex items-start gap-3 text-[15px] leading-[1.55] text-[var(--stage-ink-2)]"
                 >
                   <Check
-                    className="mt-[3px] size-4 shrink-0 text-[var(--stage-brand)]"
-                    strokeWidth={2.75}
+                    className="mt-[3px] size-[18px] shrink-0 text-[var(--stage-brand)]"
+                    strokeWidth={2.5}
                   />
                   {row}
                 </li>
@@ -102,7 +102,7 @@ export function AuthShell({
             </ul>
           </div>
 
-          <p className="t-num relative text-[11.5px] text-[var(--stage-ink-3)]">
+          <p className="t-num relative text-[13px] text-[var(--stage-ink-3)]">
             © {new Date().getFullYear()} CodeArena
           </p>
         </aside>
@@ -114,20 +114,22 @@ export function AuthShell({
               <LogoLink />
             </div>
 
-            <div className="pane-solid rounded-[var(--r-pane)] p-6 sm:p-8">
-              <h1 className="t-title text-[var(--ink)]">{title}</h1>
-              <p className="t-body mt-2 text-[var(--ink-3)]">{subtitle}</p>
+            <div className="pane-solid rounded-[var(--r-pane)] p-8 sm:p-10">
+              <h1 className="text-[32px] leading-[1.15] font-bold tracking-[-0.026em] text-[var(--ink)]">
+                {title}
+              </h1>
+              <p className="mt-3 text-[16px] leading-[1.6] text-[var(--ink-2)]">{subtitle}</p>
 
               {error ? (
-                <Alert tone="bad" className="enter-pop mt-5">
+                <Alert tone="bad" className="enter-pop mt-6">
                   {error}
                 </Alert>
               ) : null}
 
-              <div className="mt-1">{children}</div>
+              <div className="mt-2">{children}</div>
             </div>
 
-            <p className="mt-5 text-center text-[13px] text-[var(--ink-3)]">{footer}</p>
+            <p className="mt-6 text-center text-[14px] text-[var(--ink-3)]">{footer}</p>
           </div>
         </main>
       </div>
@@ -154,18 +156,32 @@ export function AuthField({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="text-[12.5px] font-medium text-[var(--ink-2)]">
+    <div className={cn("flex min-w-0 flex-col gap-2", className)}>
+      <label htmlFor={htmlFor} className="text-[13.5px] font-semibold text-[var(--ink)]">
         {label}
-        {required ? <span className="ml-0.5 text-[var(--bad)]">*</span> : null}
+        {required ? <span className="ml-0.5 text-[var(--brand)]">*</span> : null}
       </label>
-      <div className={cn(error && "[&_input,&_textarea,&_select]:border-[var(--bad)]")}>
+      {/* Xato — qalinlashgan siyoh chegara + ichki halqa (palitrada qizil yo'q) */}
+      <div
+        className={cn(
+          error &&
+            "[&_input,&_textarea,&_select]:border-[var(--ink)] [&_input,&_textarea,&_select]:shadow-[inset_0_0_0_1px_var(--ink)]",
+        )}
+      >
         {children}
       </div>
       {error ? (
-        <p className="text-[11.5px] text-[var(--bad)]">{error}</p>
+        <p className="flex items-start gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+          <span
+            aria-hidden
+            className="mt-px grid size-4 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-[10px] leading-none font-bold text-[var(--canvas)]"
+          >
+            !
+          </span>
+          {error}
+        </p>
       ) : hint ? (
-        <p className="text-[11.5px] text-[var(--ink-4)]">{hint}</p>
+        <p className="text-[13px] text-[var(--ink-3)]">{hint}</p>
       ) : null}
     </div>
   );

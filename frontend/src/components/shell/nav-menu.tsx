@@ -65,24 +65,26 @@ export function NavMenu({
           setOpen((previous) => !previous);
         }}
         className={cn(
-          "focus-ring flex h-8 items-center gap-1 rounded-[var(--r-ctl)] px-2.5",
-          "text-[13.5px] whitespace-nowrap",
+          // Qora matn → hoverda ko'k. Faol bo'lim ham ko'k, lekin qalinroq:
+          // rang "qayerdaman"ni, og'irlik esa "shu yerdaman"ni bildiradi.
+          "focus-ring flex h-10 items-center gap-1.5 rounded-[var(--r-ctl)] px-3",
+          "text-[14.5px] whitespace-nowrap",
           "transition-colors duration-[var(--t-fast)]",
           active || open
-            ? "bg-[var(--pane-hover)] font-semibold text-[var(--ink)]"
-            : "font-medium text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+            ? "font-semibold text-[var(--brand)]"
+            : "font-medium text-[var(--ink)] hover:text-[var(--brand)]",
         )}
       >
         {label}
         <ChevronDown
           className={cn(
-            "size-3 text-[var(--ink-4)] transition-transform duration-[var(--t-fast)]",
-            open && "rotate-180",
+            "size-3.5 transition-transform duration-[var(--t-base)]",
+            open ? "rotate-180 text-[var(--brand)]" : "text-[var(--ink-4)]",
           )}
         />
       </button>
 
-      <Popover open={open} onClose={() => setOpen(false)} align="start" className="min-w-60">
+      <Popover open={open} onClose={() => setOpen(false)} align="start" className="min-w-64 p-2">
         <div id={menuId}>
           {visible.map((link) => {
             const isActive = pathname.startsWith(link.href);
@@ -94,11 +96,11 @@ export function NavMenu({
                 className={cn(
                   // Ikonka plitkasiz — rangli kvadratchalar ro'yxati menyuni
                   // "ilovalar panelia"ga aylantiradi va nomlarni bosib ketadi.
-                  "focus-ring flex items-center gap-2.5 rounded-[6px] px-2.5 py-2",
-                  "text-[13px] transition-colors duration-[var(--t-fast)]",
+                  "focus-ring flex items-center gap-3 rounded-[8px] px-3 py-2.5",
+                  "text-[14px] transition-colors duration-[var(--t-fast)]",
                   isActive
                     ? "bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]"
-                    : "font-medium text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                    : "font-medium text-[var(--ink)] hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
                 )}
               >
                 <span

@@ -24,8 +24,8 @@ export default function GlobalError({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#f7f7f4",
-          color: "#1a1917",
+          backgroundColor: "#ffffff",
+          color: "#0a0a0a",
           fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
           padding: "2rem 1.25rem",
         }}
@@ -34,19 +34,26 @@ export default function GlobalError({
           <p
             style={{
               margin: 0,
-              fontFamily: "ui-monospace, Consolas, monospace",
-              fontSize: "0.6875rem",
-              letterSpacing: "0.11em",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "#a09c92",
+              color: "#1e5eff",
             }}
           >
             CodeArena
           </p>
-          <h1 style={{ margin: "1rem 0 0", fontSize: "1.6rem", letterSpacing: "-0.03em" }}>
+          <h1
+            style={{
+              margin: "1rem 0 0",
+              fontSize: "2rem",
+              fontWeight: 700,
+              letterSpacing: "-0.026em",
+            }}
+          >
             Ilova ishga tushmadi
           </h1>
-          <p style={{ margin: "0.75rem 0 0", lineHeight: 1.65, color: "#4a4842" }}>
+          <p style={{ margin: "0.75rem 0 0", lineHeight: 1.65, color: "#4a4a4a" }}>
             Kutilmagan xatolik yuz berdi. Sahifani qayta yuklab ko&apos;ring.
           </p>
           {error.digest ? (
@@ -55,7 +62,7 @@ export default function GlobalError({
                 margin: "1rem 0 0",
                 fontFamily: "ui-monospace, Consolas, monospace",
                 fontSize: "0.8125rem",
-                color: "#736f66",
+                color: "#737373",
               }}
             >
               {error.digest}
@@ -65,14 +72,14 @@ export default function GlobalError({
             type="button"
             onClick={reset}
             style={{
-              marginTop: "1.75rem",
-              height: "2.25rem",
-              padding: "0 0.875rem",
-              borderRadius: "8px",
+              marginTop: "2rem",
+              height: "3rem",
+              padding: "0 1.75rem",
+              borderRadius: "10px",
               border: "none",
-              backgroundColor: "#1f6feb",
+              backgroundColor: "#0a0a0a",
               color: "#fff",
-              fontSize: "0.85rem",
+              fontSize: "1rem",
               fontWeight: 600,
               cursor: "pointer",
             }}

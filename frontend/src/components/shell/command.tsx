@@ -134,7 +134,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   return createPortal(
     <div className="fixed inset-0 z-110 flex items-start justify-center px-4 pt-[14vh]">
-      <div className="enter-veil absolute inset-0 bg-[rgb(26_25_23/0.44)] backdrop-blur-[2px]" onClick={onClose} />
+      <div className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]" onClick={onClose} />
 
       <div
         role="dialog"

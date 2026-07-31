@@ -90,7 +90,7 @@ export function ImageUpload({
           {/* Amallar qatlami — rasm ustidagi yagona to'q sirt */}
           <div
             className={cn(
-              "absolute inset-0 flex items-center justify-center gap-2 bg-[rgb(26_25_23/0.55)]",
+              "absolute inset-0 flex items-center justify-center gap-2 bg-[rgb(10_10_10/0.6)]",
               "opacity-0 transition-opacity duration-[var(--t-fast)]",
               "group-hover:opacity-100 focus-within:opacity-100",
             )}

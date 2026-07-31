@@ -1,235 +1,221 @@
-# CodeArena dizayn tili — "ARENA" (v4)
+# CodeArena dizayn tizimi — "MONO" (v5)
 
 Bu hujjat ekran quruvchi har bir ishtirokchi uchun MAJBURIY qo'llanma.
-Maqsad: har bir sahifa bitta ovozda gapirsin va "shablondan yasalgan" emas,
-**ataylab terilgan** ko'rinsin.
+Maqsad: sayt har bir sahifada bitta ovozda gapirsin.
+
+Manba fayllar: `src/styles/aurora.css` (tokenlar va utility'lar),
+`src/app/globals.css` (animatsiya, markdown, to'q sahna).
+
+---
 
 ## Konsepsiya
 
-Musobaqa uch narsadan iborat: **DARAJA, VAQT va DALIL**. Interfeys ham shu
-uchligini ko'rsatadi — yaxshi terilgan natijalar taxtasi kabi: iliq qog'oz,
-o'tkir siyoh, bitta qat'iy ko'k va monoshriftdagi raqamlar.
+Butun sayt **UCH rangdan** quriladi va to'rtinchisi yo'q:
 
-Butun tizimni **to'rt qaror** belgilaydi. Yangi ekran shu to'rttasiga
-bo'ysunsa, u avtomatik ravishda qolgan sahifalarga o'xshaydi.
+| Rang | Token | Qiymat | Vazifa |
+| --- | --- | --- | --- |
+| QORA | `--ink` | `#0A0A0A` | Matn, asosiy tugma foni, futer, to'q bo'limlar |
+| OQ | `--canvas` / `--pane` | `#FFFFFF` | Sahifa foni, karta foni, to'q fondagi matn |
+| KO'K | `--brand` | `#1E5EFF` | CTA, havola, aksent chiziq, statistik raqam |
 
-### 1. Iliq neytral + sovuq ko'k
+**Kulrang RANG hisoblanmaydi.** U faqat chegara (`--edge` #E5E5E5), ajratgich
+va ikkinchi darajali matn (`--ink-2` #4A4A4A, `--ink-3` #737373) uchun neytral.
 
-Sahifa — **iliq qog'oz** (`--canvas` #f7f7f4), karta — **sof oq** (`--pane`).
-Ko'k (`--brand` #1f6feb) faqat AMALDA: tugma, havola, faol holat, fokus.
+**Yashil/sariq/qizil YO'Q.** Holat farqi rang bilan emas — SHAKL, YORLIQ va
+OG'IRLIK bilan beriladi (pastda "Rangsiz semantika" bo'limiga qarang).
 
-Iliq va sovuq qarama-qarshiligi tufayli ko'k kuchli yangraydi. Ko'kish fonda
-turgan ko'k esa yo'qoladi — shuning uchun kanvas hech qachon ko'kish emas.
+### To'rt qaror
 
-### 2. Quti emas, CHIZIQ va BO'SHLIQ
+1. **Ko'k kam va qimmat.** Sahifaning ~10% dan ortig'i ko'k bo'lmaydi. Ko'k
+   ko'rinsa — u yerda harakat bor: bosiladigan joy yoki muhim raqam.
+2. **Bo'sh joy — material.** Bo'limlar orasida 120px, sarlavhalar yirik.
+   Element qo'shishdan oldin bo'shliqni kengaytirish tekshiriladi.
+3. **Soya faqat hoverda.** Tinch holatda sirt tekis: karta 1px kulrang chegara
+   bilan turadi. Soya — javob, bezak emas.
+4. **Yumaloq, lekin qat'iy.** Tugma 10px, karta 16px, katta panel 24px.
+   Bitta shkala, o'rtasida tasodifiy qiymat yo'q.
 
-**Karta faqat MA'LUMOTGA beriladi**: ro'yxat, jadval, forma, panel, grafik.
+---
 
-Kartada BO'LMAYDI: sahifa sarlavhasi, bo'lim nomi, statistika lentasi,
-sahifalash, bo'sh holat matni, ogohlantirish. Bular kanvasda turadi va
-**soch chizig'i** (`rule`, `border-t`) bilan ajraladi.
+## 1. Tipografika
 
-Hamma narsani qutilash — eng keng tarqalgan xato. U sahifani bir xil
-og'irlikdagi to'rtburchaklar panjarasiga aylantiradi va ko'zga "qayerdan
-boshlash"ni ko'rsatmaydi.
+**Bitta shrift — Inter.** Sarlavha ham, interfeys ham, raqam ham. JetBrains
+Mono faqat KOD uchun (muharrir, kod bloki, test chiqishi).
 
-Karta ichida karta — **TAQIQ**. Ichki maydon kerak bo'lsa `pane-sunken`.
+| Klass | O'lcham (mobil → desktop) | Weight | Qayerda |
+| --- | --- | --- | --- |
+| `t-display` | 36 → 64px | 700 | Hero sarlavhasi |
+| `t-title` | 28 → 40px | 700 | Sahifa va bo'lim sarlavhasi |
+| `t-section` | 20px | 600 | Panel/karta sarlavhasi |
+| `t-body` | 16px / 1.65 | 400 | Asosiy matn |
+| `t-meta` | 14px | 400 | Meta: sana, muallif, izoh |
+| `t-eyebrow` | 13px, +0.12em, UPPERCASE | 600 | Bo'lim yorlig'i — kulrang (interfeys ichida) |
+| `t-eyebrow-brand` | 13px, +0.12em, UPPERCASE | 600 | Marketing bo'limi yorlig'i — **KO'K** |
+| `t-num` | — | — | Raqam (`tabular-nums`, ustunlar tik turadi) |
+| `t-metric` | 28 → 36px | 700 | Interfeys ichidagi ko'rsatkich |
+| `t-metric-lg` | 40 → 56px | 700 | Marketing statistikasi — **doim KO'K** |
 
-### 3. Uch ovoz (tipografika)
+**Qoidalar**
 
-| Rol | Shrift | Qayerda |
+- Sarlavhalar **faqat chapdan** tekislanadi. Yagona istisno: sahifa
+  oxiridagi CTA bloki va 404.
+- Matn qatori maksimal **68 belgi** (`max-w-[68ch]` yoki `shell-tight`).
+- Sarlavha ichidagi ko'k aksent — **bitta so'z yoki bitta qisqa ibora**.
+  Ikkita ko'k bo'lak bitta sarlavhada bo'lmaydi.
+- `--ink-4` (#A3A3A3) matn uchun ISHLATILMAYDI — oq fonda 3.45:1, AA dan past.
+  U faqat ikonka va ajratgich uchun.
+
+---
+
+## 2. Tartib (layout)
+
+| Token | Qiymat | Nima |
 | --- | --- | --- |
-| Sarlavha | **Space Grotesk** (`--font-display`) | `t-display`, `t-title`, `t-section`, `h1–h3` |
-| Interfeys | **Inter** (`--font-sans`) | matn, yorliq, jadval, tugma |
-| Raqam va kod | **JetBrains Mono** (`--font-mono`) | `t-num`, `t-metric`, `t-eyebrow`, kod |
+| `--page` | 1200px | Konteyner kengligi (`shell`) |
+| `--page-tight` | 720px | Matn ustuni (`shell-tight`) |
+| `--bar` | 72px | Yopishqoq panel balandligi |
+| `--sec` / `--sec-md` / `--sec-sm` | 120 / 88 / 64px | Bo'lim vertikal paddingi (`band`) |
 
-**Eng muhim qoida: sahifadagi HAR BIR son `t-num` yoki `t-metric` bilan.**
-Reyting, ball, foiz, vaqt, sana, hisoblagich — hammasi monoshriftda. Shu
-tufayli ustunlar tik turadi va ma'lumot "o'lchangan" ko'rinadi.
+**Utility'lar:** `shell` (gorizontal konteyner), `shell-tight` (matn ustuni),
+`band` (bo'lim paddingi), `band-sm` (zich bo'lim).
 
-`t-eyebrow` ham monoshrift: kichik, keng oraliqli, katta harflarda — texnik
-hujjatdagi ustun nomiga o'xshaydi.
+Yangi marketing bo'limi shu ikkitadan quriladi: `<section className="band shell">`.
 
-### 4. O'tkir geometriya
+### Sahifa ritmi
 
-Burchaklar kichik va aniq: `--r-ctl` 8px (tugma), `--r-field` 10px (maydon),
-`--r-pane` 14px (karta), `--r-pane-lg` 20px (yirik blok), `--r-chip` kapsula.
+Bo'limlar fon bo'yicha almashinadi, shuning uchun uzun sahifa "nafas oladi":
 
-Soya deyarli yo'q — faqat **suzuvchi qatlamda** (menyu, popover, modal:
-`pane-float`) va hoverda (`pane-interactive`). Yumshoq katta burchak + soya
-hamma narsani bir xil "mayin" qiladi va boshqaruvni bezakdan ajratmaydi.
+```
+oq → oq → OCH KULRANG (#F5F5F5) → oq → QORA (#0A0A0A) → oq → OCH KULRANG → oq → QORA (futer)
+```
 
-## 0. Qat'iy taqiqlar (birinchi o'qing)
+To'q bo'lim sahifada **bittadan ortiq bo'lmaydi** (futer alohida hisoblanadi).
+Ikki og'ir blok ketma-ket kelsa, sahifa oxiri "qorong'i devor"ga aylanadi.
 
-- **Ikonka rangli plitkada** (`size-10 rounded-xl bg-brand-wash` ichida ikonka).
-  Bu eng aniq "shablon" belgisi. Ikonka yalang'och turadi (`--ink-4` rangida)
-  yoki soch chizig'idagi doirada (`rounded-full border`).
-- **Sarlavhani kartaga solish** (`<Pane><PageHead/></Pane>`).
-- **Karta ichida karta**, `pane-sunken` bilan o'ralgan `Empty`.
-- `text-white/NN`, `bg-white/[0.0N]`, `border-white/*` — faqat `pane-brand` va
-  `--stage-*` sirtlari ustida ruxsat.
-- `glass`, `backdrop-blur` (parda va sticky'dan tashqari), fon gradient tumanlari.
-- Eski tokenlar: `--bg`, `--surface`, `--fg`, `--accent`, `--sidebar*`,
-  `--success/--danger/--warning/--info`. Yangilari: `--canvas`, `--pane`,
-  `--ink`, `--brand`, `--ok/--bad/--warn/--note`.
-- Eski komponentlar: `components/site/ui.tsx`, `components/site/select.tsx`,
-  `components/site/navbar.tsx` — IMPORT QILMANG.
-- `animate-slide-up`, `animate-fade-in`, `skeleton` (o'rniga `enter*`, `loading-block`).
-- Emerald/yashil brend. Brend — ko'k.
-- Sonni oddiy shriftda qoldirish (`t-num` siz).
+---
 
-Biznes mantiqqa TEGMANG: hooklar, so'rovlar (`useQuery`, `api.*`), handlerlar,
-marshrutlar, query-paramlar, `lib/*` — hammasi aynan qoladi. Matnlar (copy)
-o'zbekcha qoladi; izohlar ham o'zbekcha va qisqa.
+## 3. Tugmalar
 
-## 1. Token lug'ati (`styles/aurora.css`)
+Ikkita qoida butun tizimni ushlab turadi:
 
-Sirtlar: `--canvas` `--canvas-deep` `--pane` `--pane-solid` `--pane-hover` `--pane-sunken`
-Chegaralar: `--edge` `--edge-soft` `--edge-strong`
-Siyoh: `--ink` `--ink-2` `--ink-3` `--ink-4` `--ink-on-brand`
-Brend: `--brand` `--brand-hover` `--brand-press` `--brand-ink` `--brand-wash` `--brand-wash-strong` `--brand-edge`
-Ikkinchi aksent (energiya: seriya, kunlik, jonli): `--flare` `--flare-wash` `--flare-edge`
-Semantik: `--ok/--ok-wash` `--warn/--warn-wash` `--bad/--bad-wash` `--note/--note-wash`
-Qiyinlik: `--easy` `--medium` `--hard`
-**Sahna** (DOIM to'q, temaga bo'ysunmaydi): `--stage` `--stage-2` `--stage-edge`
-`--stage-ink` `--stage-ink-2` `--stage-ink-3` `--stage-brand` `--stage-ok`
-Radius: `--r-chip` `--r-ctl`(8) `--r-field`(10) `--r-pane`(14) `--r-pane-lg`(20)
-Soyalar: `--lift-1..3` `--lift-pop` `--lift-brand`
-Harakat: `--t-fast`(130ms) `--t-base`(220ms) `--t-slow`(420ms), `--ease-snap`, `--ease-soft`
-Tartib: `--rail`(68) `--rail-open`(240) `--bar`(60) `--tabbar`(62) `--page`(1240) `--page-tight`(780) `--gutter`(32)
+1. **Asosiy (`primary`)** — QORA fon, oq matn → hoverda fon **KO'KGA** o'tadi.
+2. **Ikkinchi darajali (`quiet` / `outline`)** — shaffof fon, qora chegara va
+   matn → hoverda chegara ham, matn ham **ko'kka** o'tadi.
 
-Tailwind orqali ham bor: `bg-pane-sunken`, `text-ink-3`, `border-edge`,
-`bg-brand-wash`, `rounded-pane`, `bg-stage` va h.k. Ammo mavjud kod uslubi —
-`bg-[var(--pane-sunken)]` ko'rinishida; shu uslubda davom eting.
+Ya'ni ko'k tugmaning tinch holati emas, balki **javobi**.
 
-## 2. Utility klasslar
+| Variant | Tinch holat | Hover |
+| --- | --- | --- |
+| `primary` / `ink` | Qora fon, oq matn | Ko'k fon |
+| `quiet` / `outline` | Shaffof, qora chegara | Ko'k chegara + ko'k matn |
+| `brand` / `secondary` | To'yingan ko'k | Ochroq ko'k |
+| `brand-soft` | Ko'k yuvindi | To'yingan ko'k |
+| `ghost` | Faqat matn | Ko'k matn + yengil fon |
+| `danger` | Qora | Quyuqroq — **ko'kka o'tmaydi** |
 
-**Sirtlar**
-- `pane` / `pane-solid` — oq karta, soch chizig'i, soyasiz.
-- `pane-sunken` — botiq maydon (input foni, kod bloki, bo'sh joy).
-- `pane-float` — suzuvchi qatlam (menyu, popover, modal). Yagona soyali sirt.
-- `pane-interactive` — hoverda chegara brend rangiga o'tadi (transform YO'Q).
-- `pane-brand` — to'yingan ko'k blok. Sahifada faqat BITTA (CTA).
-- `pane-ink` — siyoh blok, ko'kdan ham kuchli urg'u.
+**O'lchamlar:** `sm` 36px · `md` 40px · `lg` 48px (padding 14/28 — CTA) ·
+`xl` 56px. `lg` va `xl` hoverda 2px yuqoriga siljiydi; kichiklari siljimaydi
+(jadval ichida sakraydigan tugma qatorni titratadi).
 
-**Chiziqlar**
-- `rule` / `rule-soft` — bo'lim ustidagi soch chizig'i.
-- `edge-brand` — chap qirrada 2px brend chizig'i (faol element).
-- `row-mark` — ro'yxat qatori: hoverda chap qirradan brend chizig'i o'sib chiqadi.
-  `data-active="true"` bilan doimiy qilib qo'yiladi.
+**Barcha tugmalarda:** radius 10px, o'tish 250ms `ease-snap`,
+bosilganda `scale(0.97)`. Rang hech qachon to'satdan almashmaydi.
 
-**Fon va tekstura**
-- `aurora-canvas` — sahifa foni.
-- `grid-paper` / `dot-paper` — juda xira tekstura (hero, bo'sh maydon).
-- `texture-fade` — teksturani chekkalarga qarab so'ndiradi.
+---
 
-**Boshqalar**
-- `focus-ring` (har bir interaktiv elementda), `sticky-edge`, `fade-edges`,
-  `no-scrollbar`, `loading-block` (chapdan o'ngga yorug'lik),
-  `enter` / `enter-pop` / `enter-sheet` / `enter-veil` / `enter-draw` / `enter-stagger`.
+## 4. Sirtlar
 
-Tipografika: `t-display` `t-title` `t-section` `t-body` `t-meta` `t-eyebrow` `t-num` `t-metric`.
+| Utility | Nima |
+| --- | --- |
+| `pane` / `pane-solid` | Karta: oq fon + 1px kulrang chegara, **soyasiz** |
+| `pane-sunken` | Karta ICHIDAGI botiq maydon |
+| `pane-float` | Suzuvchi qatlam (menyu, modal) — yagona doimiy soya |
+| `pane-interactive` | Hoverda `translateY(-4px)` + soya + ko'k chegara |
+| `pane-ink` | Qora blok (CTA lentasi, hero vizuali) |
+| `pane-brand` | To'yingan ko'k blok — sahifada bittadan ko'p emas |
+| `on-dark` | To'q bo'lim: sirt/siyoh tokenlarini ag'daradi |
 
-## 3. Kit API (`@/components/kit`)
+**Karta ichida karta — TAQIQ.** Ichki maydon kerak bo'lsa `pane-sunken`.
 
-- `Button` {variant: primary|quiet|ghost|danger|brand-soft|ink, size: sm|md|lg, loading, icon, iconAfter}
-- `LinkButton`, `IconButton` {label majburiy}
-- `Chip` {tone: neutral|brand|ok|warn|bad|note|flare, dot, icon}, `Count`, `LiveDot`, `KeyHint`
-- `Divider` {vertical}, `DividerLabel`, `Eyebrow` {index}, `DifficultyMark` {value, label}
-- `Pane` {tone: card|solid|sunken|bare, interactive, inset: none|sm|md|lg}
-- `PaneHead` {eyebrow, title, hint, action}
-- `PageHead` {eyebrow, **index**, title, lead, meta, actions} — kanvasda, o'ramsiz
-- `Stat` {label, value, sub, tone, icon}, `StatRow`+`StatCell` (kanvasdagi lenta)
-- `Section` {eyebrow, index, title, hint, action} — sarlavha ostida chiziq
-- `SplitLayout` {aside, asideFirst} — 1fr + 316px yopishqoq yon ustun
-- `Field` {label, hint, error, required, htmlFor}, `Input`, `Textarea`,
-  `SearchField`, `Toggle`, `ChoiceRow`, `inputClass`/`textareaClass`/`fieldBase`
-- `Empty` {icon, title, description, action, compact}, `Block`, `TextLines`,
-  `ListSkeleton`, `CardSkeleton`, `Spinner`, `Alert` {tone, title, action}, `Meter` {value, max, label, tone}
-- `Segmented`, `ChipRail`, `Breadcrumb`, `Pagination`
-- `Modal`, `Tooltip`, `Popover`, `MenuItem`, `MenuLink`
+`on-dark` ichida `--ink` oq, `--brand` ochroq ko'k (#5B8CFF) va
+`--ink-on-brand` qora bo'ladi — komponentlar o'z kodiga tegmasdan moslashadi.
 
-Logotip: `@/components/shell/logo` — `Logo`, `LogoMark`, `LogoLink`. Belgi —
-buyruq qatori kursori (`>`); u tizimning monoshrift qatlamiga bog'lanadi.
-Boshqa joyda logotip **qayta yasalmaydi**.
+---
 
-Yetishmagan bezak kerak bo'lsa — tokenlar bilan joyida yozing, eski
-komponentga qaytmang.
+## 5. Animatsiya
 
-## 4. Sahifa ritmi
+| Token | Qiymat | Qayerda |
+| --- | --- | --- |
+| `--t-fast` | 200ms | Hover, rang |
+| `--t-base` | 250ms | Tugma, menyu |
+| `--t-slow` | 300ms | Akkordeon, karta ko'tarilishi |
+| `--t-reveal` | 500ms | Scroll bo'yicha paydo bo'lish |
 
-Sayt sahifalari `SiteShell` ichida: tepada `SiteBar` (`--bar`), pastda
-`SiteFooter`, mobilda qo'shimcha tab-bar. `main` allaqachon
-`max-w-[var(--page)]` + gutter beradi — sahifa ichida QAYTA konteyner ochmang
-(faqat torroq kontent uchun `max-w-[var(--page-tight)] mx-auto`). Bosh sahifa
-(`components/landing/`) ham AYNAN shu gutterlardan foydalanadi: aks holda
-sahifalar orasida logotip va sarlavha gorizontal siljib ketadi.
+**Easing:** `--ease-snap` (boshqaruv), `--ease-soft` (kirish).
 
-Mobilda pastda `MobileTabBar` (`--tabbar`) turadi. Ekran pastiga yopishgan
-har qanday element (`sticky bottom-*`) uni hisobga olishi shart:
-`bottom-[var(--tabbar)] lg:bottom-0`.
+- **Hech bir animatsiya 0.6s dan uzoq emas.**
+- Kirish qonuni bitta: **20px pastdan + shaffoflikdan**. Masshtab yo'q —
+  masshtablangan blok matnni kirish paytida xiralashtiradi.
+- Ro'yxatlarda stagger **100ms**, 6 elementdan keyin kechikish to'xtaydi.
+- Scroll animatsiyasi `Reveal` komponenti orqali (IntersectionObserver).
+- Sahifa almashganda `page-in`: 220ms fade + 8px ko'tarilish. Siljish
+  ataylab kichik — yirik siljish yopishqoq panel bilan to'qnashadi.
+- Sahifa ichidagi havolalar — silliq scroll
+  (`scroll-behavior: smooth` + `scroll-padding-top`).
+- `prefers-reduced-motion` barcha animatsiyani bir joyda o'chiradi.
 
-Har sahifa:
+---
 
-1. `PageHead` — eyebrow + title + lead + meta + actions. **`Pane` ichiga
-   solinmaydi.** Ostidagi chiziq o'zi kontentni ajratadi.
-2. Tashqi o'ram: `flex flex-col gap-7` (28px). Blok ichida 16–20px.
-3. Ro'yxatlar `enter-stagger` bilan; qatorlarda `row-mark`.
-4. Har bir holat: loading (skelet — HAQIQIY tartib shaklida), empty (`Empty` +
-   amal tugmasi), error (`Alert tone="bad"` + qayta urinish).
-   **Uchtasi ham majburiy.** Xatoni bo'sh holat bilan almashtirish — jimgina
-   yolg'on: so'rov uzilganda foydalanuvchi ma'lumotini yo'qotdim deb o'ylaydi.
-   `useQuery` dan `isError` va `refetch` ni oling.
-5. `Pagination` — kanvasda, `Pane` ICHIDA EMAS (2-bo'limga qarang).
+## 6. Rangsiz semantika
 
-Yopishqoq elementlar `top-[var(--bar)]` (ro'yxat sarlavhasi) yoki
-`top-[calc(var(--bar)+24px)]` (yon ustun).
+Palitrada yashil/sariq/qizil yo'q. Ma'no shunday beriladi:
 
-## 5. Kompozitsiya qoidalari
+| Token | Qiymat | Mantiq |
+| --- | --- | --- |
+| `--ok` | Ko'k | Tizimda ko'k = "ishladi, davom et" |
+| `--bad` | Qora | Eng og'ir vizual og'irlik |
+| `--warn` | `--ink-2` | Qoradan bir pog'ona past |
+| `--easy` / `--medium` / `--hard` | Och → quyuq ton | Yoniga uchta ustunli belgi qo'shiladi |
 
-- Bitta ekranda ko'pi bilan 2 xil sirt turi.
-- **Masala yechish maydoni — bitta ustun:** shart tepada, kod muharriri
-  pastda, natija konsoli eng oxirida (amaliyot va musobaqa sahifalarida bir
-  xil). Yonma-yon ikki ustunda matn ham, kod ham yarim kenglikda qolardi.
-  Mobilda `Segmented` bilan bo'lim almashadi — telefon uchun uzun varaq
-  o'rniga uchta ekran.
-- Ro'yxat sahifalarida kontent bitta `Pane tone="solid" inset="none"` ichidagi
-  `divide-y` qatorlar — "har element alohida karta" uslubiga qaytmang.
-- Aksent kam va maqsadli: sahifada bitta `primary` tugma; qolgani `quiet`/`ghost`.
-- Hover: rang/chegara/fon o'zgaradi — transform yo'q (ro'yxat sakramasin).
-  Faqat tugmada `active:scale-[0.985]`.
-- Ikonkalar lucide, `size-4` (meta ichida `size-3.5`), rang `--ink-4` dan boshlanadi.
-- Bo'sh bezakli div'lar, gradient chiziqlar, "chiroyli" burchak bezaklari —
-  yo'q. Har piksel funksional.
-- Tekstura (`grid-paper`) juda xira va faqat hero/bo'sh maydonda.
+**Majburiy:** har bir holat yonida DOIM matnli yorliq yoki ikonka turadi.
+Rang bitta o'zi ma'no tashimasligi kerak (WCAG 1.4.1).
 
-## 6. Responsiv
+**Forma xatosi** uch signal bilan: qalinlashgan siyoh chegara + ichki halqa +
+ostidagi ikonkali qalin matn.
 
-- Mobil: bir ustun, `PageHead` actions pastga o'raladi, jadval → karta-qator
-  ko'rinishi (muhim ustunlargina), filtrlar `Segmented full` yoki `ChipRail`.
-- Yon ustunlar (`SplitLayout`) mobilda pastga tushadi (yoki `asideFirst`).
-- Touch nishonlar ≥ 40px.
-- Gorizontal scroll faqat o'z konteyneri ichida (`fade-edges no-scrollbar`);
-  sahifa tanasi hech qachon gorizontal siljimaydi.
+---
 
-## 7. Harakat va a11y
+## 7. Kontrast (tekshirilgan)
 
-- Kirish: `enter` / `enter-stagger`. Hover: 130ms. Joy almashish: 220ms `--ease-snap`.
-- `prefers-reduced-motion` CSS'da o'chiriladi — inline animatsiya yozmang;
-  JS bilan animatsiya qilsangiz, `matchMedia` bilan tekshiring.
-- Har interaktiv element: `focus-ring`, `aria-*`, klaviatura bilan ishlaydi.
-- Rang yagona signal emas: qiyinlik uchun `DifficultyMark` (shakl + rang),
-  statuslar `Chip dot`.
-- Kontrast: oq matn faqat `--brand`, `--bad`, `--ink` va `--stage-*` ustida.
+| Juftlik | Nisbat | Holat |
+| --- | --- | --- |
+| `#1E5EFF` oq ustida | 5.12:1 | ✅ AA |
+| oq `#1E5EFF` ustida | 5.12:1 | ✅ AA (tugma matni) |
+| `#1E5EFF` **qora ustida** | 3.80:1 | ❌ — to'q fonda `--brand-light` (#5B8CFF, 6.16:1) |
+| `#4A4A4A` oq ustida | 8.86:1 | ✅ |
+| `#737373` oq ustida | 4.74:1 | ✅ |
+| `#A3A3A3` oq ustida | 3.45:1 | ❌ matn uchun ishlatilmaydi |
 
-## 8. Admin panel
+**Qorong'i rejimda** `--brand` ochroq (#4C7FFF), shuning uchun ko'k fondagi
+matn QORA bo'ladi — `--ink-on-brand` tokeni buni avtomatik hal qiladi.
+Ko'k tugmada `text-white` yozmang, `text-[var(--ink-on-brand)]` yozing.
 
-Admin ham xuddi shu tilda, lekin **zichroq** (Linear/Stripe ichki asboblari kabi).
+---
 
-- Sahifa: `PageHeader` (orqaga + sarlavha + amallar + tablar, **kartasiz**) →
-  KPI qatori (`StatCard` panjarasi) → asboblar paneli → zich `DataTable`
-  (`pane-solid` ichida) → `Pagination`.
-- Jadval qatori ~44px, matn 13px, ustun sarlavhalari `t-eyebrow`, sonlar `t-num`.
-- Boshqaruv balandligi 36px (`h-9`), kichigi 32px (`h-8`).
-- Yon panel (drawer) tafsilotlar uchun, modal — qisqa amallar uchun.
-- `components/ui/*` API'lari saqlanadi — ko'rinish yangi tilda.
+## 8. Qat'iy taqiqlar
+
+- Palitradan tashqari rang: yashil, sariq, qizil, binafsha, kehribar.
+- Ko'k tugmada `text-white` (qorong'i rejimda kontrast yo'qoladi —
+  `--ink-on-brand` ishlating).
+- `bg-[var(--ink)]` ustida `text-white` (qorong'i rejimda oq ustiga oq —
+  `text-[var(--canvas)]` ishlating).
+- Ikonka rangli plitkada. Ikonka yalang'och turadi yoki chegarali doirada.
+- Sarlavhani kartaga solish; karta ichida karta.
+- Sahifada ikkita to'q bo'lim ketma-ket.
+- Sarlavhada ikkita ko'k bo'lak.
+- Bo'sh yoki nol statistikani ko'rsatish (`0+` kabi) — raqam bo'lmasa,
+  raqam chizilmaydi.
+- O'ylab topilgan statistika, sharh yoki mijoz nomi. Bosh sahifadagi
+  raqamlar `site.stats` API'dan keladi; sharhlar bo'limi (`testimonials.tsx`)
+  haqiqiy matn kelmaguncha shablon holatida turadi.
+- `spacing` shkalasidan tashqari qiymat (4, 8, 12, 16, 20, 24, 32, 40, 48,
+  64, 80, 96, 120, 160).

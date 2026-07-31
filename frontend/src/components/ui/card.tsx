@@ -31,16 +31,16 @@ export function CardHeader({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 border-b border-[var(--edge)] px-5 py-4",
+        "flex flex-wrap items-center justify-between gap-3 border-b border-[var(--edge)] px-6 py-5",
         className,
       )}
     >
       <div className="min-w-0">
         {title ? (
-          <h3 className="truncate text-sm font-semibold text-[var(--ink)]">{title}</h3>
+          <h3 className="truncate text-[15px] font-semibold text-[var(--ink)]">{title}</h3>
         ) : null}
         {description ? (
-          <p className="mt-0.5 text-xs text-[var(--ink-3)]">{description}</p>
+          <p className="mt-1 text-[13px] text-[var(--ink-3)]">{description}</p>
         ) : null}
         {children}
       </div>
@@ -50,14 +50,14 @@ export function CardHeader({
 }
 
 export function CardBody({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={cn("p-5", className)}>{children}</div>;
+  return <div className={cn("p-6", className)}>{children}</div>;
 }
 
 export function CardFooter({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "flex items-center justify-end gap-2 border-t border-[var(--edge)] px-5 py-3.5",
+        "flex items-center justify-end gap-2 border-t border-[var(--edge)] px-6 py-4",
         className,
       )}
     >
@@ -82,20 +82,20 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "enter flex flex-col items-center justify-center gap-3 px-6 py-14 text-center",
+        "enter flex flex-col items-center justify-center gap-4 px-6 py-16 text-center",
         className,
       )}
     >
       {icon ? (
         // Soch chizig'idagi doira — rangli plitka e'tiborni matndan tortadi
-        <span className="flex size-11 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+        <span className="flex size-12 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
           {icon}
         </span>
       ) : null}
       <div>
-        <p className="text-sm font-medium text-[var(--ink)]">{title}</p>
+        <p className="text-[15px] font-semibold text-[var(--ink)]">{title}</p>
         {description ? (
-          <p className="mt-1 max-w-sm text-xs text-[var(--ink-3)]">{description}</p>
+          <p className="mt-1.5 max-w-sm text-[13.5px] text-[var(--ink-3)]">{description}</p>
         ) : null}
       </div>
       {action}

@@ -117,7 +117,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 pt-[12vh]">
       {/* Parda — to'q, ammo blursiz: oq bilan ko'k aralashmasin */}
-      <div className="enter-veil absolute inset-0 bg-[rgb(26_25_23/0.44)]" onClick={onClose} />
+      <div className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)]" onClick={onClose} />
 
       <div className="enter-pop pane-float relative flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-[var(--r-pane-lg)]">
         {/* -------------------------------------------------------- qidiruv */}

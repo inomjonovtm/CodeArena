@@ -115,7 +115,7 @@ export function Modal({
       {/* Parda iliq siyoh rangida — sovuq ko'kish qatlam iliq qog'oz ustida
           "boshqa mahsulotdan" ko'rinardi. */}
       <div
-        className="enter-veil absolute inset-0 bg-[rgb(26_25_23/0.44)] backdrop-blur-[2px]"
+        className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]"
         onClick={persistent ? undefined : onClose}
       />
 
@@ -283,8 +283,10 @@ export function Popover({
     <div
       ref={ref}
       className={cn(
-        "enter-pop absolute top-[calc(100%+6px)] z-80 min-w-52",
-        "rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-solid)] p-1",
+        // Ochilish: fade + pastga siljish (`enter-pop`, 200ms) — dizayn
+        // tizimidagi ochiluvchi menyu qoidasi.
+        "enter-pop absolute top-[calc(100%+10px)] z-80 min-w-56",
+        "rounded-[var(--r-pane)] border border-[var(--edge)] bg-[var(--pane-solid)] p-1.5",
         "shadow-[var(--lift-pop)]",
         align === "end" ? "right-0" : "left-0",
         className,
@@ -296,8 +298,8 @@ export function Popover({
 }
 
 const MENU_ROW = [
-  "flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-[7px] text-left",
-  "text-[13px] font-medium transition-colors focus-ring",
+  "flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-left",
+  "text-[14px] font-medium transition-colors duration-[var(--t-fast)] focus-ring",
 ].join(" ");
 
 /** Menyudagi havola — `MenuItem` bilan bir xil ko'rinish, lekin `<a>`. */
@@ -320,7 +322,7 @@ export function MenuLink({
       onClick={onClick}
       className={cn(
         MENU_ROW,
-        "text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+        "text-[var(--ink)] hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
         className,
       )}
     >

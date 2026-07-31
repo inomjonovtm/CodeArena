@@ -9,28 +9,28 @@ import { cn } from "@/lib/utils";
 /* ==========================================================================
    Maydonlar
    --------------------------------------------------------------------------
-   Kirish maydoni "botiq": u sirtdan chuqurroq, ya'ni yozish mumkinligi
-   shakldan ko'rinadi. Fokusda maydon oqarib ko'tariladi va brend halqasi
-   paydo bo'ladi — bu "endi shu yerdasan" degan aniq signal.
+   Maydon OQ sirtda, ingichka kulrang chegara bilan — karta bilan bir xil
+   tilda. Fokusda chegara ko'kka o'tadi va tashqarisida yumshoq ko'k halqa
+   paydo bo'ladi: "endi shu yerdasan" degan aniq signal.
 
-   Chegara doim mavjud, lekin juda nozik: fokusda chegara paydo bo'ladigan
-   maydonlar sakraydi va forma "titraydi".
+   Balandlik 44px: barmoq bilan bosish uchun qulay minimal o'lcham va
+   formaga "havodor" korporativ ko'rinish beradi.
    ========================================================================== */
 
 export const fieldBase = [
   "w-full rounded-[var(--r-field)] border border-[var(--edge)]",
-  "bg-[var(--pane-sunken)] text-[var(--ink)]",
+  "bg-[var(--pane)] text-[var(--ink)]",
   "placeholder:text-[var(--ink-4)]",
-  "transition-[background-color,border-color,box-shadow] duration-[var(--t-fast)]",
+  "transition-[background-color,border-color,box-shadow] duration-[var(--t-base)]",
   "outline-none",
   "hover:border-[var(--edge-strong)]",
-  "focus:border-[var(--brand)] focus:bg-[var(--pane-solid)]",
+  "focus:border-[var(--brand)]",
   "focus:shadow-[0_0_0_var(--focus-w)_var(--focus)]",
   "disabled:opacity-50 disabled:cursor-not-allowed",
 ].join(" ");
 
-export const inputClass = cn(fieldBase, "h-9 px-3 text-[13.5px]");
-export const textareaClass = cn(fieldBase, "px-3 py-2.5 text-[13.5px] leading-relaxed resize-y");
+export const inputClass = cn(fieldBase, "h-11 px-4 text-[15px]");
+export const textareaClass = cn(fieldBase, "px-4 py-3 text-[15px] leading-relaxed resize-y");
 
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...rest }, ref) {
@@ -104,21 +104,37 @@ export function Field({
       {label ? (
         <label
           htmlFor={htmlFor}
-          className="mb-1.5 flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--ink-2)]"
+          className="mb-2 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]"
         >
           {label}
-          {required ? <span className="text-[var(--bad)]">*</span> : null}
+          {required ? <span className="text-[var(--brand)]">*</span> : null}
         </label>
       ) : null}
 
-      <div className={cn(error && "[&_input,&_textarea,&_select]:border-[var(--bad)]")}>
+      {/* Xato holati palitrada qizil YO'Qligi uchun uch signal bilan
+          beriladi: qalinlashgan siyoh chegara, ichki halqa va ostidagi
+          ikonkali matn. Rang bitta o'zi ma'no tashimaydi. */}
+      <div
+        className={cn(
+          error &&
+            "[&_input,&_textarea,&_select]:border-[var(--ink)] [&_input,&_textarea,&_select]:shadow-[inset_0_0_0_1px_var(--ink)]",
+        )}
+      >
         {children}
       </div>
 
       {error ? (
-        <p className="mt-1.5 text-[12.5px] text-[var(--bad)]">{error}</p>
+        <p className="mt-2 flex items-start gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+          <span
+            aria-hidden
+            className="mt-px grid size-4 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-[10px] leading-none font-bold text-[var(--canvas)]"
+          >
+            !
+          </span>
+          {error}
+        </p>
       ) : hint ? (
-        <p className="mt-1.5 text-[12.5px] text-[var(--ink-4)]">{hint}</p>
+        <p className="mt-2 text-[13px] text-[var(--ink-3)]">{hint}</p>
       ) : null}
     </div>
   );
@@ -217,7 +233,7 @@ export function Toggle({
       <span
         className={cn(
           "absolute top-1/2 size-4 -translate-y-1/2 rounded-full bg-white",
-          "shadow-[0_1px_3px_rgb(26_25_23/0.3)]",
+          "shadow-[0_1px_3px_rgb(10_10_10/0.3)]",
           "transition-[left] duration-[var(--t-base)] ease-[var(--ease-snap)]",
           checked ? "left-[calc(100%-1.125rem)]" : "left-[2px]",
         )}

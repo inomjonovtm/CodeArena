@@ -140,7 +140,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
 
   return (
     <div className="fixed inset-0 z-100 flex flex-col justify-end lg:hidden">
-      <div className="enter-veil absolute inset-0 bg-[rgb(26_25_23/0.44)] backdrop-blur-[2px]" onClick={onClose} />
+      <div className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]" onClick={onClose} />
 
       <div
         role="dialog"

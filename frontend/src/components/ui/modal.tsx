@@ -57,7 +57,7 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
       <div
-        className="enter-veil fixed inset-0 bg-[rgb(26_25_23/0.44)]"
+        className="enter-veil fixed inset-0 bg-[rgb(10_10_10/0.5)]"
         onClick={onClose}
         aria-hidden
       />
@@ -132,7 +132,7 @@ export function Drawer({
   return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="enter-veil absolute inset-0 bg-[rgb(26_25_23/0.44)]"
+        className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)]"
         onClick={onClose}
         aria-hidden
       />
