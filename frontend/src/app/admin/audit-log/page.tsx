@@ -32,7 +32,7 @@ function actionTone(action: string) {
 }
 
 export default function AuditLogPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const table = useTableQuery({ ordering: "-created_at" });
   const [openRow, setOpenRow] = useState<AuditLogRow | null>(null);
 
@@ -107,7 +107,7 @@ export default function AuditLogPage() {
           ) : (
             <span className="text-[13px] text-[var(--ink-4)]">tizim</span>
           )}
-          {row.actor_role ? <RoleBadge value={row.actor_role} locale={locale} /> : null}
+          {row.actor_role ? <RoleBadge value={row.actor_role} /> : null}
         </div>
       ),
     },

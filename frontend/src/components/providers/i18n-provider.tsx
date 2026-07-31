@@ -46,14 +46,3 @@ export function useI18n() {
   if (!context) throw new Error("useI18n I18nProvider ichida ishlatilishi kerak");
   return context;
 }
-
-/**
- * Masala/maqola kabi ikki tilli yozuvlardan matnni oladi.
- *
- * Bazada `_en` maydonlari saqlanib qolgan (keyinchalik kerak bo'ladi), lekin
- * sayt hozir doim o'zbekchasini ko'rsatadi; o'zbekchasi bo'sh bo'lsa
- * inglizchasi zaxira sifatida ishlatiladi.
- */
-export function useLocalized() {
-  return useCallback((uz?: string | null, en?: string | null) => (uz || en) ?? "", []);
-}

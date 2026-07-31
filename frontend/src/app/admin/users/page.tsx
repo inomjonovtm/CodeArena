@@ -63,7 +63,7 @@ interface UserSummary {
 }
 
 export default function UsersPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const can = useCan();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -209,7 +209,7 @@ export default function UsersPage() {
       csv: (row) => row.role,
       // Rol o'zgartirish qator ichidagi select'da emas — tasodifiy bosishda
       // odam admin bo'lib qolmasligi uchun menyu + tasdiq oynasi orqali.
-      render: (row) => <RoleBadge value={row.role} locale={locale} />,
+      render: (row) => <RoleBadge value={row.role} />,
     },
     {
       key: "status",
@@ -835,16 +835,6 @@ export default function UsersPage() {
                 { value: "user", label: t.users.roleUser },
                 { value: "moderator", label: t.users.roleModerator },
                 { value: "admin", label: t.users.roleAdmin },
-              ]}
-            />
-          </Field>
-          <Field label={t.common.language}>
-            <Select
-              value={draft.locale}
-              onChange={(event) => setDraft({ ...draft, locale: event.target.value })}
-              options={[
-                { value: "uz", label: "O'zbekcha" },
-                { value: "en", label: "English" },
               ]}
             />
           </Field>

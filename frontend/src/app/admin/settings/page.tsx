@@ -41,7 +41,7 @@ const GROUP_META = [
 ] as const;
 
 export default function SettingsPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const { user, refresh } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -96,8 +96,7 @@ export default function SettingsPage() {
     },
   );
 
-  const labelOf = (row: SiteSetting) =>
-    (row.label_uz || row.label_en) || row.key;
+  const labelOf = (row: SiteSetting) => row.label_uz || row.key;
 
   const groups = GROUP_META.map((meta) => ({
     ...meta,
@@ -419,7 +418,7 @@ export default function SettingsPage() {
                 <p className="text-[15px] font-semibold text-[var(--ink)]">{user?.username}</p>
                 <p className="t-meta text-[var(--ink-3)]">{user?.email}</p>
               </div>
-              {user ? <RoleBadge value={user.role} locale={locale} /> : null}
+              {user ? <RoleBadge value={user.role} /> : null}
               <div className="mt-2 w-full space-y-1.5 border-t border-[var(--edge)] pt-3 text-left text-[12.5px]">
                 <p className="flex justify-between gap-3">
                   <span className="text-[var(--ink-3)]">{t.users.rating}</span>

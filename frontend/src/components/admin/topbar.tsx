@@ -197,7 +197,7 @@ export function Topbar({
             <div className="border-b border-[var(--edge)] p-1.5">
               {user ? (
                 <div className="mb-1.5 px-1.5 pt-1">
-                  <RoleBadge value={user.role} locale="uz" />
+                  <RoleBadge value={user.role} />
                 </div>
               ) : null}
               <Link href="/admin/settings" onClick={() => setMenuOpen(false)} className={MENU_ITEM}>

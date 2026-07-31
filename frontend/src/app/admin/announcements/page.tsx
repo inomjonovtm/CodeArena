@@ -54,9 +54,7 @@ const AUDIENCES: Record<string, { tone: BadgeTone; uz: string }> = {
 interface Draft {
   id?: string;
   title_uz: string;
-  title_en: string;
   body_uz: string;
-  body_en: string;
   level: string;
   is_active: boolean;
   is_pinned: boolean;
@@ -68,15 +66,12 @@ interface Draft {
   target_group: string;
   action_url: string;
   action_label_uz: string;
-  action_label_en: string;
   send_push: boolean;
 }
 
 const emptyDraft: Draft = {
   title_uz: "",
-  title_en: "",
   body_uz: "",
-  body_en: "",
   level: "info",
   is_active: true,
   is_pinned: false,
@@ -88,16 +83,13 @@ const emptyDraft: Draft = {
   target_group: "",
   action_url: "",
   action_label_uz: "",
-  action_label_en: "",
   send_push: false,
 };
 
 const toDraft = (row: Announcement): Draft => ({
   id: row.id,
   title_uz: row.title_uz,
-  title_en: row.title_en,
   body_uz: row.body_uz,
-  body_en: row.body_en,
   level: row.level,
   is_active: row.is_active,
   is_pinned: row.is_pinned,
@@ -109,7 +101,6 @@ const toDraft = (row: Announcement): Draft => ({
   target_group: row.target_group ?? "",
   action_url: row.action_url,
   action_label_uz: row.action_label_uz,
-  action_label_en: row.action_label_en,
   send_push: row.send_push,
 });
 
@@ -531,38 +522,21 @@ export default function AnnouncementsPage() {
         {draft ? (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div className="flex min-w-0 flex-col gap-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Sarlavha (uz)" required>
-                  <Input
-                    autoFocus
-                    value={draft.title_uz}
-                    onChange={(event) => setDraft({ ...draft, title_uz: event.target.value })}
-                  />
-                </Field>
-                <Field label="Sarlavha (en)">
-                  <Input
-                    value={draft.title_en}
-                    onChange={(event) => setDraft({ ...draft, title_en: event.target.value })}
-                  />
-                </Field>
-              </div>
+              <Field label="Sarlavha" required>
+                <Input
+                  autoFocus
+                  value={draft.title_uz}
+                  onChange={(event) => setDraft({ ...draft, title_uz: event.target.value })}
+                />
+              </Field>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Matn (uz)">
-                  <Textarea
-                    rows={3}
-                    value={draft.body_uz}
-                    onChange={(event) => setDraft({ ...draft, body_uz: event.target.value })}
-                  />
-                </Field>
-                <Field label="Matn (en)">
-                  <Textarea
-                    rows={3}
-                    value={draft.body_en}
-                    onChange={(event) => setDraft({ ...draft, body_en: event.target.value })}
-                  />
-                </Field>
-              </div>
+              <Field label="Matn">
+                <Textarea
+                  rows={3}
+                  value={draft.body_uz}
+                  onChange={(event) => setDraft({ ...draft, body_uz: event.target.value })}
+                />
+              </Field>
 
               {/* -------------------------------------------- amal tugmasi */}
               <div className="border-t border-[var(--edge)] pt-4">
@@ -571,7 +545,7 @@ export default function AnnouncementsPage() {
                   Bannerdan to&apos;g&apos;ridan-to&apos;g&apos;ri kerakli sahifaga olib boradi.
                   Sayt ichida `/contests/bahor-kubogi`, tashqarida to&apos;liq manzil.
                 </p>
-                <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
                   <Field label="Manzil">
                     <Input
                       placeholder="/contests/bahor-kubogi"
@@ -579,21 +553,12 @@ export default function AnnouncementsPage() {
                       onChange={(event) => setDraft({ ...draft, action_url: event.target.value })}
                     />
                   </Field>
-                  <Field label="Tugma (uz)">
+                  <Field label="Tugma matni">
                     <Input
                       placeholder="Musobaqaga o'tish"
                       value={draft.action_label_uz}
                       onChange={(event) =>
                         setDraft({ ...draft, action_label_uz: event.target.value })
-                      }
-                    />
-                  </Field>
-                  <Field label="Tugma (en)">
-                    <Input
-                      placeholder="Open contest"
-                      value={draft.action_label_en}
-                      onChange={(event) =>
-                        setDraft({ ...draft, action_label_en: event.target.value })
                       }
                     />
                   </Field>

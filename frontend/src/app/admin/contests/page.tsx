@@ -28,7 +28,7 @@ const STATE: Record<ContestState, { tone: BadgeTone; uz: string; en: string }> =
 };
 
 export default function ContestsPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();

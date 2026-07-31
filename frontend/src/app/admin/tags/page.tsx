@@ -27,7 +27,6 @@ const PRESET_COLORS = [
 interface TagDraft {
   id?: number;
   name_uz: string;
-  name_en: string;
   slug: string;
   color: string;
   description: string;
@@ -35,14 +34,13 @@ interface TagDraft {
 
 const emptyDraft: TagDraft = {
   name_uz: "",
-  name_en: "",
   slug: "",
   color: "#1f6feb",
   description: "",
 };
 
 export default function TagsPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [draft, setDraft] = useState<TagDraft | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Tag | null>(null);
   const [search, setSearch] = useState("");
@@ -53,8 +51,12 @@ export default function TagsPage() {
   });
 
   const saveMutation = useCrudMutation(
-    (payload: TagDraft) =>
-      payload.id ? tags.update(payload.id, payload) : tags.create(payload),
+    (payload: TagDraft) => {
+      // Backendda `name_en` hali majburiy (ustun bazada qoldirilgan), lekin
+      // panelda ikkinchi til maydoni yo'q — qiymat o'zbekchasidan olinadi.
+      const body = { ...payload, name_en: payload.name_uz };
+      return payload.id ? tags.update(payload.id, body) : tags.create(body);
+    },
     {
       invalidate: [["tags"]],
       successMessage: "Teg saqlandi",
@@ -84,9 +86,6 @@ export default function TagsPage() {
           <div className="min-w-0">
             <p className="truncate text-[13px] font-medium text-[var(--ink)]">
               {row.name_uz}
-            </p>
-            <p className="truncate text-[11px] text-[var(--ink-4)]">
-              {row.name_en}
             </p>
           </div>
         </div>
@@ -250,29 +249,22 @@ export default function TagsPage() {
       >
         {draft ? (
           <div className="flex flex-col gap-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nomi (o'zbekcha)" required>
-                <Input
-                  autoFocus
-                  value={draft.name_uz}
-                  onChange={(event) => setDraft({ ...draft, name_uz: event.target.value })}
-                  placeholder="Massiv"
-                />
-              </Field>
-              <Field label="Nomi (inglizcha)" required>
-                <Input
-                  value={draft.name_en}
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      name_en: event.target.value,
-                      slug: draft.id ? draft.slug : slugify(event.target.value),
-                    })
-                  }
-                  placeholder="Array"
-                />
-              </Field>
-            </div>
+            <Field label="Nomi" required>
+              <Input
+                autoFocus
+                value={draft.name_uz}
+                onChange={(event) =>
+                  setDraft({
+                    ...draft,
+                    name_uz: event.target.value,
+                    // Slug faqat yangi tegda avtomatik: mavjud tegning
+                    // manzilini o'zgartirish eski havolalarni buzardi.
+                    slug: draft.id ? draft.slug : slugify(event.target.value),
+                  })
+                }
+                placeholder="Massiv"
+              />
+            </Field>
 
             <Field label="Slug" hint="Bo'sh qoldirilsa avtomatik yaratiladi">
               <Input

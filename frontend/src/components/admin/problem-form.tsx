@@ -136,7 +136,7 @@ export function ProblemForm({
   /** Chap panel pastiga qo'shimcha tugmalar (Statistika, Ko'rish...). */
   sideExtra?: React.ReactNode;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [step, setStep] = useState<StepKey>("basic");
   const [codeLang, setCodeLang] = useState<"python" | "javascript" | "cpp">("python");
   const [slugTouched, setSlugTouched] = useState(Boolean(value.slug));
@@ -218,7 +218,6 @@ export function ProblemForm({
       expected_output: "",
       is_sample: isSample,
       explanation_uz: "",
-      explanation_en: "",
       time_limit_ms: null,
       memory_limit_kb: null,
     };
@@ -269,7 +268,7 @@ export function ProblemForm({
                 </p>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-1.5">
-                <PublishBadge value={value.status} locale={locale} />
+                <PublishBadge value={value.status} />
                 <Badge tone="outline">{DIFFICULTY_LABEL[value.difficulty]}</Badge>
                 <Badge tone="outline" className="t-num">
                   {value.points} ball

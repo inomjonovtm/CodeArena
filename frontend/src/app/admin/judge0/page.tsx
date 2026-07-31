@@ -45,7 +45,7 @@ interface Judge0TestResult {
  * tugmasi bilan natijani darhol ko'rsatadi.
  */
 export default function Judge0Page() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const toast = useToast();
   const can = useCan();
   const queryClient = useQueryClient();
@@ -110,8 +110,7 @@ export default function Judge0Page() {
     },
   });
 
-  const labelOf = (row: SiteSetting) =>
-    (row.label_uz || row.label_en) || row.key;
+  const labelOf = (row: SiteSetting) => row.label_uz || row.key;
 
   const control = (row: SiteSetting) => {
     const value = values[row.key];

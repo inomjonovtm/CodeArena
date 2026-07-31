@@ -22,7 +22,7 @@ import { useState } from "react";
 import { ProblemImportDialog } from "@/components/admin/import-dialog";
 import { PageHeader, StatCard } from "@/components/admin/page-header";
 import { Button as KitButton, LinkButton } from "@/components/kit";
-import { useConfirm, useI18n, useLocalized, useToast } from "@/components/providers";
+import { useConfirm, useI18n, useToast } from "@/components/providers";
 import { Badge, DifficultyBadge, PublishBadge, TagChip } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -38,8 +38,7 @@ import { formatDate, formatNumber } from "@/lib/utils";
 const problems = resource<ProblemListItem>("problems");
 
 export default function ProblemsPage() {
-  const { t, locale } = useI18n();
-  const L = useLocalized();
+  const { t } = useI18n();
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -113,7 +112,7 @@ export default function ProblemsPage() {
             href={`/admin/problems/${row.id}`}
             className="focus-ring block max-w-md truncate rounded-[6px] text-[13px] font-medium text-[var(--ink)] transition-colors duration-[var(--t-fast)] hover:text-[var(--brand)]"
           >
-            {L(row.title_uz, row.title_en)}
+            {row.title_uz}
           </Link>
           <span className="block max-w-md truncate font-mono text-[11px] text-[var(--ink-4)]">
             {row.slug}
@@ -126,23 +125,23 @@ export default function ProblemsPage() {
       header: t.problems.difficulty,
       sortKey: "difficulty",
       csv: (row) => row.difficulty,
-      render: (row) => <DifficultyBadge value={row.difficulty} locale={locale} />,
+      render: (row) => <DifficultyBadge value={row.difficulty} />,
     },
     {
       key: "status",
       header: t.common.status,
       csv: (row) => row.status,
-      render: (row) => <PublishBadge value={row.status} locale={locale} />,
+      render: (row) => <PublishBadge value={row.status} />,
     },
     {
       key: "tags",
       header: t.problems.tags,
       hideable: true,
-      csv: (row) => row.tags.map((tag) => tag.name_en).join(" | "),
+      csv: (row) => row.tags.map((tag) => tag.name_uz).join(" | "),
       render: (row) => (
         <div className="flex max-w-[13rem] flex-wrap gap-1">
           {row.tags.slice(0, 2).map((tag) => (
-            <TagChip key={tag.id} tag={tag} locale={locale} />
+            <TagChip key={tag.id} tag={tag} />
           ))}
           {row.tags.length > 2 ? (
             <span className="t-num text-[11px] text-[var(--ink-4)]">+{row.tags.length - 2}</span>
@@ -456,7 +455,7 @@ export default function ProblemsPage() {
         title={t.common.delete}
         message={
           <>
-            <strong>{deleteTarget ? L(deleteTarget.title_uz, deleteTarget.title_en) : ""}</strong>{" "}
+            <strong>{deleteTarget ? deleteTarget.title_uz : ""}</strong>{" "}
             masalasi, uning barcha test-case va submissionlari bilan birga o&apos;chiriladi.
           </>
         }

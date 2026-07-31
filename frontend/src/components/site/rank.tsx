@@ -31,7 +31,6 @@ export function RankBadge({
   rating?: number;
   className?: string;
 }) {
-  const { locale } = useI18n();
   if (!rank) return null;
 
   const padding = {
@@ -43,7 +42,7 @@ export function RankBadge({
 
   return (
     <span
-      title={`${rankName(rank, locale)} · ${formatNumber(rank.min_rating)}+`}
+      title={`${rankName(rank)} · ${formatNumber(rank.min_rating)}+`}
       style={rankChipStyle(rank)}
       className={cn(
         "inline-flex shrink-0 items-center rounded-[var(--r-chip)] font-semibold",
@@ -53,7 +52,7 @@ export function RankBadge({
       )}
     >
       <RankGlyph rank={rank} size={size === "lg" ? 16 : size === "xs" ? 10 : 12} />
-      {rankName(rank, locale)}
+      {rankName(rank)}
       {showRating && rating !== undefined ? (
         <span className="opacity-60">· {formatNumber(rating)}</span>
       ) : null}
@@ -173,7 +172,6 @@ export function RankAvatar({
 
 /** Rank + keyingi rankgacha qolgan yo'l — profil yon ustuni uchun. */
 export function RankProgress({ rank, rating }: { rank: RankInfo; rating: number }) {
-  const { locale } = useI18n();
 
   return (
     <div className="w-full">
@@ -189,7 +187,7 @@ export function RankProgress({ rank, rating }: { rank: RankInfo; rating: number 
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-semibold" style={{ color: rank.color }}>
-            {rankName(rank, locale)}
+            {rankName(rank)}
           </p>
           <p className="t-meta text-[var(--ink-3)]">
             {rank.is_max

@@ -181,7 +181,6 @@ export interface TestCase {
   expected_output: string;
   is_sample: boolean;
   explanation_uz: string;
-  explanation_en: string;
   time_limit_ms: number | null;
   memory_limit_kb: number | null;
   created_at?: string;

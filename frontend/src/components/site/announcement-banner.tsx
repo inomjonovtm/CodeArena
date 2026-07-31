@@ -72,7 +72,7 @@ function AnnouncementAction({
  * uni har sahifada qayta ko'rmaydi.
  */
 export function AnnouncementBanner() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [dismissed, setDismissed] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
 
@@ -108,8 +108,6 @@ export function AnnouncementBanner() {
   const rows = data.filter((row) => !dismissed.includes(row.id));
   if (!rows.length) return null;
 
-  /* Sayt o'zbek tilida — `_en` maydonlari bazada saqlanadi, lekin
-     ko'rsatilmaydi (ingliz tili keyinchalik qo'shiladi). */
   const title = (row: SiteAnnouncement) => row.title_uz;
   const body = (row: SiteAnnouncement) => row.body_uz;
   const actionLabel = (row: SiteAnnouncement) => row.action_label_uz;

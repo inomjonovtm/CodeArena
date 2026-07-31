@@ -83,7 +83,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     // saqlanadi (server relevantlik bo'yicha saralab bergan)
     const result: Row[] = (data?.results ?? []).map((item) => ({
       id: `${item.type}-${item.id}`,
-      label: item.title || item.title_en,
+      label: item.title,
       hint: item.subtitle || undefined,
       group: TYPE_LABELS[item.type],
       href: item.url,

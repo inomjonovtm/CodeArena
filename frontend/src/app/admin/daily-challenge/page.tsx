@@ -32,7 +32,7 @@ function toISODate(date: Date) {
 }
 
 export default function DailyChallengePage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const today = new Date();
   const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() + 1 });
   const [assignDate, setAssignDate] = useState<string | null>(null);
@@ -277,7 +277,7 @@ export default function DailyChallengePage() {
                           {challenge.problem_title}
                         </Link>
                         <div className="mt-1.5">
-                          <DifficultyBadge value={challenge.problem_difficulty} locale={locale} />
+                          <DifficultyBadge value={challenge.problem_difficulty} />
                         </div>
                       </div>
                     ) : (

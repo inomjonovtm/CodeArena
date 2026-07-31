@@ -5,7 +5,7 @@ import { Check, Clock, Loader2, Lock, Play, RotateCcw, Send, Trophy } from "luci
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useAuth, useI18n, useLocalized, useToast } from "@/components/providers";
+import { useAuth, useI18n, useToast } from "@/components/providers";
 import {
   Alert,
   Block,
@@ -81,7 +81,6 @@ export default function ContestProblemPage() {
 
   const { user, loading: authLoading } = useAuth();
   const { t } = useI18n();
-  const localized = useLocalized();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -256,7 +255,7 @@ export default function ContestProblemPage() {
       {/* Musobaqa konteksti — nom, taymer, masala almashtirgich, natijalar */}
       <ContestBar
         slug={contestSlug}
-        title={localized(data.contest_title_uz, data.contest_title_en)}
+        title={data.contest_title_uz}
         endTime={data.contest_end_time}
         serverTime={data.server_time}
         state={data.contest_state as "running" | "finished" | "scheduled"}
@@ -269,7 +268,7 @@ export default function ContestProblemPage() {
           {data.label}
         </span>
         <h1 className="t-title min-w-0 flex-1 truncate text-[var(--ink)]">
-          {localized(data.title_uz, data.title_en)}
+          {data.title_uz}
         </h1>
         {data.is_solved ? (
           <Chip tone="ok" icon={<Check className="size-3.5" strokeWidth={3} />}>
@@ -306,13 +305,13 @@ export default function ContestProblemPage() {
               sahifa kengligida bo'lgani uchun matn ham cho'zilib ketardi.
               Namunalar esa ma'lumot: ular pastda to'liq kenglikda. */}
           <div className="max-w-[72ch]">
-            <Markdown source={localized(data.description_uz, data.description_en)} />
+            <Markdown source={data.description_uz} />
 
-            {localized(data.constraints_uz, data.constraints_en).trim() ? (
+            {data.constraints_uz.trim() ? (
               <div className="mt-7">
                 <p className="t-eyebrow">{t.site.problem.constraints}</p>
                 <div className="mt-2.5">
-                  <Markdown source={localized(data.constraints_uz, data.constraints_en)} />
+                  <Markdown source={data.constraints_uz} />
                 </div>
               </div>
             ) : null}
@@ -343,9 +342,9 @@ export default function ContestProblemPage() {
                       </pre>
                     </div>
                   </div>
-                  {localized(sample.explanation_uz, sample.explanation_en) ? (
+                  {sample.explanation_uz ? (
                     <p className="t-meta mt-2.5 max-w-[72ch] text-[var(--ink-3)]">
-                      {localized(sample.explanation_uz, sample.explanation_en)}
+                      {sample.explanation_uz}
                     </p>
                   ) : null}
                 </div>

@@ -41,7 +41,7 @@ import {
   Segmented,
   Stat,
 } from "@/components/kit";
-import { useAuth, useI18n, useLocalized, useToast } from "@/components/providers";
+import { useAuth, useI18n, useToast } from "@/components/providers";
 import { CommentThread } from "@/components/site/discussions";
 import { CodeEditor } from "@/components/ui/code-editor";
 import { Markdown } from "@/components/ui/markdown";
@@ -189,7 +189,6 @@ export default function ProblemDetailPage() {
   const slug = params?.slug ?? "";
   const { user, loading: authLoading } = useAuth();
   const { t } = useI18n();
-  const localized = useLocalized();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -376,8 +375,8 @@ export default function ProblemDetailPage() {
     localStorage.setItem(langKey, next);
   };
 
-  const hint = localized(problem?.hint_uz, problem?.hint_en).trim();
-  const editorial = localized(problem?.editorial_uz, problem?.editorial_en).trim();
+  const hint = (problem?.hint_uz ?? "").trim();
+  const editorial = (problem?.editorial_uz ?? "").trim();
 
   const tabs = useMemo(() => {
     const items: { value: LeftTab; label: string; icon?: React.ReactNode; count?: number }[] = [
@@ -454,8 +453,8 @@ export default function ProblemDetailPage() {
     );
   }
 
-  const title = localized(problem.title_uz, problem.title_en);
-  const constraints = localized(problem.constraints_uz, problem.constraints_en).trim();
+  const title = problem.title_uz;
+  const constraints = problem.constraints_uz.trim();
   const difficultyLabel =
     (t.site.difficulty as Record<string, string>)[problem.difficulty] ?? problem.difficulty;
 
@@ -577,7 +576,7 @@ export default function ProblemDetailPage() {
                 <div className="max-w-[72ch]">
                   <Markdown
                     className={PROSE}
-                    source={localized(problem.description_uz, problem.description_en)}
+                    source={problem.description_uz}
                   />
 
                   {constraints ? (
@@ -606,9 +605,9 @@ export default function ProblemDetailPage() {
                             text={sample.expected_output}
                           />
                         </div>
-                        {localized(sample.explanation_uz, sample.explanation_en) ? (
+                        {sample.explanation_uz ? (
                           <p className="t-meta mt-3 max-w-[72ch] text-[var(--ink-3)]">
-                            {localized(sample.explanation_uz, sample.explanation_en)}
+                            {sample.explanation_uz}
                           </p>
                         ) : null}
                       </div>

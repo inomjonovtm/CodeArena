@@ -33,7 +33,7 @@ interface SubmissionSummary {
 }
 
 export default function SubmissionsPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const can = useCan();
   const queryClient = useQueryClient();
   const { confirm } = useConfirm();
@@ -103,7 +103,7 @@ export default function SubmissionsPage() {
       csv: (row) => row.problem_title,
       render: (row) => (
         <div className="flex min-w-0 items-center gap-2">
-          <DifficultyBadge value={row.problem_difficulty} locale={locale} />
+          <DifficultyBadge value={row.problem_difficulty} />
           <Link
             href={`/admin/problems/${row.problem}`}
             className="focus-ring max-w-[14rem] truncate rounded-[6px] text-[13px] text-[var(--ink-3)] transition-colors duration-[var(--t-fast)] hover:text-[var(--brand)]"
@@ -124,7 +124,7 @@ export default function SubmissionsPage() {
       key: "status",
       header: t.common.status,
       csv: (row) => row.status,
-      render: (row) => <StatusBadge value={row.status} locale={locale} />,
+      render: (row) => <StatusBadge value={row.status} />,
     },
     {
       key: "tests",
@@ -389,7 +389,7 @@ export default function SubmissionsPage() {
         title={
           detail ? (
             <span className="flex items-center gap-2">
-              <StatusBadge value={detail.status} locale={locale} />
+              <StatusBadge value={detail.status} />
               <span className="truncate">{detail.problem_title}</span>
             </span>
           ) : (
@@ -493,7 +493,7 @@ export default function SubmissionsPage() {
                             {row.order}
                           </td>
                           <td className="px-3 py-2">
-                            <StatusBadge value={row.status} locale={locale} />
+                            <StatusBadge value={row.status} />
                           </td>
                           <td className="t-num px-3 py-2 text-right text-[12px] text-[var(--ink-3)]">
                             {formatDuration(row.runtime_ms)}

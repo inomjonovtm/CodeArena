@@ -44,10 +44,9 @@ export function rankChipStyle(rank: RankInfo | null | undefined): React.CSSPrope
   };
 }
 
-/** Ranklar guruhi uchun o'zbekcha/inglizcha nom. */
-export function rankName(rank: RankInfo | null | undefined, locale: string): string {
-  if (!rank) return "";
-  return locale === "en" ? rank.name_en : rank.name_uz;
+/** Rank nomi — bo'sh rank uchun bo'sh satr qaytadi. */
+export function rankName(rank: RankInfo | null | undefined): string {
+  return rank ? rank.name_uz : "";
 }
 
 /** Eng yuqori ikki rank uchun jonli effekt beriladi. */

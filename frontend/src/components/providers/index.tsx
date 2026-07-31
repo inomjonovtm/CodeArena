@@ -55,6 +55,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
 export { useAuth, useCan, usePermissions } from "./auth-provider";
 export { useConfirm } from "./confirm-provider";
 export type { ConfirmOptions, PromptOptions } from "./confirm-provider";
-export { useI18n, useLocalized } from "./i18n-provider";
+export { useI18n } from "./i18n-provider";
 export { useTheme } from "./theme-provider";
 export { useToast } from "./toast-provider";

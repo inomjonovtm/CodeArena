@@ -55,7 +55,7 @@ function BreakdownList({ rows }: { rows: { label: string; count: number }[] }) {
 }
 
 export default function EditProblemPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const id = params.id;
@@ -126,7 +126,7 @@ export default function EditProblemPage() {
             <span className="truncate">
               {data.title_uz}
             </span>
-            <PublishBadge value={data.status} locale={locale} />
+            <PublishBadge value={data.status} />
           </span>
         }
         description={

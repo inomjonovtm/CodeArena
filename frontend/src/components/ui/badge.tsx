@@ -43,31 +43,34 @@ export function Badge({
 }
 
 // ------------------------------------------------- domenga xos badge'lar
-const DIFFICULTY: Record<Difficulty, { tone: BadgeTone; uz: string; en: string }> = {
-  easy: { tone: "success", uz: "Oson", en: "Easy" },
-  medium: { tone: "warning", uz: "O'rta", en: "Medium" },
-  hard: { tone: "danger", uz: "Qiyin", en: "Hard" },
+const DIFFICULTY: Record<Difficulty, { tone: BadgeTone; label: string }> = {
+  easy: { tone: "success", label: "Oson" },
+  medium: { tone: "warning", label: "O'rta" },
+  hard: { tone: "danger", label: "Qiyin" },
 };
 
-export function DifficultyBadge({ value, locale = "uz" }: { value: Difficulty; locale?: "uz" | "en" }) {
+export function DifficultyBadge({ value }: { value: Difficulty }) {
   const config = DIFFICULTY[value] ?? DIFFICULTY.easy;
-  return <Badge tone={config.tone}>{locale === "en" ? config.en : config.uz}</Badge>;
+  return <Badge tone={config.tone}>{config.label}</Badge>;
 }
 
 /** 8-bo'limdagi status jadvaliga mos ranglar. */
-const STATUS: Record<SubmissionStatus, { tone: BadgeTone; uz: string; en: string }> = {
-  PENDING: { tone: "neutral", uz: "Navbatda", en: "Pending" },
-  JUDGING: { tone: "neutral", uz: "Tekshirilmoqda", en: "Judging" },
-  ACCEPTED: { tone: "success", uz: "Accepted", en: "Accepted" },
-  WRONG_ANSWER: { tone: "danger", uz: "Wrong Answer", en: "Wrong Answer" },
-  TIME_LIMIT_EXCEEDED: { tone: "warning", uz: "Time Limit", en: "Time Limit" },
-  MEMORY_LIMIT_EXCEEDED: { tone: "warning", uz: "Memory Limit", en: "Memory Limit" },
-  RUNTIME_ERROR: { tone: "danger", uz: "Runtime Error", en: "Runtime Error" },
-  COMPILE_ERROR: { tone: "danger", uz: "Compile Error", en: "Compile Error" },
-  SYSTEM_ERROR: { tone: "neutral", uz: "Tizim xatosi", en: "System Error" },
+/* Judge statuslari atayin inglizcha atama bilan qoladi: «Accepted»,
+   «Wrong Answer» — bular butun dunyoda shu ko'rinishda ishlatiladi va
+   tarjimasi foydalanuvchini chalg'itardi. Bu ikkinchi til emas, atama. */
+const STATUS: Record<SubmissionStatus, { tone: BadgeTone; label: string }> = {
+  PENDING: { tone: "neutral", label: "Navbatda" },
+  JUDGING: { tone: "neutral", label: "Tekshirilmoqda" },
+  ACCEPTED: { tone: "success", label: "Accepted" },
+  WRONG_ANSWER: { tone: "danger", label: "Wrong Answer" },
+  TIME_LIMIT_EXCEEDED: { tone: "warning", label: "Time Limit" },
+  MEMORY_LIMIT_EXCEEDED: { tone: "warning", label: "Memory Limit" },
+  RUNTIME_ERROR: { tone: "danger", label: "Runtime Error" },
+  COMPILE_ERROR: { tone: "danger", label: "Compile Error" },
+  SYSTEM_ERROR: { tone: "neutral", label: "Tizim xatosi" },
 };
 
-export function StatusBadge({ value, locale = "uz" }: { value: SubmissionStatus; locale?: "uz" | "en" }) {
+export function StatusBadge({ value }: { value: SubmissionStatus }) {
   const config = STATUS[value] ?? STATUS.SYSTEM_ERROR;
   const spinning = value === "PENDING" || value === "JUDGING";
   return (
@@ -75,31 +78,31 @@ export function StatusBadge({ value, locale = "uz" }: { value: SubmissionStatus;
       {spinning ? (
         <span className="size-1.5 animate-pulse rounded-full bg-current" />
       ) : null}
-      {locale === "en" ? config.en : config.uz}
+      {config.label}
     </Badge>
   );
 }
 
-const PUBLISH: Record<PublishState, { tone: BadgeTone; uz: string; en: string }> = {
-  draft: { tone: "neutral", uz: "Qoralama", en: "Draft" },
-  published: { tone: "success", uz: "Chop etilgan", en: "Published" },
-  archived: { tone: "outline", uz: "Arxivlangan", en: "Archived" },
+const PUBLISH: Record<PublishState, { tone: BadgeTone; label: string }> = {
+  draft: { tone: "neutral", label: "Qoralama" },
+  published: { tone: "success", label: "Chop etilgan" },
+  archived: { tone: "outline", label: "Arxivlangan" },
 };
 
-export function PublishBadge({ value, locale = "uz" }: { value: PublishState; locale?: "uz" | "en" }) {
+export function PublishBadge({ value }: { value: PublishState }) {
   const config = PUBLISH[value] ?? PUBLISH.draft;
-  return <Badge tone={config.tone}>{locale === "en" ? config.en : config.uz}</Badge>;
+  return <Badge tone={config.tone}>{config.label}</Badge>;
 }
 
-const ROLES: Record<Role, { tone: BadgeTone; uz: string; en: string }> = {
-  user: { tone: "outline", uz: "Foydalanuvchi", en: "User" },
-  moderator: { tone: "info", uz: "Moderator", en: "Moderator" },
-  admin: { tone: "accent", uz: "Administrator", en: "Admin" },
+const ROLES: Record<Role, { tone: BadgeTone; label: string }> = {
+  user: { tone: "outline", label: "Foydalanuvchi" },
+  moderator: { tone: "info", label: "Moderator" },
+  admin: { tone: "accent", label: "Administrator" },
 };
 
-export function RoleBadge({ value, locale = "uz" }: { value: Role; locale?: "uz" | "en" }) {
+export function RoleBadge({ value }: { value: Role }) {
   const config = ROLES[value] ?? ROLES.user;
-  return <Badge tone={config.tone}>{locale === "en" ? config.en : config.uz}</Badge>;
+  return <Badge tone={config.tone}>{config.label}</Badge>;
 }
 
 const LANGUAGE_LABEL: Record<string, string> = {
@@ -116,13 +119,13 @@ export function LanguageBadge({ value }: { value: string }) {
   );
 }
 
-export function TagChip({ tag, locale = "uz" }: { tag: { name_uz: string; name_en: string; color: string }; locale?: "uz" | "en" }) {
+export function TagChip({ tag }: { tag: { name_uz: string; color: string } }) {
   return (
     <span
       className="inline-flex items-center rounded-[var(--r-chip)] px-2 py-0.5 text-[11px] font-medium leading-5"
       style={{ backgroundColor: `${tag.color}1f`, color: tag.color }}
     >
-      {locale === "en" ? tag.name_en : tag.name_uz}
+      {tag.name_uz}
     </span>
   );
 }

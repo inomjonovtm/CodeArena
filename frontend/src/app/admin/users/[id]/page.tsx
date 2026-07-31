@@ -44,7 +44,7 @@ interface UserStats {
 }
 
 export default function UserDetailPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const can = useCan();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -169,7 +169,7 @@ export default function UserDetailPage() {
           <span className="flex items-center gap-2.5">
             <Avatar src={data.avatar_url} name={data.full_name || data.username} size="sm" rank={data.rank} />
             <span className="truncate">{data.username}</span>
-            <RoleBadge value={data.role} locale={locale} />
+            <RoleBadge value={data.role} />
             {data.is_banned ? (
               <Badge tone="danger" dot>
                 {t.users.banned}
@@ -350,18 +350,6 @@ export default function UserDetailPage() {
                     onChange={(event) =>
                       setDraft({ ...draft, education_place: event.target.value })
                     }
-                  />
-                </Field>
-                <Field label={t.common.language}>
-                  <Select
-                    value={draft.locale ?? "uz"}
-                    onChange={(event) =>
-                      setDraft({ ...draft, locale: event.target.value as "uz" | "en" })
-                    }
-                    options={[
-                      { value: "uz", label: "O'zbekcha" },
-                      { value: "en", label: "English" },
-                    ]}
                   />
                 </Field>
                 <Field label="Avatar URL" className="sm:col-span-2">
@@ -572,7 +560,7 @@ export default function UserDetailPage() {
                       </td>
                       <td className="px-3 py-2.5 text-[12px] text-[var(--ink-3)]">{row.language}</td>
                       <td className="px-3 py-2.5">
-                        <StatusBadge value={row.status} locale={locale} />
+                        <StatusBadge value={row.status} />
                       </td>
                       <td className="t-num px-3 py-2.5 text-right text-[12px] text-[var(--ink-3)]">
                         {row.runtime_ms ? `${row.runtime_ms} ms` : "—"}

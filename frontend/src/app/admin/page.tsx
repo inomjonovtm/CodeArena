@@ -185,7 +185,7 @@ function AllLink({ href, label }: { href: string; label: string }) {
 }
 
 export default function DashboardPage() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const [days, setDays] = useState(30);
 
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -739,7 +739,7 @@ export default function DashboardPage() {
                           </Link>
                         </td>
                         <td className="px-3 py-2.5">
-                          <StatusBadge value={row.status} locale={locale} />
+                          <StatusBadge value={row.status} />
                         </td>
                         <td className="t-num px-5 py-2.5 text-right text-[11px] whitespace-nowrap text-[var(--ink-4)]">
                           {formatRelative(row.created_at)}
