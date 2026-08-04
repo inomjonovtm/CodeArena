@@ -272,12 +272,16 @@ def lesson_read(request, slug: str, lesson_slug: str):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def lesson_quiz_submit(request, slug: str, lesson_slug: str):
     """`POST .../quiz/` — testni tekshiradi va to'g'ri javoblarni qaytaradi.
 
     To'g'ri javoblar AYNAN shu javobda ochiladi: savol yuborilayotganda
     ular berilmagan, ya'ni foydalanuvchi avval tanlaydi, keyin ko'radi.
+
+    Mehmon ham topshira oladi — o'zini tekshirish darslikning bir qismi.
+    Farq faqat NATIJADA: kirgan foydalanuvchida urinish saqlanadi va
+    progressga yoziladi, mehmonda esa javob qaytadi-yu, hech narsa qolmaydi.
     """
     lesson = _get_lesson(slug, lesson_slug)
     questions = list(lesson.quiz_questions.all())
@@ -308,27 +312,30 @@ def lesson_quiz_submit(request, slug: str, lesson_slug: str):
     total = len(questions)
     passed = progress_service.quiz_passed(score, total)
 
-    QuizAttempt.objects.create(
-        user=request.user,
-        lesson=lesson,
-        answers={str(key): value for key, value in answers.items()},
-        score=score,
-        total=total,
-        is_passed=passed,
-    )
+    is_completed = False
+    if request.user.is_authenticated:
+        QuizAttempt.objects.create(
+            user=request.user,
+            lesson=lesson,
+            answers={str(key): value for key, value in answers.items()},
+            score=score,
+            total=total,
+            is_passed=passed,
+        )
 
-    row = progress_service.ensure_progress(request.user, lesson)
-    changed = ["updated_at"]
-    if score > row.quiz_best_score or row.quiz_total != total:
-        row.quiz_best_score = max(row.quiz_best_score, score)
-        row.quiz_total = total
-        changed += ["quiz_best_score", "quiz_total"]
-    if passed and row.quiz_passed_at is None:
-        row.quiz_passed_at = timezone.now()
-        changed.append("quiz_passed_at")
-    row.save(update_fields=changed)
+        row = progress_service.ensure_progress(request.user, lesson)
+        changed = ["updated_at"]
+        if score > row.quiz_best_score or row.quiz_total != total:
+            row.quiz_best_score = max(row.quiz_best_score, score)
+            row.quiz_total = total
+            changed += ["quiz_best_score", "quiz_total"]
+        if passed and row.quiz_passed_at is None:
+            row.quiz_passed_at = timezone.now()
+            changed.append("quiz_passed_at")
+        row.save(update_fields=changed)
 
-    row = progress_service.sync_lesson(request.user, lesson)
+        row = progress_service.sync_lesson(request.user, lesson)
+        is_completed = row.completed_at is not None
 
     return Response(
         {
@@ -338,7 +345,9 @@ def lesson_quiz_submit(request, slug: str, lesson_slug: str):
             "is_passed": passed,
             "pass_percent": progress_service.QUIZ_PASS_PERCENT,
             "results": rows,
-            "is_completed": row.completed_at is not None,
+            "is_completed": is_completed,
+            # Mehmonga natija saqlanmaganini interfeys shu bayroq bilan aytadi
+            "is_saved": request.user.is_authenticated,
         }
     )
 
@@ -347,10 +356,17 @@ def lesson_quiz_submit(request, slug: str, lesson_slug: str):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 @throttle_classes([CourseRunThrottle])
 def snippet_run(request):
-    """`POST /api/courses/run/` — «Sinab ko'rish»: misol kodini bajaradi."""
+    """`POST /api/courses/run/` — «Sinab ko'rish»: misol kodini bajaradi.
+
+    Hisob TALAB QILINMAYDI. Darslikda misolni o'zgartirib ko'rish — o'qishning
+    bir qismi, ro'yxatdan o'tish esa unga to'siq bo'lardi: mehmon kodni
+    ishlatib ko'rmaguncha bu sayt nima berishini bilmaydi. Hech narsa
+    saqlanmaydi, shuning uchun progressga ham aloqasi yo'q. Tez-tez
+    chaqirishdan `CourseRunThrottle` himoya qiladi (mehmonlar IP bo'yicha).
+    """
     serializer = SnippetRunSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
@@ -379,10 +395,16 @@ def _get_exercise(pk) -> Exercise:
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 @throttle_classes([CourseRunThrottle])
 def exercise_run(request, pk):
-    """`POST /api/courses/exercises/<id>/run/` — faqat ochiq testlar, natija saqlanmaydi."""
+    """`POST /api/courses/exercises/<id>/run/` — faqat ochiq testlar, natija saqlanmaydi.
+
+    `snippet_run` kabi mehmonga ham ochiq: bu yerda faqat NAMUNA testlar
+    ishlaydi (ular sahifada allaqachon ko'rinib turibdi) va hech qanday
+    yozuv qoldirmaydi. Ball va progress `submit` da beriladi — o'sha yerda
+    hisob talab qilinadi.
+    """
     exercise = _get_exercise(pk)
     serializer = ExerciseRunSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)

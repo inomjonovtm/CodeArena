@@ -7,12 +7,15 @@ bajarilmaguncha «tugallandi» bo'lib qolmasligi.
 """
 from __future__ import annotations
 
+from unittest.mock import patch
+
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.courses import progress as progress_service
+from apps.courses import views
 from apps.courses.models import (
     Course,
     Enrollment,
@@ -24,6 +27,7 @@ from apps.courses.models import (
     LessonProgress,
     Module,
     PublishStatus,
+    QuizAttempt,
     QuizQuestion,
 )
 
@@ -90,13 +94,20 @@ class QuizTests(APITestCase):
         self.assertNotIn("correct_index", payload)
         self.assertNotIn("explanation_uz", payload)
 
-    def test_quiz_requires_authentication(self):
+    def test_mehmon_testni_topshira_oladi_lekin_saqlanmaydi(self):
+        """O'zini tekshirish — darslikning bir qismi, hisob esa faqat
+        natijani saqlash uchun kerak."""
         response = self.client.post(
             "/api/courses/test-kurs/lessons/mavzu/quiz/",
             {"answers": {str(self.question.id): 1}},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["is_passed"])
+        # Javob ko'rsatiladi, lekin hech qanday iz qoldirmaydi
+        self.assertFalse(response.data["is_saved"])
+        self.assertEqual(QuizAttempt.objects.count(), 0)
+        self.assertEqual(LessonProgress.objects.count(), 0)
 
     def test_passing_quiz_records_progress(self):
         self.client.force_authenticate(self.user)
@@ -168,9 +179,27 @@ class ExerciseVisibilityTests(APITestCase):
         self.assertTrue(payload["is_solved"])
         self.assertEqual(payload["solution_code"], "print(3)")
 
-    def test_run_requires_authentication(self):
+    def test_mehmon_kodni_ishga_tushira_oladi(self):
+        """«Ishga tushirish» faqat NAMUNA testlarda ishlaydi va hech narsa
+        saqlamaydi — shuning uchun hisob talab qilinmaydi. Ilgari bu yerda
+        401 turardi va mehmonga kod muharriri umuman ko'rsatilmasdi."""
+        with patch.object(views.grading, "run_tests", return_value={"results": [], "passed": 0,
+                                                                    "total": 0, "all_passed": True,
+                                                                    "status": "ACCEPTED"}):
+            response = self.client.post(
+                f"/api/courses/exercises/{self.exercise.id}/run/",
+                {"code": "print(3)"},
+                format="json",
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(ExerciseAttempt.objects.count(), 0)
+
+    def test_mehmon_topshira_olmaydi(self):
+        """`submit` ball beradi va progressga yozadi — bu yerda hisob shart."""
         response = self.client.post(
-            f"/api/courses/exercises/{self.exercise.id}/run/", {"code": "print(3)"}, format="json"
+            f"/api/courses/exercises/{self.exercise.id}/submit/",
+            {"code": "print(3)"},
+            format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 

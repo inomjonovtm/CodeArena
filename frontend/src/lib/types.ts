@@ -1617,6 +1617,8 @@ export interface QuizResult {
   pass_percent: number;
   results: QuizAnswerResult[];
   is_completed: boolean;
+  /** Mehmon topshirsa `false` — javob ko'rsatiladi, lekin progressga yozilmaydi. */
+  is_saved: boolean;
 }
 
 export interface MyCourseRow {

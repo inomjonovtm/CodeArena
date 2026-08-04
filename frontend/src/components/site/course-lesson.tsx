@@ -78,20 +78,27 @@ function Console({
   );
 }
 
-/** Kod bajarish uchun hisob kerakligini bildiruvchi blok. */
-function LoginNeeded({ what }: { what: string }) {
+/**
+ * Natija SAQLANMASLIGI haqidagi eslatma.
+ *
+ * Ilgari bu yerda «Kirish talab qilinadi» degan to'siq turardi va mehmonga
+ * kod muharriri umuman ko'rsatilmasdi — ya'ni sayt nima berishini ko'rish
+ * uchun avval ro'yxatdan o'tish kerak edi. Endi kod yozish ham, ishga
+ * tushirish ham hammaga ochiq; hisob faqat NATIJANI saqlash uchun kerak,
+ * shuning uchun bu blok to'sib qo'ymaydi — chetda turib eslatadi.
+ */
+function ProgressNote({ what }: { what: string }) {
   return (
     <Alert
       tone="info"
-      title="Kirish talab qilinadi"
       action={
         <LinkButton href="/login" size="sm" variant="brand-soft">
           Kirish
         </LinkButton>
       }
     >
-      {what} uchun hisobingizga kiring — kod serverda bajariladi va natija sizning
-      progressingizga yoziladi.
+      {what} bemalol sinab ko&apos;ring. Natija progressingizga yozilishi va ball
+      olish uchun hisobingizga kiring.
     </Alert>
   );
 }
@@ -105,7 +112,6 @@ function LoginNeeded({ what }: { what: string }) {
    ========================================================================== */
 
 export function ExampleBlock({ example, index }: { example: CourseExample; index: number }) {
-  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState(example.code);
   const [stdin, setStdin] = useState("");
@@ -171,8 +177,6 @@ export function ExampleBlock({ example, index }: { example: CourseExample; index
       {/* --------------------------------------------- interaktiv maydon */}
       {open ? (
         <div className="flex flex-col gap-4 border-t border-[var(--edge)] bg-[var(--pane-sunken)] p-5">
-          {user ? (
-            <>
               <div>
                 <p className="t-eyebrow mb-2">Kodni o&apos;zgartiring va bajaring</p>
                 <CodeEditor
@@ -244,10 +248,6 @@ export function ExampleBlock({ example, index }: { example: CourseExample; index
                   {result.compile_output || result.stderr || result.stdout || "(chiqish bo'sh)"}
                 </Console>
               ) : null}
-            </>
-          ) : (
-            <LoginNeeded what="Misolni o'zgartirib ishga tushirish" />
-          )}
         </div>
       ) : null}
     </Pane>
@@ -285,8 +285,13 @@ export function QuizBlock({
     onSuccess: (data) => {
       setResult(data);
       if (data.is_passed) {
-        toast.success("Test topshirildi", `${data.score}/${data.total} to'g'ri javob`);
-        onCompleted();
+        toast.success(
+          "Test topshirildi",
+          data.is_saved
+            ? `${data.score}/${data.total} to'g'ri javob`
+            : `${data.score}/${data.total} to'g'ri — natija saqlanmadi, kiring`,
+        );
+        if (data.is_saved) onCompleted();
       } else {
         toast.info("Yana urinib ko'ring", `${data.score}/${data.total} — o'tish uchun ${data.pass_percent}% kerak`);
       }
@@ -323,7 +328,7 @@ export function QuizBlock({
 
       {!user ? (
         <div className="mt-5">
-          <LoginNeeded what="Testni topshirish" />
+          <ProgressNote what="Testni" />
         </div>
       ) : null}
 
@@ -433,13 +438,13 @@ export function QuizBlock({
             variant="primary"
             icon={<Send className="size-4" />}
             loading={submit.isPending}
-            disabled={!user || !answeredAll}
+            disabled={!answeredAll}
             onClick={() => submit.mutate()}
           >
             Javoblarni tekshirish
           </Button>
         )}
-        {!result && user && !answeredAll ? (
+        {!result && !answeredAll ? (
           <span className="t-meta text-[var(--ink-4)]">
             Barcha savolga javob bering ({Object.keys(answers).length}/{questions.length})
           </span>
@@ -581,8 +586,6 @@ export function ExerciseBlock({
 
       {/* ------------------------------------------------------- muharrir */}
       <div className="flex flex-col gap-4 border-t border-[var(--edge)] p-6">
-        {user ? (
-          <>
             <CodeEditor
               value={code}
               onChange={setCode}
@@ -602,16 +605,30 @@ export function ExerciseBlock({
               >
                 Ishga tushirish
               </Button>
-              <Button
-                size="sm"
-                variant="primary"
-                icon={<Send className="size-3.5" />}
-                loading={submit.isPending}
-                disabled={busy}
-                onClick={() => submit.mutate()}
-              >
-                Topshirish
-              </Button>
+              {/* Topshirish natijani SAQLAYDI — bu yagona joyda hisob kerak.
+                  Mehmonga tugmani o'chirib qo'yish o'rniga to'g'ridan-to'g'ri
+                  kirish sahifasiga havola beriladi: bosish behuda ketmaydi. */}
+              {user ? (
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={<Send className="size-3.5" />}
+                  loading={submit.isPending}
+                  disabled={busy}
+                  onClick={() => submit.mutate()}
+                >
+                  Topshirish
+                </Button>
+              ) : (
+                <LinkButton
+                  href="/login"
+                  size="sm"
+                  variant="primary"
+                  icon={<Send className="size-3.5" />}
+                >
+                  Topshirish uchun kiring
+                </LinkButton>
+              )}
               <Button
                 size="sm"
                 variant="ghost"
@@ -745,10 +762,8 @@ export function ExerciseBlock({
                 />
               </div>
             ) : null}
-          </>
-        ) : (
-          <LoginNeeded what="Topshiriqni bajarish" />
-        )}
+
+            {!user ? <ProgressNote what="Topshiriqni" /> : null}
       </div>
     </Pane>
   );
