@@ -19,4 +19,4 @@ sentry-sdk[django]>=2.20,<3.0
 
 # Media fayllarni S3/R2 da saqlash. MEDIA_STORAGE=s3 bo'lmasa ishlatilmaydi,
 # lekin `check --deploy` importni sinab ko'radi, shuning uchun ro'yxatda.
-django-storages[s3]>=1.14
+django-storages[s3]>=1.14.6
