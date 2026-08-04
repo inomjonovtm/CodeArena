@@ -485,8 +485,15 @@ celery -A config beat -l info
 
 # Frontend
 npm run dev          # ishlab chiqish
-npm run build        # produksiya build
+npm run build        # produksiya build (`.next`)
+npm run build:check  # tekshiruv buildi (`.next-check`) — dev serverga tegmaydi
 npm run typecheck    # TypeScript tekshiruvi
 npm run lint         # ESLint
 npm test             # Vitest
 ```
+
+> **Dev server ishlab turganda `npm run build` QILMANG.** Ikkalasi bitta `.next`
+> katalogiga yozadi: build serverning chunk'larini almashtiradi va sayt darhol
+> `Cannot find module './5611.js'` deb 500 qaytara boshlaydi. Jarayon eski modul
+> xaritasini xotirada saqlagani uchun buni faqat qayta ishga tushirish tuzatadi.
+> Tekshirish uchun `npm run build:check` ishlating — u alohida katalogga yig'adi.

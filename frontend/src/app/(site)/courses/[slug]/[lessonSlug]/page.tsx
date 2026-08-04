@@ -30,8 +30,8 @@ import {
 } from "@/components/kit";
 import { useAuth } from "@/components/providers";
 import { ExampleBlock, ExerciseBlock, QuizBlock } from "@/components/site/course-lesson";
+import { LessonReader } from "@/components/site/lesson-reader";
 import { LessonTabs, type LessonTab } from "@/components/site/lesson-tabs";
-import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
 import { publicApi } from "@/lib/public-api";
 import type { CourseLanguage } from "@/lib/types";
@@ -43,7 +43,14 @@ const LANGUAGE_LABEL: Record<CourseLanguage, string> = {
   cpp: "C++",
 };
 
-type TabKey = "theory" | "examples" | "quiz" | "exercises";
+/**
+ * Bo'limlar: DARSLIK (nazariya + misollar) · TEST · TOPSHIRIQLAR.
+ *
+ * Misollar ataylab alohida bo'lim EMAS. Ular nazariyaning davomi: matn nimani
+ * tushuntirsa, misol o'shani ishlab ko'rsatadi. Alohida qo'yilganda o'quvchi
+ * bir xil mavzuni ikki marta, ikki joyda o'qishga majbur bo'lardi.
+ */
+type TabKey = "lesson" | "quiz" | "exercises";
 
 /**
  * Mavzu «o'qildi» deb NAZARIYA OXIRIGA yetganda belgilanadi.
@@ -85,7 +92,7 @@ export default function LessonPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [justCompleted, setJustCompleted] = useState(false);
-  const [tab, setTab] = useState<TabKey>("theory");
+  const [tab, setTab] = useState<TabKey>("lesson");
 
   // Bo'lim almashganda kontent tepasiga qaytariladi — aks holda uzun
   // nazariyadan keyin topshiriqqa o'tilganda sahifa o'rtasida qolib ketardi.
@@ -136,13 +143,13 @@ export default function LessonPage() {
   const alreadyRead = lesson?.my_state?.is_read ?? false;
 
   const sentinel = useMarkReadOnScroll(
-    Boolean(user) && Boolean(lesson) && !alreadyRead && tab === "theory",
+    Boolean(user) && Boolean(lesson) && !alreadyRead && tab === "lesson",
     () => markRead.mutate(),
   );
 
   // Yangi mavzuga o'tilganda birinchi bo'limdan boshlanadi
   useEffect(() => {
-    setTab("theory");
+    setTab("lesson");
     setJustCompleted(false);
   }, [lessonSlug]);
 
@@ -156,20 +163,12 @@ export default function LessonPage() {
     const state = lesson.my_state;
     const rows: LessonTab[] = [
       {
-        key: "theory",
-        label: "Nazariya",
+        key: "lesson",
+        label: "Darslik",
         icon: <BookOpen className="size-4" />,
         done: alreadyRead,
       },
     ];
-    if (lesson.examples.length) {
-      rows.push({
-        key: "examples",
-        label: "Misollar",
-        icon: <Code2 className="size-4" />,
-        count: lesson.examples.length,
-      });
-    }
     if (lesson.quiz_questions.length) {
       rows.push({
         key: "quiz",
@@ -223,6 +222,11 @@ export default function LessonPage() {
       ? [`${lesson.exercises.length - solvedExercises} ta topshiriq`]
       : []),
   ];
+
+  // Mavzuning kurs ichidagi o'rni — «qanchasi qoldi» degan savolga javob.
+  // Kurs so'rovi kelmaguncha ko'rsatilmaydi (noto'g'ri raqamdan ko'ra yo'qroq).
+  const flatLessons = (courseQuery.data?.modules ?? []).flatMap((module) => module.lessons);
+  const position = flatLessons.findIndex((row) => row.slug === lessonSlug);
 
   const tabIndex = Math.max(0, tabs.findIndex((row) => row.key === tab));
   const previousTab = tabs[tabIndex - 1];
@@ -342,7 +346,17 @@ export default function LessonPage() {
         <div className="flex min-w-0 flex-col gap-6">
           {/* --------------------------------------------------- sarlavha */}
           <header>
-            <p className="t-eyebrow">{lesson.module_title}</p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <p className="t-eyebrow">{lesson.module_title}</p>
+              {position >= 0 ? (
+                <>
+                  <span aria-hidden className="h-px w-4 bg-[var(--edge-strong)]" />
+                  <p className="t-eyebrow text-[var(--ink-4)]">
+                    <span className="t-num">{position + 1}</span> / {flatLessons.length} mavzu
+                  </p>
+                </>
+              ) : null}
+            </div>
             <h1 className="t-title mt-3 text-[var(--ink)]">{lesson.title_uz}</h1>
             {lesson.summary_uz ? (
               <p className="t-body mt-3 text-[var(--ink-3)]">{lesson.summary_uz}</p>
@@ -372,7 +386,7 @@ export default function LessonPage() {
           </div>
 
           {/* Til bajarilmasa — ogohlantirish kod bo'limlarining tepasida */}
-          {languageOff && (tab === "examples" || tab === "exercises") ? (
+          {languageOff && tab !== "quiz" ? (
             <Alert tone="warn" title="Kod hozircha bajarilmaydi">
               Serverda <strong>{LANGUAGE_LABEL[lesson.course_language]}</strong> uchun muhit
               sozlanmagan, shuning uchun kodni ishga tushirish xato qaytaradi. Nazariya,
@@ -380,38 +394,54 @@ export default function LessonPage() {
             </Alert>
           ) : null}
 
-          {/* --------------------------------------------------- nazariya */}
-          {tab === "theory" ? (
+          {/* ------------------------------------------ darslik: nazariya + misollar
+              Misollar nazariyadan keyin, lekin O'SHA oqimda: sarlavha ostidagi
+              chiziq ularni ajratadi, alohida bo'lim qilmaydi. */}
+          {tab === "lesson" ? (
             <section className="enter">
               {lesson.content_md ? (
                 <article>
-                  <Markdown source={lesson.content_md} />
+                  <LessonReader
+                    source={lesson.content_md}
+                    language={lesson.course_language}
+                  />
                 </article>
-              ) : (
+              ) : lesson.examples.length ? null : (
                 <Pane tone="solid" inset="none">
                   <Empty
                     compact
                     icon={<BookOpen className="size-5" />}
-                    title="Bu mavzuda nazariya matni yo'q"
-                    description="To'g'ridan-to'g'ri misollar va topshiriqlarga o'ting."
+                    title="Bu mavzuda darslik matni yo'q"
+                    description="To'g'ridan-to'g'ri test va topshiriqlarga o'ting."
                   />
                 </Pane>
               )}
-              {/* Nazariya tugagan nuqta — «o'qildi» shu yerda belgilanadi */}
-              <div ref={sentinel} aria-hidden className="h-px" />
-            </section>
-          ) : null}
 
-          {/* --------------------------------------------------- misollar */}
-          {tab === "examples" ? (
-            <section className="enter flex flex-col gap-5">
-              <p className="t-meta text-[var(--ink-3)]">
-                Har bir misolni o&apos;zgartirib, shu yerning o&apos;zida ishga tushirishingiz
-                mumkin — hisob talab qilinmaydi.
-              </p>
-              {lesson.examples.map((example, index) => (
-                <ExampleBlock key={example.id} example={example} index={index} />
-              ))}
+              {lesson.examples.length ? (
+                <div className={cn(lesson.content_md && "mt-10")}>
+                  <div className="mb-6 border-b border-[var(--edge)] pb-4">
+                    <p className="t-eyebrow flex items-center gap-2">
+                      <Code2 className="size-3.5" />
+                      Misollar
+                    </p>
+                    <h2 className="t-section mt-2 text-[var(--ink)]">
+                      Tayyor kodni o&apos;zgartirib ko&apos;ring
+                    </h2>
+                    <p className="t-meta mt-1.5 text-[var(--ink-3)]">
+                      Har birini shu yerning o&apos;zida ishga tushirish mumkin — hisob
+                      talab qilinmaydi.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-5">
+                    {lesson.examples.map((example, index) => (
+                      <ExampleBlock key={example.id} example={example} index={index} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {/* Darslik tugagan nuqta — «o'qildi» shu yerda belgilanadi */}
+              <div ref={sentinel} aria-hidden className="h-px" />
             </section>
           ) : null}
 
