@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: CodeQL'ni tayyorlash
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4.37.4
         with:
           language: ${{ matrix.language }}
           # `security-and-quality` xavfsizlikdan tashqari sifat qoidalarini
@@ -51,6 +51,6 @@ jobs:
           queries: security-and-quality
 
       - name: Tahlil
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4.37.4
         with:
           category: /language:${{ matrix.language }}
