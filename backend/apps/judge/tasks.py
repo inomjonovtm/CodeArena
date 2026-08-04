@@ -54,7 +54,7 @@ def judge_submission(self, submission_id: str) -> str:
             time_limit_ms=max(tc.effective_time_limit for tc in test_cases),
             memory_limit_kb=max(tc.effective_memory_limit for tc in test_cases),
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.exception("Judge xatosi: %s", exc)
         submission.status = SubmissionStatus.SYSTEM_ERROR
         submission.error_message = "Judge xizmatiga ulanib bo'lmadi."
@@ -69,7 +69,19 @@ def judge_submission(self, submission_id: str) -> str:
         submission.save(update_fields=["status", "error_message", "judged_at"])
         return "no-backend"
 
-    _apply_results(submission, test_cases, results)
+    try:
+        _apply_results(submission, test_cases, results)
+    except Exception as exc:
+        # Natijalarni yozishda xato bo'lsa (masalan natijalar soni testlar
+        # soniga mos kelmasa yoki baza uzilsa), submission JUDGING holatida
+        # ABADIY qolib ketardi va foydalanuvchi javob kutib o'tirardi.
+        logger.exception("Natijalarni yozib bo'lmadi: %s", exc)
+        submission.status = SubmissionStatus.SYSTEM_ERROR
+        submission.error_message = "Natijalarni saqlashda xatolik yuz berdi."
+        submission.judged_at = timezone.now()
+        submission.save(update_fields=["status", "error_message", "judged_at"])
+        return "apply-error"
+
     return submission.status
 
 
@@ -86,7 +98,9 @@ def _apply_results(submission: Submission, test_cases, results) -> None:
     compile_output = ""
 
     rows = []
-    for index, (tc, result) in enumerate(zip(test_cases, results), start=1):
+    # `strict=True` — `engine.execute` uzunliklar tengligini kafolatlaydi;
+    # kafolat buzilsa jimgina qisqartirish o'rniga xato ko'tarilsin.
+    for index, (tc, result) in enumerate(zip(test_cases, results, strict=True), start=1):
         rows.append(
             SubmissionTestResult(
                 submission=submission,
@@ -159,7 +173,7 @@ def _update_counters(submission: Submission) -> None:
     # saqlaydi va hisoblagichlarni qayta hisoblash mos keladi.
     awarded = problem.points if submission.is_practice else 0
 
-    solved, created = SolvedProblem.objects.get_or_create(
+    _solved, created = SolvedProblem.objects.get_or_create(
         user=user, problem=problem, defaults={"points_awarded": awarded}
     )
     if created:

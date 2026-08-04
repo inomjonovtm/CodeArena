@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
-import { useAuth, useI18n } from "@/components/providers";
+import { useAuth } from "@/components/providers";
 import { publicApi } from "@/lib/public-api";
 import { isElite, rankChipStyle, rankName, ringStyle, ringWidth } from "@/lib/rank";
 import type { RankInfo } from "@/lib/types";

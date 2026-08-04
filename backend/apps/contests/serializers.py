@@ -3,10 +3,10 @@ from __future__ import annotations
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.core.serializer_fields import RankField
 from apps.core.utils import unique_slug
 from apps.problems.models import Problem
 
-from apps.core.serializer_fields import RankField
 from .models import Contest, ContestParticipant, ContestProblem
 
 
@@ -33,8 +33,15 @@ class ContestProblemSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContestProblem
         fields = (
-            "id", "contest", "problem", "problem_title", "problem_slug",
-            "problem_difficulty", "order", "label", "points",
+            "id",
+            "contest",
+            "problem",
+            "problem_title",
+            "problem_slug",
+            "problem_difficulty",
+            "order",
+            "label",
+            "points",
         )
         extra_kwargs = {"contest": {"required": False}}
 
@@ -62,10 +69,24 @@ class ContestListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contest
         fields = (
-            "id", "slug", "title_uz", "title_en", "start_time", "end_time",
-            "duration_minutes", "status", "computed_status", "visibility",
-            "is_rated", "is_virtual_allowed", "problem_count", "participant_count",
-            "created_by_username", "ratings_applied_at", "plagiarism_checked_at", "created_at",
+            "id",
+            "slug",
+            "title_uz",
+            "title_en",
+            "start_time",
+            "end_time",
+            "duration_minutes",
+            "status",
+            "computed_status",
+            "visibility",
+            "is_rated",
+            "is_virtual_allowed",
+            "problem_count",
+            "participant_count",
+            "created_by_username",
+            "ratings_applied_at",
+            "plagiarism_checked_at",
+            "created_at",
         )
 
 
@@ -78,12 +99,31 @@ class ContestDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contest
         fields = (
-            "id", "slug", "title_uz", "title_en", "description_uz", "description_en",
-            "start_time", "end_time", "duration_minutes", "status", "computed_status",
-            "visibility", "access_password", "is_rated", "is_virtual_allowed",
-            "max_participants", "rating_k_new", "rating_k_experienced",
-            "plagiarism_checked_at", "ratings_applied_at", "created_by_username",
-            "participant_count", "contest_problems", "created_at", "updated_at",
+            "id",
+            "slug",
+            "title_uz",
+            "title_en",
+            "description_uz",
+            "description_en",
+            "start_time",
+            "end_time",
+            "duration_minutes",
+            "status",
+            "computed_status",
+            "visibility",
+            "access_password",
+            "is_rated",
+            "is_virtual_allowed",
+            "max_participants",
+            "rating_k_new",
+            "rating_k_experienced",
+            "plagiarism_checked_at",
+            "ratings_applied_at",
+            "created_by_username",
+            "participant_count",
+            "contest_problems",
+            "created_at",
+            "updated_at",
         )
         read_only_fields = ("id", "created_at", "updated_at", "plagiarism_checked_at", "ratings_applied_at")
         extra_kwargs = {"slug": {"required": False, "allow_blank": True}}
@@ -151,10 +191,26 @@ class ContestParticipantSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContestParticipant
         fields = (
-            "id", "contest", "user", "username", "full_name", "avatar_url", "country", "user_rank",
-            "rank", "score", "penalty", "solved_count", "rating_before", "rating_after",
-            "rating_change", "is_virtual", "is_disqualified", "disqualify_reason",
-            "started_at", "created_at",
+            "id",
+            "contest",
+            "user",
+            "username",
+            "full_name",
+            "avatar_url",
+            "country",
+            "user_rank",
+            "rank",
+            "score",
+            "penalty",
+            "solved_count",
+            "rating_before",
+            "rating_after",
+            "rating_change",
+            "is_virtual",
+            "is_disqualified",
+            "disqualify_reason",
+            "started_at",
+            "created_at",
         )
         read_only_fields = ("id", "created_at")
 
@@ -171,9 +227,20 @@ class PublicContestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contest
         fields = (
-            "id", "slug", "title_uz", "title_en", "description_uz", "description_en",
-            "start_time", "end_time", "duration_minutes", "computed_status",
-            "is_rated", "is_virtual_allowed", "problem_count", "participant_count",
+            "id",
+            "slug",
+            "title_uz",
+            "title_en",
+            "description_uz",
+            "description_en",
+            "start_time",
+            "end_time",
+            "duration_minutes",
+            "computed_status",
+            "is_rated",
+            "is_virtual_allowed",
+            "problem_count",
+            "participant_count",
         )
 
 
@@ -186,9 +253,14 @@ class PublicContestDetailSerializer(PublicContestSerializer):
     requires_password = serializers.SerializerMethodField()
 
     class Meta(PublicContestSerializer.Meta):
-        fields = PublicContestSerializer.Meta.fields + (
-            "max_participants", "ratings_applied_at",
-            "my_participation", "can_see_problems", "server_time", "requires_password",
+        fields = (
+            *PublicContestSerializer.Meta.fields,
+            "max_participants",
+            "ratings_applied_at",
+            "my_participation",
+            "can_see_problems",
+            "server_time",
+            "requires_password",
         )
 
     def _user(self):

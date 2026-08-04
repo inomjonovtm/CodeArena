@@ -44,7 +44,7 @@ import {
   inputClass,
   textareaClass,
 } from "@/components/kit";
-import { useAuth, useI18n, useTheme, useToast } from "@/components/providers";
+import { useAuth, useTheme, useToast } from "@/components/providers";
 import type { ThemeMode } from "@/components/providers/theme-provider";
 import { usePush } from "@/hooks/use-push";
 import { useSiteSettings } from "@/hooks/use-site-settings";

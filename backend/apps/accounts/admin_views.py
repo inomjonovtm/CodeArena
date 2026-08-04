@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import django_filters as filters
-from django.db.models import Count, Q
+from django.db.models import Count
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -13,7 +13,6 @@ from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
 from apps.core.permissions import HasResourcePerm, IsStaff
 
 from .models import AdminSession, Role, User
-from .sessions import revoke_queryset
 from .serializers import (
     AdjustRatingSerializer,
     AdminUserCreateSerializer,
@@ -22,6 +21,7 @@ from .serializers import (
     BanSerializer,
     RoleChangeSerializer,
 )
+from .sessions import revoke_queryset
 
 
 def _rank_breakdown(queryset) -> list[dict]:

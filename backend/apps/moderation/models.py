@@ -278,6 +278,9 @@ class BackupRecord(TimeStampedModel):
         choices=[("full", "To'liq"), ("data", "Faqat ma'lumot")],
         default="data",
     )
+    # Rejaga ko'ra (celery beat) olinganmi yoki admin tugma bosganmi.
+    # Tungi zaxira uzilib qolganini ro'yxatga qarab darrov ko'rish uchun.
+    is_automatic = models.BooleanField(default=False)
     note = models.CharField(max_length=255, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True,

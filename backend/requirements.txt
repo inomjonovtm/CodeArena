@@ -13,3 +13,10 @@ python-dotenv>=1.0
 gunicorn>=23.0; sys_platform != "win32"
 whitenoise>=6.8
 pywebpush>=2.0
+
+# Xatolarni kuzatish. SENTRY_DSN bo'sh bo'lsa umuman ishga tushmaydi.
+sentry-sdk[django]>=2.20,<3.0
+
+# Media fayllarni S3/R2 da saqlash. MEDIA_STORAGE=s3 bo'lmasa ishlatilmaydi,
+# lekin `check --deploy` importni sinab ko'radi, shuning uchun ro'yxatda.
+django-storages[s3]>=1.14

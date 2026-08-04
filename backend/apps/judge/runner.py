@@ -97,8 +97,41 @@ LANGUAGES: dict[str, LanguageSpec] = {
 }
 
 
+def _extra_bin_dirs() -> list[str]:
+    """`JUDGE_BIN_DIRS` sozlamasidagi qo'shimcha kataloglar.
+
+    Kompilyator PATH'da bo'lmasligi mumkin: Windowsda MinGW odatda alohida
+    katalogga o'rnatiladi va uni tizim PATH'iga qo'shish serverni qayta
+    ishga tushirishni talab qiladi. Shu sozlama bilan yo'l loyihaning
+    `.env` faylida qoladi — mashina sozlamalariga tegilmaydi.
+    (`PG_BIN_DIR` bilan bir xil yondashuv.)
+    """
+    raw = getattr(settings, "JUDGE_BIN_DIRS", "") or ""
+    return [part.strip() for part in raw.split(os.pathsep) if part.strip()]
+
+
+def _search_path() -> str:
+    """Dastur qidiriladigan yo'l: qo'shimcha kataloglar + tizim `PATH`."""
+    dirs = _extra_bin_dirs()
+    current = os.environ.get("PATH", "")
+    return os.pathsep.join([*dirs, current]) if dirs else current
+
+
+def _which(program: str) -> str | None:
+    return shutil.which(program, path=_search_path())
+
+
 def _resolve(cmd: list[str], src: str, exe: str) -> list[str]:
-    return [part.replace("{src}", src).replace("{exe}", exe) for part in cmd]
+    parts = [part.replace("{src}", src).replace("{exe}", exe) for part in cmd]
+    # Birinchi element — bajariladigan dastur. Uni TO'LIQ yo'lga aylantiramiz:
+    # `subprocess` bolaga berilgan `env["PATH"]` ni dasturni qidirishda
+    # ishlatmaydi (Windowsda ota-jarayonning PATH'i olinadi), shuning uchun
+    # qo'shimcha katalogdagi kompilyator aks holda topilmasdi.
+    if parts:
+        resolved = _which(parts[0])
+        if resolved:
+            parts[0] = resolved
+    return parts
 
 
 def _clip(text: str | None) -> str:
@@ -127,7 +160,7 @@ def available_languages() -> dict[str, bool]:
     """Qaysi tillar shu mashinada ishlay oladi."""
     result = {}
     for key, spec in LANGUAGES.items():
-        result[key] = all(shutil.which(probe) is not None for probe in spec.probes)
+        result[key] = all(_which(probe) is not None for probe in spec.probes)
     return result
 
 
@@ -140,7 +173,7 @@ def _limits_preexec(memory_limit_kb: int, time_limit_ms: int):
     if os.name != "posix":
         return None
 
-    import resource  # noqa: PLC0415 — faqat POSIX'da mavjud
+    import resource
 
     cpu_seconds = max(1, int(time_limit_ms / 1000) + 1)
     address_space = max(64, memory_limit_kb) * 1024
@@ -160,6 +193,9 @@ def _child_env() -> dict[str, str]:
     """Sirlarsiz minimal muhit."""
     keep = {"PATH", "SYSTEMROOT", "COMSPEC", "TEMP", "TMP", "WINDIR", "PATHEXT", "LANG", "LC_ALL"}
     env = {key: value for key, value in os.environ.items() if key in keep}
+    # Kompilyator kutubxonalari (masalan MinGW `libstdc++`) o'sha katalogda
+    # yotadi — bolaning PATH'i ularsiz qolsa, dastur ishga tushmaydi.
+    env["PATH"] = _search_path()
     env.setdefault("LANG", "C.UTF-8")
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONDONTWRITEBYTECODE"] = "1"
@@ -194,7 +230,7 @@ class LocalRunner:
     # -------------------------------------------------------------- tayyorlash
     def _prepare(self) -> None:
         assert self.workdir
-        missing = [probe for probe in self.spec.probes if shutil.which(probe) is None]
+        missing = [probe for probe in self.spec.probes if _which(probe) is None]
         if missing:
             self.setup_error = (
                 f"{self.spec.label} bu serverda o'rnatilmagan ({', '.join(missing)})."
@@ -258,7 +294,7 @@ class LocalRunner:
                 encoding="utf-8",
                 errors="replace",
                 timeout=timeout_sec,
-                preexec_fn=_limits_preexec(self.memory_limit_kb, self.time_limit_ms),  # noqa: PLW1509
+                preexec_fn=_limits_preexec(self.memory_limit_kb, self.time_limit_ms),
             )
         except subprocess.TimeoutExpired:
             return ExecutionResult(

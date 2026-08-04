@@ -7,11 +7,11 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.core import ranks
 from apps.core.exports import ExportMixin
 from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
-from apps.core.trash import SoftDeleteViewSetMixin
-from apps.core import ranks
 from apps.core.permissions import HasResourcePerm, IsStaff
+from apps.core.trash import SoftDeleteViewSetMixin
 
 from .models import Contest, ContestParticipant, ContestProblem, ContestStatus
 from .serializers import (

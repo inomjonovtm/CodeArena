@@ -114,12 +114,22 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           # `.env` fayllari nusxalanmaydi — ular faqat serverda turadi.
+          # `infra/certbot/{conf,www}` ham tegilmaydi: u yerda sertifikatlar
+          # yotadi va ular serverda yaratiladi.
+          ssh -i ~/.ssh/id_deploy -p "${PORT:-22}" "${USER}@${HOST}" \
+            "mkdir -p '${DEPLOY_PATH}/infra/nginx' '${DEPLOY_PATH}/infra/certbot'"
           scp -i ~/.ssh/id_deploy -P "${PORT:-22}" \
             docker-compose.prod.yml \
             "${USER}@${HOST}:${DEPLOY_PATH}/docker-compose.prod.yml"
           scp -i ~/.ssh/id_deploy -P "${PORT:-22}" \
-            infra/nginx.conf \
-            "${USER}@${HOST}:${DEPLOY_PATH}/infra/nginx.conf"
+            infra/nginx/app.conf infra/nginx/entrypoint.sh \
+            "${USER}@${HOST}:${DEPLOY_PATH}/infra/nginx/"
+          scp -i ~/.ssh/id_deploy -P "${PORT:-22}" \
+            infra/certbot/entrypoint.sh \
+            "${USER}@${HOST}:${DEPLOY_PATH}/infra/certbot/entrypoint.sh"
+          # `infra/judge0.conf` ATAYLAB nusxalanmaydi — undagi AUTHN_TOKEN
+          # serverda qo'lda qo'yiladi va repozitoriydagi namuna uni bosib
+          # ketardi (judge butunlay ishlamay qolardi).
 
       - name: Pull va qayta ishga tushirish
         env:
@@ -164,14 +174,29 @@ jobs:
             echo "DEPLOY_HEALTH_URL sozlanmagan, tekshiruv tashlab ketildi."
             exit 0
           fi
-          for attempt in $(seq 1 12); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$HEALTH_URL" || true)
+
+          # `/health/` faqat jarayon tirikligini bildiradi. Deploy'ni
+          # muvaffaqiyatli deb belgilashdan oldin baza, kesh va
+          # migratsiyalar ham tekshirilishi kerak — buni `/health/ready/`
+          # qiladi va nosozlikda 503 qaytaradi. Ilgari bunday tekshiruv
+          # yo'q edi: baza yiqilgan holatda ham deploy yashil bo'lardi.
+          READY_URL="${HEALTH_URL%/}"
+          case "$READY_URL" in
+            */health) READY_URL="${READY_URL}/ready/" ;;
+            *)        READY_URL="${READY_URL}/ready/" ;;
+          esac
+
+          for attempt in $(seq 1 18); do
+            code=$(curl -s -o /tmp/ready.json -w '%{http_code}' --max-time 10 "$READY_URL" || true)
             if [ "$code" = "200" ]; then
-              echo "Sayt javob berdi (200)."
+              echo "Sayt to'liq tayyor:"
+              cat /tmp/ready.json
               exit 0
             fi
-            echo "urinish ${attempt}/12, javob kodi: ${code}"
+            echo "urinish ${attempt}/18, javob kodi: ${code}"
+            [ -s /tmp/ready.json ] && cat /tmp/ready.json
             sleep 10
           done
-          echo "Sayt 2 daqiqada 200 qaytarmadi."
+
+          echo "Sayt 3 daqiqada tayyor holatga kelmadi."
           exit 1

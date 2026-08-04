@@ -635,7 +635,7 @@ export interface MediaFile {
 }
 
 // ----------------------------------------------------------------- savatcha
-export type TrashKind = "problem" | "contest" | "discussion" | "comment" | "group";
+export type TrashKind = "problem" | "contest" | "course" | "discussion" | "comment" | "group";
 
 export interface TrashRow {
   kind: TrashKind;
@@ -1432,6 +1432,343 @@ export interface GroupMemberRow {
   position?: number;
 }
 
+/* ================================================================ kurslar */
+
+export type CourseLanguage = "python" | "javascript" | "cpp";
+export type CourseLevel = "beginner" | "intermediate" | "advanced";
+
+/** Katalogda va kurs sahifasida ko'rinadigan shaxsiy holat. */
+export interface CourseProgress {
+  is_enrolled: boolean;
+  completed_lessons: number;
+  points_earned: number;
+  completed_at: string | null;
+  last_lesson_slug: string | null;
+}
+
+export interface LessonState {
+  is_read: boolean;
+  is_completed: boolean;
+  quiz_best_score: number;
+  quiz_total: number;
+  quiz_passed: boolean;
+  exercises_solved: number;
+}
+
+export interface PublicCourseCard {
+  id: string;
+  slug: string;
+  title_uz: string;
+  subtitle_uz: string;
+  language: CourseLanguage;
+  level: CourseLevel;
+  badge: string;
+  accent_color: string;
+  estimated_hours: number;
+  is_featured: boolean;
+  lesson_count: number;
+  module_count: number;
+  exercise_count: number;
+  my_progress: CourseProgress | null;
+}
+
+export interface PublicLessonNode {
+  id: string;
+  slug: string;
+  title_uz: string;
+  summary_uz: string;
+  order: number;
+  points: number;
+  estimated_minutes: number;
+  exercise_count: number;
+  quiz_count: number;
+  my_state: LessonState | null;
+}
+
+export interface PublicCourseModule {
+  id: string;
+  slug: string;
+  title_uz: string;
+  summary_uz: string;
+  order: number;
+  lessons: PublicLessonNode[];
+}
+
+export interface PublicCourseDetail extends PublicCourseCard {
+  description_uz: string;
+  total_points: number;
+  modules: PublicCourseModule[];
+}
+
+export interface CourseExample {
+  id: number;
+  title_uz: string;
+  language: CourseLanguage;
+  code: string;
+  expected_output: string;
+  explanation_uz: string;
+  is_runnable: boolean;
+  order: number;
+}
+
+export interface CourseQuizQuestion {
+  id: number;
+  question_uz: string;
+  options: string[];
+  order: number;
+}
+
+export interface CourseExerciseTest {
+  input: string;
+  expected_output: string;
+  explanation_uz: string;
+  order: number;
+}
+
+export interface CourseExercise {
+  id: string;
+  title_uz: string;
+  prompt_md: string;
+  language: CourseLanguage;
+  starter_code: string;
+  hint_uz: string;
+  points: number;
+  order: number;
+  sample_tests: CourseExerciseTest[];
+  is_solved: boolean;
+  /** Oxirgi urinishdagi kod — muharrir shundan ochiladi. */
+  my_code: string;
+  /** Faqat topshiriq bajarilgach to'ldiriladi. */
+  solution_code: string;
+}
+
+export interface PublicLessonDetail {
+  id: string;
+  slug: string;
+  title_uz: string;
+  summary_uz: string;
+  content_md: string;
+  order: number;
+  points: number;
+  estimated_minutes: number;
+  course_slug: string;
+  course_title: string;
+  course_language: CourseLanguage;
+  module_title: string;
+  examples: CourseExample[];
+  quiz_questions: CourseQuizQuestion[];
+  exercises: CourseExercise[];
+  my_state: LessonState | null;
+  previous: { slug: string; title_uz: string } | null;
+  next: { slug: string; title_uz: string } | null;
+}
+
+export interface SnippetRunResult {
+  status: string;
+  stdout: string;
+  stderr: string;
+  compile_output: string;
+  runtime_ms: number | null;
+}
+
+export interface ExerciseTestResult {
+  order: number;
+  status: string;
+  input: string;
+  expected_output: string | null;
+  stdout: string;
+  stderr: string;
+  compile_output: string;
+  runtime_ms: number | null;
+  explanation_uz?: string;
+  is_hidden: boolean;
+}
+
+export interface ExerciseRunResult {
+  results: ExerciseTestResult[];
+  passed: number;
+  total: number;
+  all_passed: boolean;
+  status: string;
+  runtime_ms: number | null;
+}
+
+export interface ExerciseSubmitResult extends ExerciseRunResult {
+  attempt_id: string;
+  is_solved: boolean;
+  solution_code: string;
+  lesson_completed: boolean;
+  points: number;
+}
+
+export interface QuizAnswerResult {
+  id: number;
+  given_index: number | null;
+  correct_index: number;
+  is_correct: boolean;
+  explanation_uz: string;
+}
+
+export interface QuizResult {
+  score: number;
+  total: number;
+  percent: number;
+  is_passed: boolean;
+  pass_percent: number;
+  results: QuizAnswerResult[];
+  is_completed: boolean;
+}
+
+export interface MyCourseRow {
+  slug: string;
+  title_uz: string;
+  language: CourseLanguage;
+  badge: string;
+  accent_color: string;
+  lesson_count: number;
+  completed_lessons: number;
+  points_earned: number;
+  completed_at: string | null;
+  last_lesson_slug: string | null;
+  last_lesson_title: string | null;
+  updated_at: string;
+}
+
+/* --------------------------------------------------- kurslar: admin panel */
+
+export interface AdminCourse {
+  id: string;
+  slug: string;
+  title_uz: string;
+  subtitle_uz: string;
+  description_uz: string;
+  language: CourseLanguage;
+  level: CourseLevel;
+  status: PublishState;
+  badge: string;
+  accent_color: string;
+  order: number;
+  is_featured: boolean;
+  estimated_hours: number;
+  author: string | null;
+  author_username: string | null;
+  published_at: string | null;
+  module_count: number;
+  lesson_count: number;
+  exercise_count: number;
+  enrollment_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminCourseModule {
+  id: string;
+  course: string;
+  title_uz: string;
+  slug: string;
+  summary_uz: string;
+  order: number;
+  lesson_count: number;
+}
+
+export interface AdminCourseExample {
+  id: number;
+  lesson: string;
+  title_uz: string;
+  language: CourseLanguage;
+  code: string;
+  expected_output: string;
+  explanation_uz: string;
+  is_runnable: boolean;
+  order: number;
+}
+
+export interface AdminCourseQuizQuestion {
+  id: number;
+  lesson: string;
+  question_uz: string;
+  options: string[];
+  correct_index: number;
+  explanation_uz: string;
+  order: number;
+}
+
+export interface AdminCourseExerciseTest {
+  id?: number;
+  input: string;
+  expected_output: string;
+  is_sample: boolean;
+  explanation_uz: string;
+  order: number;
+}
+
+export interface AdminCourseExercise {
+  id: string;
+  lesson: string;
+  title_uz: string;
+  prompt_md: string;
+  language: CourseLanguage;
+  starter_code: string;
+  solution_code: string;
+  hint_uz: string;
+  points: number;
+  order: number;
+  time_limit_ms: number;
+  memory_limit_kb: number;
+  tests: AdminCourseExerciseTest[];
+}
+
+export interface AdminCourseLesson {
+  id: string;
+  course: string;
+  course_title: string;
+  course_slug: string;
+  module: string;
+  module_title: string;
+  title_uz: string;
+  slug: string;
+  summary_uz: string;
+  content_md: string;
+  order: number;
+  status: PublishState;
+  points: number;
+  estimated_minutes: number;
+  example_count: number;
+  quiz_count: number;
+  exercise_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminCourseLessonDetail extends AdminCourseLesson {
+  examples: AdminCourseExample[];
+  quiz_questions: AdminCourseQuizQuestion[];
+  exercises: AdminCourseExercise[];
+}
+
+export interface AdminCourseTree {
+  course: AdminCourse;
+  modules: {
+    id: string;
+    title_uz: string;
+    slug: string;
+    summary_uz: string;
+    order: number;
+    lessons: {
+      id: string;
+      title_uz: string;
+      slug: string;
+      order: number;
+      status: PublishState;
+      points: number;
+      estimated_minutes: number;
+      example_count: number;
+      quiz_count: number;
+      exercise_count: number;
+    }[];
+  }[];
+}
+
 /* ------------------------------------------------------------- sayt meta */
 
 export interface SiteStats {
@@ -1464,7 +1801,7 @@ export interface SiteAnnouncement {
 }
 
 export interface SiteSearchItem {
-  type: "problem" | "contest" | "user";
+  type: "problem" | "course" | "lesson" | "contest" | "user";
   id: string;
   title: string;
   title_en: string;

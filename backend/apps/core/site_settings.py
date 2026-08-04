@@ -13,6 +13,7 @@ jadvalini o'qish ortiqcha yuk bo'lardi.
 """
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
@@ -167,8 +168,8 @@ def all_values() -> dict[str, Any]:
 
         for key, value in SiteSetting.objects.values_list("key", "value"):
             values[key] = value
-    except Exception:  # noqa: BLE001 — migratsiyagacha jadval bo'lmasligi mumkin
-        pass
+    except Exception as exc:  # noqa: BLE001 — migratsiyagacha jadval bo'lmasligi mumkin
+        logging.getLogger(__name__).debug("Sozlamalarni bazadan o'qib bo'lmadi: %s", exc)
 
     cache.set(CACHE_KEY, values, CACHE_TTL)
     return values

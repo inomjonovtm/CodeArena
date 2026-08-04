@@ -136,9 +136,20 @@ def _execute_judge0(
     rows = _poll(client, tokens)
     results = [client.parse(row) for row in rows]
 
+    # `execute` ning shartnomasi: natijalar soni testlar soniga TENG.
+    # Judge0 biror natijani tushirib qoldirsa (tarmoq uzilishi, navbatdagi
+    # xato), tekshirilmagan testlar jimgina «yo'q» bo'lib qolardi va
+    # yechim to'liq o'tgan deb belgilanardi. Bu yerdagi xato yuqorida
+    # ushlanadi va submission SYSTEM_ERROR oladi — noto'g'ri «qabul
+    # qilindi» dan ko'ra ochiq xato yaxshiroq.
+    if len(results) != len(cases):
+        raise RuntimeError(
+            f"Judge0 {len(cases)} testdan {len(results)} tasiga javob qaytardi."
+        )
+
     # Maxsus kirishda Judge0 ham "Wrong Answer" qaytaradi (kutilgan chiqish bo'sh) —
     # solishtirish talab qilinmagan testlarni qabul qilingan deb belgilaymiz.
-    for case, result in zip(cases, results):
+    for case, result in zip(cases, results, strict=True):
         if case.get("expected_output") is None and result.status == "WRONG_ANSWER":
             result.status = "ACCEPTED"
     return results

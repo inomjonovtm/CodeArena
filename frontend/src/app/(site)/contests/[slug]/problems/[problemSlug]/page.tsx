@@ -24,7 +24,7 @@ import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
 import { publicApi, TERMINAL_STATUSES } from "@/lib/public-api";
 import type { ContestProblemDetail, Language, PublicSubmission, RunResponse } from "@/lib/types";
-import { cn, formatDuration, formatRelative } from "@/lib/utils";
+import { formatDuration, formatRelative } from "@/lib/utils";
 
 const LANGUAGES: { value: Language; label: string }[] = [
   { value: "python", label: "Python" },

@@ -24,7 +24,7 @@ import { PageHeader, StatCard } from "@/components/admin/page-header";
 import { Button as KitButton, LinkButton } from "@/components/kit";
 import { useConfirm, useI18n, useToast } from "@/components/providers";
 import { Badge, DifficultyBadge, PublishBadge, TagChip } from "@/components/ui/badge";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { FilterSelect, SegmentedControl } from "@/components/ui/field";
 import { ConfirmDialog } from "@/components/ui/modal";

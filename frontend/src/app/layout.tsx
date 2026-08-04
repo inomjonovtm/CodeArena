@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 
+import { Analytics } from "@/components/analytics";
 import { Providers } from "@/components/providers";
 import { themeInitScript } from "@/components/providers/theme-provider";
 
@@ -69,6 +70,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="uz"
       suppressHydrationWarning
+      // `globals.css` da `scroll-behavior: smooth` bor. Next hozircha uni
+      // marshrut almashganda o'zi vaqtincha o'chiradi (aks holda sahifa
+      // yangi sahifaning tepasiga «sirg'alib» borardi), lekin keyingi
+      // versiyada bu avtomatik bo'lmaydi — atribut aynan shuni tasdiqlaydi.
+      data-scroll-behavior="smooth"
       className={`${sans.variable} ${mono.variable}`}
     >
       <head>
@@ -77,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );

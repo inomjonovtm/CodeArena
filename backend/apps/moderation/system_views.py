@@ -1,15 +1,10 @@
 """Tizim bo'limi: zaxira nusxalar va Judge0 tillari."""
 from __future__ import annotations
 
-import gzip
-import io
-import os
 import shutil
 
 from django.conf import settings
-from django.core.management import call_command
 from django.http import FileResponse, Http404
-from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -17,16 +12,8 @@ from rest_framework.response import Response
 from apps.core.mixins import AuditLogMixin, write_audit
 from apps.core.permissions import HasResourcePerm, IsStaff
 
+from . import backups
 from .models import BackupRecord, JudgeLanguage
-
-# Zaxiraga tushmaydigan jadvallar (sessiya, token, log)
-EXCLUDED_APPS = [
-    "contenttypes",
-    "auth.Permission",
-    "sessions",
-    "token_blacklist",
-    "moderation.AuditLog",
-]
 
 
 # ------------------------------------------------------------- zaxira
@@ -36,12 +23,13 @@ class BackupRecordSerializer(serializers.ModelSerializer):
     )
     size_mb = serializers.SerializerMethodField()
     exists = serializers.SerializerMethodField()
+    restore_command = serializers.SerializerMethodField()
 
     class Meta:
         model = BackupRecord
         fields = (
-            "id", "filename", "size_bytes", "size_mb", "kind",
-            "note", "created_by_username", "exists", "created_at",
+            "id", "filename", "size_bytes", "size_mb", "kind", "is_automatic",
+            "note", "created_by_username", "exists", "restore_command", "created_at",
         )
         read_only_fields = fields
 
@@ -50,6 +38,11 @@ class BackupRecordSerializer(serializers.ModelSerializer):
 
     def get_exists(self, obj) -> bool:
         return (settings.BACKUP_DIR / obj.filename).exists()
+
+    def get_restore_command(self, obj) -> str:
+        # Format ikki xil bo'lishi mumkin (pg_dump yoki dumpdata) va
+        # tiklash buyrug'i ham har xil — uni fayl bo'yicha aytamiz.
+        return backups.restore_hint(obj.filename)
 
 
 class BackupViewSet(viewsets.ReadOnlyModelViewSet):
@@ -67,46 +60,16 @@ class BackupViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["post"])
     def create_backup(self, request):
-        """Ma'lumotlar bazasini JSON.GZ ko'rinishida saqlaydi."""
-        settings.BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-        stamp = timezone.localtime().strftime("%Y%m%d-%H%M%S")
-        filename = f"codearena-{stamp}.json.gz"
-        path = settings.BACKUP_DIR / filename
-
-        buffer = io.StringIO()
+        """Bazani zaxiralaydi (`pg_dump`, u yo'q bo'lsa `dumpdata`)."""
         try:
-            call_command(
-                "dumpdata",
-                *[f"--exclude={item}" for item in EXCLUDED_APPS],
-                "--natural-foreign",
-                "--natural-primary",
-                indent=None,
-                stdout=buffer,
+            record = backups.create_backup(
+                note=str(request.data.get("note", ""))[:255],
+                created_by=request.user,
             )
-        except Exception as exc:  # noqa: BLE001
+        except backups.BackupError as exc:
             return Response(
-                {"detail": f"Zaxira yaratilmadi: {exc}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                {"detail": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        with gzip.open(path, "wt", encoding="utf-8") as handle:
-            handle.write(buffer.getvalue())
-
-        record = BackupRecord.objects.create(
-            filename=filename,
-            size_bytes=path.stat().st_size,
-            kind="data",
-            note=request.data.get("note", "")[:255],
-            created_by=request.user,
-        )
-
-        # Eski nusxalarni tozalash
-        extra = BackupRecord.objects.order_by("-created_at")[settings.BACKUP_KEEP:]
-        for old in extra:
-            old_path = settings.BACKUP_DIR / old.filename
-            if old_path.exists():
-                old_path.unlink()
-            old.delete()
 
         write_audit(request, action_name="backup.create", obj=record)
         return Response(
@@ -135,8 +98,10 @@ class BackupViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"])
     def summary(self, request):
-        total, used, free = shutil.disk_usage(settings.BASE_DIR)
+        _total, _used, free = shutil.disk_usage(settings.BASE_DIR)
         records = BackupRecord.objects.all()
+        latest = records.order_by("-created_at").first()
+        latest_auto = records.filter(is_automatic=True).order_by("-created_at").first()
         return Response(
             {
                 "count": records.count(),
@@ -146,9 +111,14 @@ class BackupViewSet(viewsets.ReadOnlyModelViewSet):
                 "keep_limit": settings.BACKUP_KEEP,
                 "backup_dir": str(settings.BACKUP_DIR),
                 "disk_free_gb": round(free / (1024**3), 1),
-                "restore_command": (
-                    "gzip -dc backups/<fayl>.json.gz | python manage.py loaddata --format=json -"
-                ),
+                # Interfeys «oxirgi zaxira qachon olingan» ni ko'rsatishi va
+                # tungi jadval uzilib qolganini sezishi uchun.
+                "latest_at": latest.created_at if latest else None,
+                "latest_automatic_at": latest_auto.created_at if latest_auto else None,
+                "schedule_enabled": bool(getattr(settings, "BACKUP_SCHEDULE_ENABLED", False)),
+                "offsite_enabled": bool(getattr(settings, "BACKUP_S3_BUCKET", "")),
+                "method": "pg_dump" if backups.pg_dump_available() else "dumpdata",
+                "restore_command": backups.restore_hint(latest.filename if latest else ""),
             }
         )
 

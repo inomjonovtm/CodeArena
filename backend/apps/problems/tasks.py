@@ -26,7 +26,8 @@ def rotate_daily_challenge() -> str:
     if not pool:
         return "no-candidates"
 
-    DailyChallenge.objects.create(problem=random.choice(pool), date=today)
+    # Kunlik masala tanlash — kriptografik tasodifiylik talab qilmaydi.
+    DailyChallenge.objects.create(problem=random.choice(pool), date=today)  # noqa: S311
     return "created"
 
 

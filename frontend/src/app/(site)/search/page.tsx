@@ -1,7 +1,16 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Search, Swords, Terminal, User as UserIcon, X } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  GraduationCap,
+  Search,
+  Swords,
+  Terminal,
+  User as UserIcon,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -31,7 +40,7 @@ const DIFF_LABEL: Record<Difficulty, string> = {
 };
 
 /* Guruhlar tartibi — natijalar shu ketma-ketlikda chiqadi */
-const TYPE_ORDER: SiteSearchItem["type"][] = ["problem", "contest", "user"];
+const TYPE_ORDER: SiteSearchItem["type"][] = ["problem", "course", "lesson", "contest", "user"];
 
 const TYPE_META: Record<
   SiteSearchItem["type"],
@@ -41,6 +50,16 @@ const TYPE_META: Record<
     label: "Masala",
     icon: <Terminal className="size-4" />,
     wash: "bg-[var(--brand-wash)] text-[var(--brand)]",
+  },
+  course: {
+    label: "Kurs",
+    icon: <GraduationCap className="size-4" />,
+    wash: "bg-[var(--brand-wash)] text-[var(--brand)]",
+  },
+  lesson: {
+    label: "Mavzu",
+    icon: <BookOpen className="size-4" />,
+    wash: "bg-[var(--pane-sunken)] text-[var(--ink-2)]",
   },
   contest: {
     label: "Musobaqa",

@@ -2,7 +2,6 @@
 
 import {
   Check,
-  ChevronRight,
   ExternalLink,
   LogOut,
   Menu,

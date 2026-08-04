@@ -5,10 +5,8 @@ import hashlib
 import os
 import uuid
 
-from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db import models
-from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response

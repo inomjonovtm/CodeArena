@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
@@ -14,12 +14,11 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.core import ranks
-from apps.core.mixins import write_audit
 from apps.core.middleware import get_client_ip
+from apps.core.mixins import write_audit
 
 from .authentication import clear_auth_cookies, set_auth_cookies
 from .models import AdminSession, User
-from .sessions import SESSION_CLAIM, is_revoked, record_session, revoke
 from .serializers import (
     ChangePasswordSerializer,
     LoginSerializer,
@@ -27,6 +26,7 @@ from .serializers import (
     ProfileUpdateSerializer,
     RegisterSerializer,
 )
+from .sessions import SESSION_CLAIM, is_revoked, record_session, revoke
 
 
 def _issue_tokens(user: User, session=None) -> tuple[str, str]:

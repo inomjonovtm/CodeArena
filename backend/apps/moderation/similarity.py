@@ -47,9 +47,22 @@ def normalize(code: str) -> str:
     return "".join(normalized)
 
 
+def _stable_hash(text: str) -> int:
+    """Jarayonlar orasida BIR XIL qiymat qaytaradigan hash.
+
+    O'rnatilgan `hash()` satrlar uchun har bir jarayonda boshqacha natija
+    beradi (PYTHONHASHSEED tasodifiy). Bir xil kod ikkita celery ishchisida
+    turlicha barmoq izi olishi mumkin edi — natija takrorlanmas bo'lib
+    qolardi. `blake2b` arzon va deterministik.
+    """
+    import hashlib
+
+    return int.from_bytes(hashlib.blake2b(text.encode("utf-8"), digest_size=8).digest(), "big")
+
+
 def _hashes(text: str, k: int = K_GRAM) -> list[int]:
     if len(text) < k:
-        return [hash(text)] if text else []
+        return [_stable_hash(text)] if text else []
     base, mod = 257, (1 << 61) - 1
     high = pow(base, k - 1, mod)
     result = []

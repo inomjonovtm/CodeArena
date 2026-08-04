@@ -64,7 +64,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         if group.members.count() >= group.max_members:
             return Response({"detail": "Guruh to'lgan."}, status=status.HTTP_400_BAD_REQUEST)
 
-        member, created = GroupMember.objects.get_or_create(group=group, user=request.user)
+        _member, created = GroupMember.objects.get_or_create(group=group, user=request.user)
         if created:
             group.member_count = group.members.count()
             group.save(update_fields=["member_count"])

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, DatabaseBackup, Download, HardDrive, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -22,7 +22,6 @@ const backups = resource<BackupRecord>("backups");
 
 export default function BackupsPage() {
   const { t } = useI18n();
-  const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [note, setNote] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<BackupRecord | null>(null);
@@ -36,10 +35,6 @@ export default function BackupsPage() {
     queryKey: ["backups", "summary"],
     queryFn: () => api.get<BackupSummary>("/admin/backups/summary/"),
   });
-
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ["backups"] });
-  };
 
   const createMutation = useCrudMutation(
     (payload: { note: string }) =>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { LogOut, Monitor, Shield, ShieldOff, Smartphone } from "lucide-react";
 import Link from "next/link";
 
@@ -21,7 +21,6 @@ const sessions = resource<AdminSession>("sessions");
 export default function SessionsPage() {
   const { t } = useI18n();
   const can = useCan();
-  const queryClient = useQueryClient();
   const { confirm } = useConfirm();
   const table = useTableQuery({ ordering: "-last_seen_at" });
 
@@ -30,10 +29,6 @@ export default function SessionsPage() {
     queryFn: () => sessions.list(table.params),
     refetchInterval: 60_000,
   });
-
-  const invalidate = () => {
-    void queryClient.invalidateQueries({ queryKey: ["sessions"] });
-  };
 
   const revokeMutation = useCrudMutation((id: string) => sessions.action(id, "revoke"), {
     invalidate: [["sessions"]],

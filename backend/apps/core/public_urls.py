@@ -9,4 +9,6 @@ urlpatterns = [
     path("geo/regions/", public_views.geo_regions, name="geo-regions"),
     path("ranks/", public_views.rank_table, name="site-ranks"),
     path("search/", public_views.public_search, name="site-search"),
+    # Brauzerdagi xatolarni serverga yetkazish (frontend/src/lib/report-error.ts)
+    path("client-errors/", public_views.client_error, name="client-errors"),
 ]

@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.problems",
     "apps.judge",
     "apps.contests",
+    "apps.courses",
     "apps.content",
     "apps.community",
     "apps.moderation",
@@ -72,6 +73,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.core.middleware.RequestContextMiddleware",
+    "apps.core.middleware.SecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -200,8 +202,43 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# --- media fayllarni qayerda saqlash
+#
+# Sukut — konteyner diski. Bu bitta serverda ishlaydi, lekin ikkita
+# muammosi bor: (1) backend nusxasini ko'paytirsangiz avatarlar faqat bitta
+# nusxada bo'ladi, (2) volume ulanmagan holda konteyner qayta qurilsa
+# fayllar yo'qoladi. `MEDIA_STORAGE=s3` uni obyekt xotirasiga o'tkazadi
+# (AWS S3, Cloudflare R2, Backblaze B2, MinIO — hammasi bir xil API).
+MEDIA_STORAGE = env("MEDIA_STORAGE", "local").strip().lower()
+
+if MEDIA_STORAGE == "s3":
+    _s3_endpoint = env("AWS_S3_ENDPOINT_URL", "")  # R2/MinIO uchun; AWS'da bo'sh
+    _default_storage = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
+            "region_name": env("AWS_S3_REGION_NAME", "auto"),
+            "access_key": env("AWS_ACCESS_KEY_ID"),
+            "secret_key": env("AWS_SECRET_ACCESS_KEY"),
+            "endpoint_url": _s3_endpoint or None,
+            # Fayllar ochiq o'qiladi (avatar, masala rasmlari), shuning
+            # uchun imzolangan URL kerak emas — u har safar yangi manzil
+            # yasab, brauzer keshini butunlay buzardi.
+            "querystring_auth": False,
+            "default_acl": None,
+            "file_overwrite": False,
+            "object_parameters": {"CacheControl": "public, max-age=604800"},
+        },
+    }
+    if env("AWS_S3_CUSTOM_DOMAIN"):
+        _default_storage["OPTIONS"]["custom_domain"] = env("AWS_S3_CUSTOM_DOMAIN")
+        MEDIA_URL = f"https://{env('AWS_S3_CUSTOM_DOMAIN')}/"
+else:
+    _default_storage = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": _default_storage,
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
@@ -220,15 +257,41 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # `anon`/`user` — BARCHA endpointlarga qo'llanadigan umumiy tom.
+    # Ilgari faqat scoped cheklovlar bor edi, ya'ni qidiruv, izoh yozish,
+    # murojaat yuborish kabi endpointlar cheklovsiz qolgan edi.
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.ScopedRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
+        # Umumiy tom — oddiy foydalanish uchun bemalol yetadi, lekin
+        # skript bilan bazani "so'rib olish"ni sekinlashtiradi.
+        "anon": env("ANON_RATE", "90/min"),
+        "user": env("USER_RATE", "600/min"),
         "submission": env("SUBMISSION_RATE", "10/min"),
         "auth": env("AUTH_RATE", "20/min"),
+        # Parolni tiklash: IP bo'yicha va nishon email bo'yicha alohida.
+        # Nishon bo'yicha cheklov IP almashtirib xat yog'dirishni to'sadi.
+        "password_reset": env("PASSWORD_RESET_RATE", "5/hour"),
+        "password_reset_target": env("PASSWORD_RESET_TARGET_RATE", "3/hour"),
+        # Tasdiqlash xatini qayta so'rash — hisob bo'yicha.
+        "email_send": env("EMAIL_SEND_RATE", "5/hour"),
+        # Google token tekshiruvi tashqi HTTP so'rov qiladi.
+        "social_auth": env("SOCIAL_AUTH_RATE", "20/min"),
+        # Muhokama/izoh/shikoyat yaratish — spamga qarshi.
+        "content_write": env("CONTENT_WRITE_RATE", "30/min"),
+        # Brauzerdan keladigan xato hisobotlari: buzuq reliz butun logni
+        # ko'mib tashlamasligi uchun.
+        "client_error": env("CLIENT_ERROR_RATE", "20/hour"),
         # Interfeys lug'ati: brauzer uni bir marta yuklab localStorage'ga
         # yozadi, shuning uchun tez-tez so'rash kerak emas
         "translate": env("TRANSLATE_RATE", "30/min"),
+        # Kurs misoli va topshirig'ini bajarish. Masala yuborishdan
+        # (`submission`) yumshoqroq: o'quv jarayonida kod ko'p marta
+        # ishga tushiriladi — bu odatiy holat, suiiste'mol emas.
+        "course_run": env("COURSE_RUN_RATE", "40/min"),
     },
     "EXCEPTION_HANDLER": "apps.core.exceptions.api_exception_handler",
 }
@@ -299,6 +362,11 @@ JUDGE0_CALLBACK_URL = env("JUDGE0_CALLBACK_URL", "")
 # foydalanuvchilar kodi uchun Judge0 (Docker izolyatsiyasi) ishlatilsin.
 LOCAL_JUDGE_ENABLED = env_bool("LOCAL_JUDGE_ENABLED", DEBUG)
 
+# Lokal judge dasturlarni qidiradigan QO'SHIMCHA kataloglar (`;` yoki `:` bilan).
+# Kompilyator tizim PATH'ida bo'lmasa kerak bo'ladi — masalan Windowsda
+# MinGW: `C:/Users/<siz>/msys64/ucrt64/bin`. Bo'sh bo'lsa faqat PATH ishlatiladi.
+JUDGE_BIN_DIRS = env("JUDGE_BIN_DIRS", "")
+
 DEFAULT_TIME_LIMIT_MS = int(env("DEFAULT_TIME_LIMIT_MS", "2000"))
 DEFAULT_MEMORY_LIMIT_KB = int(env("DEFAULT_MEMORY_LIMIT_KB", "262144"))
 PLAGIARISM_THRESHOLD = float(env("PLAGIARISM_THRESHOLD", "0.85"))
@@ -362,13 +430,60 @@ TRASH_RETENTION_DAYS = int(env("TRASH_RETENTION_DAYS", "30"))
 BACKUP_DIR = BASE_DIR / "backups"
 BACKUP_KEEP = int(env("BACKUP_KEEP", "10"))
 
+# Kuniga bir marta avtomatik zaxira (celery beat). Produksiyada YOQILISHI
+# shart: aks holda zaxira faqat kimdir admin paneldan tugma bosganda olinadi.
+BACKUP_SCHEDULE_ENABLED = env_bool("BACKUP_SCHEDULE_ENABLED", not DEBUG)
+BACKUP_SCHEDULE_HOUR = int(env("BACKUP_SCHEDULE_HOUR", "3"))
+BACKUP_SCHEDULE_MINUTE = int(env("BACKUP_SCHEDULE_MINUTE", "30"))
+# `pg_dump` PATH'da bo'lmasa uning katalogi (masalan Windowsda
+# `C:/Program Files/PostgreSQL/17/bin`). Bo'sh bo'lsa standart joylar
+# avtomatik tekshiriladi.
+PG_BIN_DIR = env("PG_BIN_DIR", "")
+
+# Tashqi nusxa. Zaxira serverning o'zida yotsa, disk yoki server yo'qolganda
+# u ham birga ketadi — shuning uchun obyekt xotirasiga ko'chiriladi.
+# Bo'sh bo'lsa yuklash o'chadi (lokal nusxa baribir qoladi).
+BACKUP_S3_BUCKET = env("BACKUP_S3_BUCKET", "")
+BACKUP_S3_PREFIX = env("BACKUP_S3_PREFIX", "backups")
+BACKUP_S3_ENDPOINT_URL = env("BACKUP_S3_ENDPOINT_URL", "")
+BACKUP_S3_REGION = env("BACKUP_S3_REGION", "")
+BACKUP_S3_ACCESS_KEY = env("BACKUP_S3_ACCESS_KEY", "") or env("AWS_ACCESS_KEY_ID", "")
+BACKUP_S3_SECRET_KEY = env("BACKUP_S3_SECRET_KEY", "") or env("AWS_SECRET_ACCESS_KEY", "")
+
 # ---------------------------------------------------------------- log
+#
+# `LOG_FORMAT=json` — produksiya uchun: har bir yozuv bitta JSON obyekti,
+# log yig'uvchi (Loki, CloudWatch, Datadog) uni darajasi va `request_id`
+# bo'yicha filtrlay oladi. Sukut — odam o'qiydigan matn.
+LOG_FORMAT = env("LOG_FORMAT", "json" if not DEBUG else "simple")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"simple": {"format": "[{levelname}] {asctime} {name}: {message}", "style": "{"}},
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple"}},
+    "filters": {
+        "request_id": {"()": "apps.core.logging.RequestIdFilter"},
+    },
+    "formatters": {
+        "simple": {
+            "format": "[{levelname}] {asctime} {name} [{request_id}]: {message}",
+            "style": "{",
+        },
+        "json": {"()": "apps.core.logging.JsonFormatter"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "json" if LOG_FORMAT == "json" else "simple",
+            "filters": ["request_id"],
+        }
+    },
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", "INFO")},
+    "loggers": {
+        # So'rov xatolari (500) alohida ko'rinsin va Sentry'ga ham tushsin.
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+        # Har bir SQL so'rovni chiqarish DEBUG'da ham juda shovqinli.
+        "django.db.backends": {"level": "WARNING"},
+    },
 }
 
 if not DEBUG:
@@ -387,7 +502,7 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
     # Produksiyada zaif yoki standart sir bilan ishga tushib ketmasin
-    if SECRET_KEY == "dev-only-insecure-key-change-me" or len(SECRET_KEY) < 32:
+    if SECRET_KEY == "dev-only-insecure-key-change-me" or len(SECRET_KEY) < 32:  # noqa: S105 — bu solishtirish, sir emas
         raise RuntimeError(
             "DJANGO_SECRET_KEY yetarlicha kuchli emas (kamida 32 belgi kerak). "
             "Yangi kalit: python -c \"import secrets; print(secrets.token_urlsafe(64))\""
@@ -399,4 +514,74 @@ if not DEBUG:
         raise RuntimeError(
             "POSTGRES_PASSWORD standart yoki bo'sh qiymatda. Produksiya uchun "
             "kuchli parol qo'ying: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+        )
+
+# ------------------------------------------------------------- Sentry
+#
+# DSN bo'sh bo'lsa Sentry BUTUNLAY o'chadi — hech qanday tashqi so'rov
+# ketmaydi va loyihani hisobsiz ham ishga tushirish mumkin.
+#
+# Nima uchun kerak: bularsiz produksiyadagi 500 xatosi faqat konteyner
+# logida qoladi va uni kimdir qo'lda ko'rmaguncha hech kim bilmaydi.
+SENTRY_DSN = env("SENTRY_DSN", "")
+
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.celery import CeleryIntegration
+        from sentry_sdk.integrations.django import DjangoIntegration
+        from sentry_sdk.integrations.logging import LoggingIntegration
+    except ImportError:  # pragma: no cover
+        import warnings
+
+        warnings.warn(
+            "SENTRY_DSN berilgan, lekin sentry-sdk o'rnatilmagan: "
+            "pip install -r requirements.txt",
+            RuntimeWarning,
+            stacklevel=1,
+        )
+    else:
+        def _scrub(event, _hint):
+            """Xatoga ilashib ketgan sirlarni Sentry'ga yubormaslik.
+
+            `send_default_pii=False` foydalanuvchi ma'lumotini to'sadi, lekin
+            so'rov tanasidagi `password` kabi maydonlar baribir o'tib ketishi
+            mumkin — ular shu yerda kesiladi.
+            """
+            sensitive = ("password", "token", "secret", "authorization", "cookie",
+                         "csrf", "api_key", "refresh")
+
+            def clean(node):
+                if isinstance(node, dict):
+                    return {
+                        k: ("[kesildi]" if any(s in str(k).lower() for s in sensitive)
+                            else clean(v))
+                        for k, v in node.items()
+                    }
+                if isinstance(node, list):
+                    return [clean(item) for item in node]
+                return node
+
+            if "request" in event:
+                event["request"] = clean(event["request"])
+            if "extra" in event:
+                event["extra"] = clean(event["extra"])
+            return event
+
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            environment=env("SENTRY_ENVIRONMENT", "production" if not DEBUG else "development"),
+            release=env("SENTRY_RELEASE", "") or None,
+            integrations=[
+                DjangoIntegration(),
+                CeleryIntegration(),
+                # WARNING va yuqorisi "nafas" (breadcrumb) sifatida,
+                # ERROR — alohida hodisa sifatida ketadi.
+                LoggingIntegration(level=None, event_level="ERROR"),
+            ],
+            # Foydalanuvchi ma'lumotlari (IP, cookie, tana) yuborilmaydi.
+            send_default_pii=False,
+            traces_sample_rate=float(env("SENTRY_TRACES_SAMPLE_RATE", "0.05")),
+            profiles_sample_rate=float(env("SENTRY_PROFILES_SAMPLE_RATE", "0")),
+            before_send=_scrub,
         )

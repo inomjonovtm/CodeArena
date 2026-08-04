@@ -6,8 +6,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# postgresql-client — `pg_dump`/`pg_restore` uchun. Usiz zaxira `dumpdata`
+# ga tushadi, u esa butun bazani xotiraga yig'adi va katta bazada
+# konteynerni OOM bilan o'ldiradi.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential libpq-dev curl \
+    && apt-get install -y --no-install-recommends \
+       build-essential libpq-dev curl postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

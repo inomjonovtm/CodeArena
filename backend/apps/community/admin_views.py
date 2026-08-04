@@ -6,8 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
-from apps.core.trash import SoftDeleteViewSetMixin
 from apps.core.permissions import HasResourcePerm, IsStaff
+from apps.core.trash import SoftDeleteViewSetMixin
 from apps.core.utils import invite_code
 
 from .models import Group, GroupMember

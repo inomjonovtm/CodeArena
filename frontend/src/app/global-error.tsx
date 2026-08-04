@@ -1,5 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
+
+import { reportError } from "@/lib/report-error";
+
 /* ==========================================================================
    Ildiz xatolik chegarasi
    --------------------------------------------------------------------------
@@ -15,6 +19,10 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    reportError(error, { boundary: "global", digest: error.digest ?? "" });
+  }, [error]);
+
   return (
     <html lang="uz">
       <body

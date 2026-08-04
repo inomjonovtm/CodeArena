@@ -51,9 +51,14 @@ def cache_key(text: str, source: str, target: str) -> str:
 
 
 def _fetch(url: str, *, data: bytes | None = None, headers: dict | None = None) -> dict | None:
-    request = urllib.request.Request(url, data=data, headers=headers or {})
+    request = urllib.request.Request(url, data=data, headers=headers or {})  # noqa: S310
+    if request.type not in {"http", "https"}:
+        # Manzil sozlamalardan keladi (TRANSLATE_URL), lekin `file://` yoki
+        # boshqa sxema kiritilsa server o'z faylini o'qib yuborardi.
+        logger.warning("Tarjima manzili qo'llanmaydigan sxemada: %s", request.type)
+        return None
     try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+        with urllib.request.urlopen(request, timeout=TIMEOUT) as response:  # noqa: S310
             return json.loads(response.read().decode("utf-8"))
     except Exception as exc:  # noqa: BLE001
         logger.warning("Tarjima so'rovi muvaffaqiyatsiz: %s", exc)

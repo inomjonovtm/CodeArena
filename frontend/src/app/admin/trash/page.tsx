@@ -20,6 +20,7 @@ import { cn, formatDate, formatRelative } from "@/lib/utils";
 const KIND_LABELS: Record<TrashKind, string> = {
   problem: "Masala",
   contest: "Contest",
+  course: "Kurs",
   discussion: "Muhokama",
   comment: "Izoh",
   group: "Guruh",

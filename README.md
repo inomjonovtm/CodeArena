@@ -20,6 +20,7 @@ CodeArenaV2/
 │       ├── problems/        Tag, Problem, TestCase, DailyChallenge
 │       ├── judge/           Submission, Judge0 klienti, celery tasklar
 │       ├── contests/        Contest, ishtirokchilar, Elo reyting
+│       ├── courses/         Kurslar: bo'lim, mavzu, misol, test, topshiriq
 │       ├── content/         Muhokamalar, izohlar, shikoyatlar, murojaatlar
 │       ├── community/       Guruhlar (private leaderboard)
 │       ├── moderation/      Anti-plagiat, audit log, sozlamalar, e'lonlar
@@ -31,7 +32,7 @@ CodeArenaV2/
 │       ├── lib/             API klienti, tiplar, yordamchilar
 │       ├── hooks/           jadval holati, CRUD mutatsiyalari
 │       └── i18n/            interfeys lug'ati (o'zbekcha)
-├── infra/                   nginx.conf, judge0.conf
+├── infra/                   nginx/, certbot/, judge0.conf
 └── docker-compose.yml
 ```
 
@@ -67,6 +68,7 @@ pip install -r requirements.txt
 cp .env.example .env             # POSTGRES_* qiymatlarini bazangizga moslang
 python manage.py migrate
 python manage.py seed_demo       # demo ma'lumotlar
+python manage.py seed_courses    # Python / JavaScript / C++ kurslari
 python manage.py runserver 8000
 ```
 
@@ -125,6 +127,28 @@ foydalanuvchilar kodi uchun Judge0 ishlating.
 
 `GET /api/judge/status/` qaysi backend faol va qaysi tillar mavjudligini
 qaytaradi — kod muharriri o'rnatilmagan tilni tanlash ro'yxatida o'chirib qo'yadi.
+Kurs mavzusi ham shu javobga qaraydi: til bajarilmasa, misollardan oldin
+ogohlantirish chiqadi.
+
+### Kompilyator PATH'da bo'lmasa — `JUDGE_BIN_DIRS`
+
+Lokal runner dasturlarni `PATH` orqali topadi. Windowsda MinGW odatda alohida
+katalogga o'rnatiladi va tizim PATH'iga qo'shilmaydi — natijada C++ jimgina
+"o'rnatilmagan" bo'lib qolardi. Yo'lni `.env` da ko'rsatish yetarli:
+
+```ini
+JUDGE_BIN_DIRS=C:/Users/<siz>/msys64/ucrt64/bin
+```
+
+Bir nechta katalog `;` (Windows) yoki `:` (Linux) bilan ajratiladi. Bu yo'l
+ham dastur qidirishda, ham bola jarayonning `PATH` ida ishlatiladi (kompilyator
+kutubxonalari o'sha yerda yotadi).
+
+**Windowsda g++ o'rnatish (MSYS2):**
+
+```bash
+pacman -S --needed mingw-w64-ucrt-x86_64-gcc
+```
 
 ---
 
@@ -174,6 +198,7 @@ chiqadi, serverda faqat `pull` bo'ladi.
 | **Test-case'lar** | Barcha testlar markazlashgan ro'yxati, masala bo'yicha filtr, inline tahrirlash |
 | **Teglar** | CRUD, rang tanlash, masalalar soni |
 | **Kunlik masala** | Oylik kalendar, kunga masala tayinlash, avtomatik to'ldirish |
+| **Kurslar** | Kurs CRUD, bir sahifali muharrir: bo'lim → mavzu → nazariya (Markdown), kod misollari, test savollari va kod topshiriqlari (testlari bilan birga), mavzuni nusxalash, chop etish |
 | **Foydalanuvchilar** | CRUD, rol o'zgartirish, ban/unban (sabab + muddat), reyting tuzatish, parol tiklash, faollik statistikasi, submissionlar tarixi, bulk amallar |
 | **Submissionlar** | Filtr (status/til/user/masala/rejim), kod ko'rish, test natijalari, rejudge (bitta yoki bulk), Judge0 navbati holati |
 | **Musobaqalar** | CRUD, masalalar ro'yxati (belgi/ball/tartib), ishtirokchilar, real leaderboard, diskvalifikatsiya, natijalarni qayta hisoblash, Elo reytingni qo'llash, plagiat skanerlash |
@@ -234,6 +259,11 @@ GET    /api/daily-challenge/ | /api/tags/
 GET    /api/contests/  POST /api/contests/:slug/join/
 GET    /api/contests/:slug/stream/  jonli natijalar (SSE)
 GET    /api/discussions/ | /api/comments/ | /api/site/settings/
+GET    /api/courses/ | /api/courses/:slug/ | /api/courses/mine/
+GET    /api/courses/:slug/lessons/:lessonSlug/
+POST   /api/courses/:slug/lessons/:lessonSlug/read/ | .../quiz/
+POST   /api/courses/run/  (misolni bajarish)
+POST   /api/courses/exercises/:id/run/ | /submit/
 CRUD   /api/bookmarks/ | /api/groups/
 
 GET    /api/auth/sessions/          faol qurilmalar
@@ -314,6 +344,28 @@ cd frontend && python scripts/generate-icons.py
   (`accounts/sessions.py`). Sessiya yopilganda o'sha qurilmaning access **va**
   refresh tokenlari darhol rad etiladi; ban ham barcha sessiyalarni yopadi.
   Bu bog'lanishsiz "Sessiyani yopish" faqat ko'rinishda ishlardi.
+- **Rate limit ikki qatlamli** — `anon`/`user` barcha endpointlarga umumiy tom
+  qo'yadi, ustiga aniq endpointlar uchun tor cheklovlar. Parolni tiklash
+  **ikki tomonlama** cheklangan: IP bo'yicha va so'ralgan EMAIL bo'yicha
+  (`core/throttling.py`). Faqat IP bo'yicha cheklansa, hujumchi IP
+  almashtirib bitta manzilga xat yog'dira olardi.
+- **HTTPS avtomatik** — nginx konfiguratsiyasi ishga tushishda quriladi
+  (`infra/nginx/entrypoint.sh`): sertifikat bo'lmasa 80-portda ishlaydi,
+  certbot uni olgach 443 ochiladi va yo'naltirish qo'yiladi. Ilgari HTTPS
+  bloki faylda izohda turardi va uni ochishni unutish saytni butunlay
+  ishlamas holga keltirardi (Django HTTPS'ga yo'naltirar, u yerda esa hech
+  kim eshitmasdi).
+- **CSP ikki joyda** — sayt sahifalari uchun Next (`next.config.mjs`, u o'z
+  skriptlari va Monaco haqida biladi), API javoblari uchun Django
+  (`core/middleware.py`, eng tor siyosat: `default-src 'none'`).
+- **Monaco o'z serverimizdan** — `@monaco-editor/react` sukut bo'yicha uni
+  jsdelivr CDN'idan yuklaydi. CDN bloklangan tarmoqda kod muharriri umuman
+  ochilmasdi. Fayllar `scripts/copy-monaco.mjs` orqali har build oldidan
+  `public/monaco/vs` ga ko'chiriladi.
+- **Judge natijalari soni tekshiriladi** — `engine.execute` natijalar soni
+  testlar soniga tengligini kafolatlaydi. Aks holda Judge0 bir natijani
+  tushirib qoldirsa, tekshirilmagan testlar jimgina «yo'q» bo'lib qolar va
+  yechim to'liq o'tgan deb belgilanardi.
 - **SSE endpointlariga `EventStreamRenderer` kerak** (`core/renderers.py`) —
   `EventSource` `Accept: text/event-stream` yuboradi va mos renderer bo'lmasa
   DRF 406 qaytaradi. Shuningdek `Connection` sarlavhasi qo'yilmaydi: u
@@ -353,14 +405,81 @@ cd frontend && python scripts/generate-icons.py
 
 ---
 
+## Sifat va ishonchlilik
+
+### Testlar
+
+```bash
+cd backend  && python manage.py test          # Django testlari (PostgreSQL kerak)
+cd frontend && npm test                       # Vitest
+cd frontend && npm run test:coverage
+```
+
+Qamrov ataylab **eng qimmat xatolar** ustiga qurilgan — orqaga qaytarib
+bo'lmaydigan yoki jimgina noto'g'ri ishlaydigan joylar:
+
+| Nima | Qayerda | Nega |
+|---|---|---|
+| Elo reyting | `apps/contests/tests/test_rating.py` | Musobaqa qayta o'tkazilmaydi — xato tuzatib bo'lmaydi |
+| Anti-plagiat | `apps/moderation/tests/test_similarity.py` | Yolg'on signal aybsiz odamni jazolaydi |
+| Ruxsatlar | `apps/core/tests/test_permissions.py` | Yangi `@action` jimgina himoyasiz qolishi mumkin |
+| Judge natijasi | `apps/judge/tests/test_results.py` | To'g'ri yechim «Wrong Answer» olmasligi kerak |
+| Judge kompilyator yo'li | `apps/judge/tests/test_bin_dirs.py` | PATH'da bo'lmagan toolchain jimgina «yo'q» bo'lib qolmasligi kerak |
+| Auth va cheklovlar | `apps/accounts/tests/test_auth.py` | Parol tiklash oqimi va email bombardimoniga qarshi himoya |
+| Sog'liq tekshiruvi | `apps/core/tests/test_health.py` | Deploy shu javobga qarab «yashil» bo'ladi |
+| Kurslar | `apps/courses/tests/test_courses.py` | To'g'ri javob va namuna yechim vaqtidan oldin ochilib ketmasligi kerak |
+| Formatlash | `frontend/src/lib/utils.test.ts` | Har sahifada ishlatiladi, buzilsa 500 bermaydi — jimgina xunuklashadi |
+
+### Lint
+
+```bash
+cd backend  && ruff check . && ruff format --check .
+cd frontend && npm run lint && npm run typecheck
+```
+
+### Kuzatuv (monitoring)
+
+| Endpoint | Nima tekshiradi | Kim so'raydi |
+|---|---|---|
+| `GET /health/` | jarayon tirikligi (bazaga tegmaydi) | Docker `HEALTHCHECK` |
+| `GET /health/ready/` | baza, kesh, qo'llanmagan migratsiya, judge | deploy tekshiruvi, tashqi monitoring |
+
+`/health/ready/` kritik bog'liqlik ishlamasa **503** qaytaradi.
+
+`SENTRY_DSN` berilgan bo'lsa server xatolari Sentry'ga ketadi; brauzerdagi
+xatolar ham `POST /api/client-errors/` orqali serverga yetkaziladi va o'sha
+oqimga qo'shiladi. DSN bo'sh bo'lsa hech qanday tashqi so'rov ketmaydi.
+
+`LOG_FORMAT=json` — har bir log yozuvi bitta JSON obyekti, ichida
+`request_id` bilan. Xuddi shu identifikator javobning `X-Request-ID`
+sarlavhasida ham qaytadi, ya'ni foydalanuvchi «shu vaqtda xato chiqdi»
+desa, aynan o'sha so'rovni topish mumkin.
+
+### Zaxira
+
+Kuniga bir marta avtomatik (`BACKUP_SCHEDULE_ENABLED=True`, celery beat).
+`pg_dump` mavjud bo'lsa u ishlatiladi (oqim bilan, xotira yemaydi), aks
+holda `dumpdata`. `BACKUP_S3_BUCKET` ko'rsatilsa nusxa obyekt xotirasiga
+ham yuklanadi — server yo'qolganda zaxira u bilan birga ketmasligi uchun.
+
+```bash
+python manage.py backup_db --note "reliz oldidan"
+```
+
+---
+
 ## Foydali buyruqlar
 
 ```bash
 # Backend
 python manage.py seed_demo --reset --users 24 --submissions 110
 python manage.py seed_demo --skip-verify        # judge yo'q bo'lsa
+python manage.py seed_courses --reset           # kurslarni qaytadan yozish
+python manage.py seed_courses --only python-asoslari
 python manage.py check --deploy                 # produksiyaga tayyorlikni tekshirish
 python manage.py makemigrations && python manage.py migrate
+python manage.py test                           # testlar
+python manage.py backup_db                      # zaxira
 celery -A config worker -l info
 celery -A config beat -l info
 
@@ -368,4 +487,6 @@ celery -A config beat -l info
 npm run dev          # ishlab chiqish
 npm run build        # produksiya build
 npm run typecheck    # TypeScript tekshiruvi
+npm run lint         # ESLint
+npm test             # Vitest
 ```

@@ -36,7 +36,8 @@ class AdminSubmissionDetailSerializer(AdminSubmissionListSerializer):
     test_results = SubmissionTestResultSerializer(many=True, read_only=True)
 
     class Meta(AdminSubmissionListSerializer.Meta):
-        fields = AdminSubmissionListSerializer.Meta.fields + (
+        fields = (
+            *AdminSubmissionListSerializer.Meta.fields,
             "code", "error_message", "compile_output", "judge_tokens", "test_results",
         )
 
@@ -174,7 +175,8 @@ class PublicSubmissionDetailSerializer(PublicSubmissionListSerializer):
     sample_results = serializers.SerializerMethodField()
 
     class Meta(PublicSubmissionListSerializer.Meta):
-        fields = PublicSubmissionListSerializer.Meta.fields + (
+        fields = (
+            *PublicSubmissionListSerializer.Meta.fields,
             "code", "error_message", "compile_output", "sample_results",
         )
         read_only_fields = fields

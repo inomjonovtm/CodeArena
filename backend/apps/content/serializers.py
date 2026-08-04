@@ -3,6 +3,7 @@ from __future__ import annotations
 from rest_framework import serializers
 
 from apps.core.serializer_fields import RankField
+
 from .models import Comment, ContactMessage, ContentReport, Discussion
 
 

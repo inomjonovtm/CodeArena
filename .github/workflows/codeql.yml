@@ -1,0 +1,56 @@
+name: CodeQL
+
+# Statik xavfsizlik tahlili: SQL in'ektsiya, yo'l bo'ylab chiqish
+# (path traversal), tekshirilmagan qayta yo'naltirish va shu kabilar.
+# Natijalar repozitoriyning Security → Code scanning bo'limida ko'rinadi.
+#
+# Har push'da emas, haftada bir marta + PR'larda: to'liq tahlil bir necha
+# daqiqa oladi va uni har commitda ishlatish CI ni sekinlashtiradi.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Har dushanba 05:00 UTC — yangi qoidalar chiqqanda eski kod ham
+    # qayta tekshirilsin.
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Tahlil (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, javascript-typescript]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CodeQL'ni tayyorlash
+        uses: github/codeql-action/init@v3
+        with:
+          language: ${{ matrix.language }}
+          # `security-and-quality` xavfsizlikdan tashqari sifat qoidalarini
+          # ham qo'shadi; boshlanishiga shovqin ko'proq bo'lishi mumkin,
+          # lekin aynan shu qoidalar «o'lik kod» va noto'g'ri taqqoslashni
+          # topadi.
+          queries: security-and-quality
+
+      - name: Tahlil
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}

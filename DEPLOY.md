@@ -107,8 +107,9 @@ Serverga qo'lda joylashtiriladigan fayllar (ular Git'da ham, CI'da ham yo'q):
 | `/srv/codearena/backend/.env` | Django sozlamalari (`backend/.env.example` dan) |
 | `/srv/codearena/infra/judge0.conf` | Judge0 konfiguratsiyasi, `AUTHN_TOKEN` bilan |
 
-`docker-compose.prod.yml` va `infra/nginx.conf` har deploy'da CI tomonidan
-yangilanadi — ularni qo'lda tahrirlamang.
+`docker-compose.prod.yml`, `infra/nginx/*` va `infra/certbot/entrypoint.sh`
+har deploy'da CI tomonidan yangilanadi — ularni qo'lda tahrirlamang.
+`infra/judge0.conf` esa nusxalanmaydi (unda serverdagi `AUTHN_TOKEN` bor).
 
 ### `/srv/codearena/.env`
 
@@ -120,6 +121,11 @@ POSTGRES_USER=codearena
 POSTGRES_PASSWORD=<kuchli parol>
 JUDGE0_DB_PASSWORD=<kuchli parol>
 JUDGE0_REDIS_PASSWORD=<kuchli parol>
+
+# HTTPS — certbot sertifikatni o'zi oladi va har 12 soatda yangilaydi.
+# Bo'sh qoldirilsa sayt HTTP'da qoladi (pastdagi «HTTPS» bo'limiga qarang).
+DOMAIN=codearena.uz,www.codearena.uz
+CERTBOT_EMAIL=admin@codearena.uz
 ```
 
 ### `/srv/codearena/backend/.env`
@@ -138,6 +144,17 @@ CSRF_TRUSTED_ORIGINS=https://codearena.uz
 FRONTEND_URL=https://codearena.uz
 AUTH_COOKIE_SECURE=True
 LOCAL_JUDGE_ENABLED=False
+
+# Xatolarni kuzatish — busiz prodda 500 xatosi hech kimga ko'rinmaydi
+SENTRY_DSN=<sentry.io dan olingan DSN>
+LOG_FORMAT=json
+
+# Kunlik avtomatik zaxira
+BACKUP_SCHEDULE_ENABLED=True
+# Tashqi nusxa — server yo'qolsa zaxira ham u bilan ketmasligi uchun
+BACKUP_S3_BUCKET=<bucket nomi>
+BACKUP_S3_ACCESS_KEY=<kalit>
+BACKUP_S3_SECRET_KEY=<sir>
 ```
 
 > `DJANGO_DEBUG=False` bo'lganda server standart `DJANGO_SECRET_KEY` yoki
@@ -159,6 +176,11 @@ Repozitoriy → Settings → Secrets and variables → Actions:
 | `DEPLOY_PATH` | `/srv/codearena` | ha |
 | `DEPLOY_PORT` | `22` | yo'q (sukut: 22) |
 | `DEPLOY_HEALTH_URL` | `https://codearena.uz/health/` | yo'q |
+
+> `DEPLOY_HEALTH_URL` berilsa, workflow undan `/health/ready/` manzilini
+> yasab so'raydi — u baza, kesh va qo'llanmagan migratsiyalarni ham
+> tekshiradi. Oddiy `/health/` faqat jarayon tirikligini bildiradi va
+> baza yiqilgan holatda ham 200 qaytaradi.
 
 Kalit juftligini yaratish va serverga qo'shish:
 
@@ -199,14 +221,37 @@ cd /srv/codearena && docker compose -f docker-compose.prod.yml run --rm backend 
 
 ### HTTPS
 
-`infra/nginx.conf` da HTTPS bloki izohga olingan. Sertifikat oling:
+**Qo'lda hech narsa qilinmaydi.** `.env` ga domenni yozing:
 
-```bash
-docker run --rm -v /srv/codearena/infra/certbot/conf:/etc/letsencrypt -v /srv/codearena/infra/certbot/www:/var/www/certbot certbot/certbot certonly --webroot -w /var/www/certbot -d codearena.uz
+```ini
+DOMAIN=codearena.uz,www.codearena.uz
+CERTBOT_EMAIL=siz@example.com
 ```
 
-So'ng `infra/nginx.conf` dagi HTTPS blokini va HTTP→HTTPS yo'naltirishni
-faollashtiring (fayl repozitoriyda — o'zgartirib, push qiling).
+Qolganini `certbot` xizmati bajaradi:
+
+1. nginx birinchi ko'tarilganda **80-portda** ishlaydi (sertifikat hali yo'q)
+2. `certbot` HTTP-01 tekshiruvidan o'tib sertifikat oladi
+3. nginx konfigni o'zi qayta quradi → 443 ochiladi, 80 dan yo'naltirish qo'yiladi
+4. har 12 soatda `certbot renew` chaqiriladi va nginx reload qilinadi
+
+`DOMAIN` bo'sh bo'lsa sayt HTTP'da qoladi — bu holda `backend/.env` da
+`SECURE_SSL_REDIRECT=False` va `AUTH_COOKIE_SECURE=False` qo'ying, aks holda
+Django brauzerni mavjud bo'lmagan HTTPS'ga yo'naltiradi va hisobga kirish
+ishlamaydi.
+
+Sinov uchun (Let's Encrypt limitiga urilmaslik maqsadida):
+
+```bash
+CERTBOT_STAGING=true
+```
+
+Bu rejimda sertifikat brauzerda **ishonchsiz** ko'rinadi — faqat oqimni
+tekshirish uchun. Sertifikat holatini ko'rish:
+
+```bash
+docker compose -f docker-compose.prod.yml logs certbot
+```
 
 ---
 
@@ -220,17 +265,28 @@ faollashtiring (fayl repozitoriyda — o'zgartirib, push qiling).
 | Migratsiya | deploy'da avtomatik (`migrate` xizmati) |
 | Baza zaxirasi | admin panel → Zaxira nusxalar, yoki `pg_dump` (pastga qarang) |
 
-### Qo'lda zaxira
+### Zaxira
+
+**Avtomatik** (`BACKUP_SCHEDULE_ENABLED=True` bo'lsa): celery beat har kuni
+soat 03:30 da `pg_dump` bilan nusxa oladi, oxirgi 10 tasini saqlaydi va
+`BACKUP_S3_BUCKET` ko'rsatilgan bo'lsa tashqi xotiraga ham yuklaydi.
+Ro'yxat admin panelda — **Zaxira nusxalar** bo'limida.
+
+Qo'lda olish:
 
 ```bash
-cd /srv/codearena && docker compose -f docker-compose.prod.yml exec -T postgres pg_dump -U codearena codearena | gzip > backup-$(date +%F).sql.gz
+cd /srv/codearena && docker compose -f docker-compose.prod.yml exec -T backend python manage.py backup_db --note "qo'lda"
 ```
 
-Tiklash:
+Tiklash (`pg_dump` formati):
 
 ```bash
-cd /srv/codearena && gzip -dc backup-2026-07-30.sql.gz | docker compose -f docker-compose.prod.yml exec -T postgres psql -U codearena -d codearena
+cd /srv/codearena && docker compose -f docker-compose.prod.yml exec -T postgres pg_restore --clean --if-exists --no-owner -U codearena -d codearena < backend/backups/codearena-20260730-033000.dump
 ```
+
+> Zaxirani **tiklashni ham sinab ko'ring**. Tekshirilmagan zaxira —
+> zaxira emas: fayl bor-u, undan qaytib bo'lmasligi faqat eng yomon
+> kunda ma'lum bo'ladi.
 
 ### Orqaga qaytarish (rollback)
 

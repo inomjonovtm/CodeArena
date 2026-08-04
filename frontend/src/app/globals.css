@@ -455,6 +455,9 @@
   margin: 1.3em 0;
 }
 .prose-ca hr { border: 0; border-top: 1px solid var(--edge); margin: 2.2em 0; }
+/* Jadval o'rami — tor ekranda jadval o'z maydonida suriladi, sahifa emas */
+.prose-ca .table-scroll { overflow-x: auto; margin: 1.3em 0; }
+.prose-ca .table-scroll table { margin: 0; }
 .prose-ca table { width: 100%; border-collapse: collapse; margin: 1.3em 0; font-size: 0.9375rem; }
 .prose-ca th, .prose-ca td { border-bottom: 1px solid var(--edge-soft); padding: 0.7rem 0.9rem; text-align: left; }
 .prose-ca td { font-variant-numeric: tabular-nums; }

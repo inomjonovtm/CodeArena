@@ -3,18 +3,23 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-monaco.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-monaco.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
     "@tanstack/react-query": "^5.62.7",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
-    "next": "15.1.3",
+    "next": "^15.5.22",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "recharts": "^2.15.0",
@@ -25,9 +30,12 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^9.17.0",
-    "eslint-config-next": "15.1.3",
+    "eslint-config-next": "^15.5.22",
+    "monaco-editor": "^0.53.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
   }
 }

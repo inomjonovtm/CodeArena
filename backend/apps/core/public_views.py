@@ -5,11 +5,23 @@ maxfiy ko'rsatkich yo'q va autentifikatsiya talab qilinmaydi.
 """
 from __future__ import annotations
 
+import logging
+
 from django.db.models import Count, Q
 from django.utils import timezone
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+
+from .throttling import IpThrottle
+
+logger = logging.getLogger(__name__)
+
+
+class ClientErrorThrottle(IpThrottle):
+    """Xato hisoboti — bitta brauzerdan soatiga cheklangan miqdorda."""
+
+    scope = "client_error"
 
 
 @api_view(["GET"])
@@ -144,6 +156,8 @@ def public_search(request):
     """
     from apps.accounts.models import User
     from apps.contests.models import Contest, ContestStatus
+    from apps.courses.models import Course, Lesson
+    from apps.courses.models import PublishStatus as CoursePublishStatus
     from apps.problems.models import Problem, ProblemStatus
 
     query = (request.query_params.get("q") or "").strip()
@@ -166,6 +180,44 @@ def public_search(request):
                 "subtitle": f"{problem.get_difficulty_display()} · {problem.points} ball",
                 "difficulty": problem.difficulty,
                 "url": f"/problems/{problem.slug}",
+            }
+        )
+
+    # Kurs va mavzu — o'quv kontenti masaladan alohida turadi, chunki
+    # foydalanuvchi ko'pincha «sikl», «funksiya» kabi TUSHUNCHANI qidiradi
+    # va unga masala emas, o'sha tushuncha tushuntirilgan mavzu kerak.
+    courses = Course.objects.filter(status=CoursePublishStatus.PUBLISHED).filter(
+        Q(title_uz__icontains=query) | Q(subtitle_uz__icontains=query) | Q(slug__icontains=query)
+    )
+    for course in courses[:limit]:
+        results.append(
+            {
+                "type": "course",
+                "id": str(course.id),
+                "title": course.title_uz,
+                "title_en": course.title_uz,
+                "subtitle": course.subtitle_uz or course.get_language_display(),
+                "url": f"/courses/{course.slug}",
+            }
+        )
+
+    lessons = (
+        Lesson.objects.filter(
+            status=CoursePublishStatus.PUBLISHED,
+            course__status=CoursePublishStatus.PUBLISHED,
+        )
+        .filter(Q(title_uz__icontains=query) | Q(summary_uz__icontains=query))
+        .select_related("course")
+    )
+    for lesson in lessons[:limit]:
+        results.append(
+            {
+                "type": "lesson",
+                "id": str(lesson.id),
+                "title": lesson.title_uz,
+                "title_en": lesson.title_uz,
+                "subtitle": lesson.course.title_uz,
+                "url": f"/courses/{lesson.course.slug}/{lesson.slug}",
             }
         )
 
@@ -209,3 +261,42 @@ def public_search(request):
         counts[row["type"]] = counts.get(row["type"], 0) + 1
 
     return Response({"query": query, "results": results, "counts": counts})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([ClientErrorThrottle])
+def client_error(request):
+    """`POST /api/client-errors/` — brauzerdagi xatoni logga yozadi.
+
+    Frontend `lib/report-error.ts` shu yerga yuboradi. Log darajasi `ERROR`
+    bo'lgani uchun yozuv Sentry'ga ham hodisa sifatida tushadi (DSN
+    sozlangan bo'lsa) — ya'ni klient xatolari ham bitta joyda ko'rinadi.
+
+    Bu yerda hech narsa bazaga yozilmaydi: xato oqimi to'satdan ko'payib
+    ketsa (masalan bitta buzuq relizda) jadval shishib ketardi.
+    """
+    data = request.data if isinstance(request.data, dict) else {}
+
+    def field(name: str, limit: int) -> str:
+        return str(data.get(name) or "")[:limit]
+
+    message = field("message", 500)
+    if not message:
+        return Response({"detail": "Xabar bo'sh."}, status=400)
+
+    logger.error(
+        "Klient xatosi: %s",
+        message,
+        extra={
+            "client_error": True,
+            "error_name": field("name", 100),
+            "error_stack": field("stack", 4000),
+            "page_url": field("url", 500),
+            "user_agent": field("user_agent", 300),
+            "boundary": field("boundary", 40),
+            "digest": field("digest", 100),
+            "user": request.user.username if request.user.is_authenticated else None,
+        },
+    )
+    return Response(status=204)

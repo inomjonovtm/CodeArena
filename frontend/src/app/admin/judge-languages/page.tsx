@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Check, Pencil, Plus, RefreshCw, Terminal, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -49,7 +49,6 @@ export default function JudgeLanguagesPage() {
   const { t } = useI18n();
   const can = useCan();
   const toast = useToast();
-  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<JudgeLanguage | null>(null);
   const [available, setAvailable] = useState<{ judge0_id: number; name: string }[] | null>(null);

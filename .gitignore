@@ -20,8 +20,12 @@ node_modules/
 out/
 .turbo/
 *.tsbuildinfo
+coverage/
 .env.local
 .env*.local
+# Monaco muharriri `node_modules` dan har build oldidan ko'chiriladi
+# (frontend/scripts/copy-monaco.mjs) — repozitoriyda saqlanmaydi.
+frontend/public/monaco/
 
 # --- IDE / OS
 .vscode/
@@ -30,4 +34,7 @@ out/
 Thumbs.db
 
 # --- Infra
-infra/certbot/
+# Sertifikatlar va ACME tekshiruv fayllari — serverda yaratiladi.
+# Skriptning o'zi (infra/certbot/entrypoint.sh) repozitoriyda qoladi.
+infra/certbot/conf/
+infra/certbot/www/

@@ -25,15 +25,21 @@ from apps.accounts.models import Follow, Role, User
 from apps.community.models import Group, GroupMember
 from apps.content.models import Comment, Discussion
 from apps.contests.models import Contest, ContestParticipant, ContestProblem, ContestStatus
+from apps.core import site_settings
 from apps.core.utils import unique_slug
 from apps.judge import engine
 from apps.judge.models import Submission, SubmissionStatus, SubmissionTestResult
-from apps.core import site_settings
 from apps.moderation.models import Announcement, AuditLog, SiteSetting
-from apps.problems.models import (
-    DEFAULT_POINTS, DailyChallenge, Problem, ProblemStatus, SolvedProblem, Tag, TestCase,
-)
 from apps.problems.contest_seed_data import CONTEST_PROBLEMS
+from apps.problems.models import (
+    DEFAULT_POINTS,
+    DailyChallenge,
+    Problem,
+    ProblemStatus,
+    SolvedProblem,
+    Tag,
+    TestCase,
+)
 from apps.problems.seed_data import PROBLEMS, TAG_DEFINITIONS
 
 FIRST_NAMES = ["Abror", "Malika", "Jasur", "Dilnoza", "Sardor", "Nilufar", "Bekzod", "Kamola",
@@ -313,7 +319,7 @@ class Command(BaseCommand):
                 time_limit_ms=max(spec.time_limit_ms, 6000),
                 memory_limit_kb=problem.memory_limit_kb,
             )
-            for offset, (raw_input, result) in enumerate(zip(spec.hidden_inputs, results)):
+            for offset, (raw_input, result) in enumerate(zip(spec.hidden_inputs, results, strict=True)):
                 if result.status != "ACCEPTED":
                     raise CommandError(
                         f"«{spec.title_uz}» etalon yechimi yashirin testda yiqildi "
@@ -487,7 +493,7 @@ class Command(BaseCommand):
         if not users or not problems:
             return
 
-        for index, (title, body) in enumerate(DISCUSSIONS):
+        for _index, (title, body) in enumerate(DISCUSSIONS):
             if Discussion.objects.filter(title=title).exists():
                 continue
             discussion = Discussion.objects.create(
@@ -505,7 +511,7 @@ class Command(BaseCommand):
             discussion.save(update_fields=["comment_count"])
 
         # Masala ostidagi izohlar — muhokamalardan alohida oqim
-        for index, problem in enumerate(problems[:8]):
+        for _index, problem in enumerate(problems[:8]):
             if Comment.objects.filter(problem=problem).exists():
                 continue
             for _ in range(random.randint(1, 4)):

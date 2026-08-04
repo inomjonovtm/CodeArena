@@ -15,7 +15,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.core import ranks
-from apps.core.media import ALLOWED_TYPES, MAX_SIZE_MB, MediaFile
+from apps.core.media import ALLOWED_TYPES, MediaFile
 from apps.core.pagination import StandardPagination
 
 from .models import Follow, User

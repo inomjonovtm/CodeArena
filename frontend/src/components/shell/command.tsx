@@ -36,6 +36,8 @@ type Row = {
 
 const TYPE_LABELS: Record<string, string> = {
   problem: "Masalalar",
+  course: "Kurslar",
+  lesson: "Mavzular",
   contest: "Musobaqalar",
   user: "Foydalanuvchilar",
 };

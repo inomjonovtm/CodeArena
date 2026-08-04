@@ -6,7 +6,7 @@ import re
 import zipfile
 
 from django.db import transaction
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -121,7 +121,7 @@ def import_problems(request):
         if not isinstance(raw, dict):
             errors.append({"index": index, "error": "Obyekt emas."})
             continue
-        missing = REQUIRED_FIELDS - set(k for k, v in raw.items() if str(v or "").strip())
+        missing = REQUIRED_FIELDS - {k for k, v in raw.items() if str(v or "").strip()}
         if missing:
             errors.append({"index": index, "title": raw.get("title_uz", "—"),
                            "error": f"To'ldirilmagan: {', '.join(sorted(missing))}"})

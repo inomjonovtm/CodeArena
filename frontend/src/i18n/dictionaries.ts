@@ -344,6 +344,7 @@ export const dictionaries = {
     site: {
       nav: {
         problems: "Masalalar",
+        courses: "Kurslar",
         daily: "Kunlik",
         contests: "Musobaqalar",
         leaderboard: "Reyting",
@@ -373,6 +374,7 @@ export const dictionaries = {
       },
       /** Yuqori panel va mobil menyudagi bo'lim nomlari. */
       sections: {
+        learn: "O'rganish",
         practice: "Mashq",
         compete: "Bellashuv",
         community: "Jamoa",

@@ -74,6 +74,34 @@ def scan_contest_plagiarism(contest_id: str, threshold: float | None = None) -> 
     return f"pairs:{total}"
 
 
+@shared_task(name="apps.moderation.tasks.scheduled_backup")
+def scheduled_backup() -> str:
+    """Rejaga ko'ra zaxira (celery beat, sukut bo'yicha kuniga bir marta).
+
+    Jadval `BACKUP_SCHEDULE_ENABLED` bilan boshqariladi: o'chirilgan bo'lsa
+    task chaqirilsa ham hech narsa qilmaydi. Bu lokal ishlab chiqishda
+    keraksiz fayllar to'planib qolmasligi uchun.
+    """
+    from . import backups
+
+    if not getattr(settings, "BACKUP_SCHEDULE_ENABLED", False):
+        return "disabled"
+
+    try:
+        record = backups.create_backup(automatic=True, note="Rejaga ko'ra")
+    except Exception as exc:
+        # `logger.error` Sentry'ga hodisa sifatida tushadi — tungi zaxira
+        # uzilib qolgani jimgina o'tib ketmasligi kerak.
+        logger.error("Rejadagi zaxira muvaffaqiyatsiz: %s", exc)
+        raise
+
+    logger.info(
+        "Zaxira olindi",
+        extra={"filename": record.filename, "size_bytes": record.size_bytes},
+    )
+    return record.filename
+
+
 @shared_task(name="apps.moderation.tasks.scan_problem_plagiarism")
 def scan_problem_plagiarism(problem_id: str, threshold: float | None = None, limit: int = 300) -> str:
     """Bitta masala bo'yicha amaliyot submissionlarini tekshiradi."""

@@ -15,6 +15,7 @@ from apps.core.permissions import require
 TRASHABLE = {
     "problem": ("problems.Problem", "Masala"),
     "contest": ("contests.Contest", "Contest"),
+    "course": ("courses.Course", "Kurs"),
     "discussion": ("content.Discussion", "Muhokama"),
     "comment": ("content.Comment", "Izoh"),
     "group": ("community.Group", "Guruh"),

@@ -1,0 +1,74 @@
+# Bog'liqliklarni avtomatik yangilash.
+#
+# Nima uchun: `next@15.1.3` da kritik RCE va yana 25 ta zaiflik bor edi va
+# bu bir yildan ortiq sezilmay turdi. Dependabot xavfsizlik yangilanishini
+# chiqishi bilan PR ochadi, ya'ni endi buni kimdir eslashi shart emas.
+version: 2
+
+updates:
+  # --- frontend
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tashkent
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(frontend)"
+    groups:
+      # Kichik yangilanishlar bitta PR ga yig'iladi — aks holda haftada
+      # o'nlab PR ochilib, hech kim ularni ko'rmay qo'yadi.
+      minor-va-patch:
+        update-types: [minor, patch]
+    ignore:
+      # React va Next major versiyasi qo'lda ko'chiriladi: ular sinovsiz
+      # yangilanadigan narsa emas.
+      - dependency-name: next
+        update-types: [version-update:semver-major]
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+      - dependency-name: react-dom
+        update-types: [version-update:semver-major]
+
+  # --- backend
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Tashkent
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(backend)"
+    groups:
+      minor-va-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: Django
+        update-types: [version-update:semver-major]
+
+  # --- GitHub Actions (workflow'lardagi `uses:` versiyalari)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps(ci)"
+
+  # --- Dockerfile'lardagi asosiy image'lar
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps(docker)"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "deps(docker)"

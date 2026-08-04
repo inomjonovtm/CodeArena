@@ -4,6 +4,7 @@ import { RefreshCw, TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 
 import { Button, LinkButton } from "@/components/kit";
+import { reportError } from "@/lib/report-error";
 
 /* ==========================================================================
    Xatolik chegarasi
@@ -24,6 +25,9 @@ export default function AppError({
   useEffect(() => {
     // Konsolda to'liq izi qolsin — ishlab chiqishda diagnostika uchun
     console.error("[CodeArena]", error);
+    // Serverga ham yuboriladi, aks holda bu xato faqat foydalanuvchining
+    // brauzerida qolib ketardi va biz undan bexabar bo'lardik.
+    reportError(error, { boundary: "app", digest: error.digest ?? "" });
   }, [error]);
 
   return (

@@ -10,8 +10,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
 from apps.accounts.models import Role, User
-from apps.contests.models import Contest, ContestStatus
 from apps.content.models import Comment, ContentReport, Discussion
+from apps.contests.models import Contest, ContestStatus
 from apps.core import ranks
 from apps.core.permissions import require
 from apps.judge import engine as judge_engine
@@ -118,7 +118,7 @@ def charts(request):
 
     timeline = []
     for offset in range(days, -1, -1):
-        day = str((timezone.localdate() - datetime.timedelta(days=offset)))
+        day = str(timezone.localdate() - datetime.timedelta(days=offset))
         timeline.append(
             {
                 "date": day,

@@ -136,7 +136,7 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
 
         results = []
         passed = 0
-        for index, (case, parsed) in enumerate(zip(cases, parsed_results), start=1):
+        for index, (case, parsed) in enumerate(zip(cases, parsed_results, strict=True), start=1):
             row_status = parsed.status
             if case["custom"] and row_status == "ACCEPTED":
                 # Maxsus kirishda "to'g'ri/noto'g'ri" tushunchasi yo'q — kod bajarildi

@@ -33,7 +33,8 @@ class PlagiarismPairDetailSerializer(PlagiarismPairListSerializer):
     ip_b = serializers.CharField(source="submission_b.ip_address", read_only=True, default=None)
 
     class Meta(PlagiarismPairListSerializer.Meta):
-        fields = PlagiarismPairListSerializer.Meta.fields + (
+        fields = (
+            *PlagiarismPairListSerializer.Meta.fields,
             "matched_lines", "code_a", "code_b",
             "submitted_a_at", "submitted_b_at", "ip_a", "ip_b",
         )

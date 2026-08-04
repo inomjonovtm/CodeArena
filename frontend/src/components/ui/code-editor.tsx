@@ -1,12 +1,23 @@
 "use client";
 
-import Editor, { type BeforeMount } from "@monaco-editor/react";
+import Editor, { type BeforeMount, loader } from "@monaco-editor/react";
 import { Loader2, Maximize2, Minimize2, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useTheme } from "@/components/providers";
 import { cn } from "@/lib/utils";
+
+/**
+ * Muharrir fayllarini O'Z SERVERIMIZDAN yuklaymiz.
+ *
+ * Sukut bo'yicha `@monaco-editor/react` ularni jsdelivr CDN'idan tortadi.
+ * CDN bloklangan tarmoqda (mintaqaviy filtrlar, korxona proksisi) kod
+ * muharriri umuman ochilmasdi — ya'ni saytning asosiy funksiyasi tashqi
+ * xizmatga bog'lanib qolgan edi. Fayllar `scripts/copy-monaco.mjs` orqali
+ * har build oldidan `public/monaco/vs` ga ko'chiriladi.
+ */
+loader.config({ paths: { vs: "/monaco/vs" } });
 
 const MONACO_LANGUAGE: Record<string, string> = {
   python: "python",

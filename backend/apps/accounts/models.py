@@ -232,6 +232,12 @@ PERMISSION_CATALOG: list[dict] = [
         ("tags.edit", "Tahrirlash"),
         ("tags.delete", "O'chirish"),
     ]},
+    {"key": "courses", "label": "Kurslar", "codes": [
+        ("courses.view", "Ko'rish"),
+        ("courses.edit", "Qo'shish va tahrirlash"),
+        ("courses.publish", "Chop etish"),
+        ("courses.delete", "O'chirish"),
+    ]},
     {"key": "contests", "label": "Musobaqalar", "codes": [
         ("contests.view", "Ko'rish"),
         ("contests.edit", "Tahrirlash"),
@@ -306,6 +312,7 @@ MODERATOR_PERMISSIONS: set[str] = {
     "problems.view", "problems.edit", "problems.publish",
     "testcases.view", "testcases.edit",
     "tags.view", "tags.edit",
+    "courses.view", "courses.edit", "courses.publish",
     "contests.view", "contests.edit",
     "submissions.view", "submissions.rejudge",
     "judge.view",

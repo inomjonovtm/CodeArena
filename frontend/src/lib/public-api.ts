@@ -15,7 +15,15 @@ import type {
   ContestProblemDetail,
   ContestStandings,
   CurrentUser,
+  ExerciseRunResult,
+  ExerciseSubmitResult,
   FollowState,
+  MyCourseRow,
+  PublicCourseCard,
+  PublicCourseDetail,
+  PublicLessonDetail,
+  QuizResult,
+  SnippetRunResult,
   GroupMemberRow,
   JudgeStatus,
   LeaderboardRow,
@@ -135,6 +143,40 @@ export const publicApi = {
     leaderboard: (slug: string) =>
       api.get<ContestStandings>(`/contests/${slug}/leaderboard/`),
     mine: () => api.get<MyContestRow[]>("/contests/mine/"),
+  },
+
+  /* ------------------------------------------------------------- kurslar */
+  courses: {
+    list: (query?: { language?: string; level?: string; q?: string }) =>
+      api.get<PublicCourseCard[]>("/courses/", query as Query),
+    retrieve: (slug: string) => api.get<PublicCourseDetail>(`/courses/${slug}/`),
+    /** «Mening kurslarim» — davom ettirish uchun oxirgi mavzu bilan. */
+    mine: () => api.get<MyCourseRow[]>("/courses/mine/"),
+    enroll: (slug: string) =>
+      api.post<{ detail: string; course_slug: string; start_lesson_slug: string | null }>(
+        `/courses/${slug}/enroll/`,
+      ),
+
+    lesson: (slug: string, lessonSlug: string) =>
+      api.get<PublicLessonDetail>(`/courses/${slug}/lessons/${lessonSlug}/`),
+    /** «O'qidim» belgisi — mavzuni yakunlashning birinchi sharti. */
+    markRead: (slug: string, lessonSlug: string) =>
+      api.post<{ detail: string; is_read: boolean; is_completed: boolean }>(
+        `/courses/${slug}/lessons/${lessonSlug}/read/`,
+      ),
+    /** Test javoblari: `{ "<savol id>": <variant tartibi> }`. */
+    submitQuiz: (slug: string, lessonSlug: string, answers: Record<string, number>) =>
+      api.post<QuizResult>(`/courses/${slug}/lessons/${lessonSlug}/quiz/`, { answers }),
+
+    /** «Sinab ko'rish» — misol kodini bajarish (natija saqlanmaydi). */
+    run: (body: { language: string; code: string; stdin?: string }) =>
+      api.post<SnippetRunResult>("/courses/run/", body),
+    /** Topshiriqni ochiq testlarda sinash. */
+    runExercise: (id: string, code: string, language?: string) =>
+      api.post<ExerciseRunResult>(`/courses/exercises/${id}/run/`, { code, language }),
+    /** Topshiriqni topshirish — barcha testlar, natija saqlanadi. */
+    submitExercise: (id: string, code: string, language?: string) =>
+      api.post<ExerciseSubmitResult>(`/courses/exercises/${id}/submit/`, { code, language }),
   },
 
   /* ----------------------------------------------------------- xatcho'p */

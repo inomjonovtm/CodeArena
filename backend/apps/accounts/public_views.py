@@ -18,11 +18,17 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.core.mixins import write_audit
+from apps.core.throttling import (
+    EmailSendThrottle,
+    PasswordResetIpThrottle,
+    PasswordResetTargetThrottle,
+    SocialAuthThrottle,
+)
 
 from .authentication import set_auth_cookies
 from .models import AdminSession, EmailVerification, Locale, User
@@ -57,6 +63,7 @@ def auth_config(request):
 # ============================================================ email tasdiqlash
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetIpThrottle])
 def verify_email(request):
     """`POST /api/auth/verify-email/` — xatdagi token bilan emailni tasdiqlaydi."""
     token = (request.data.get("token") or "").strip()
@@ -102,6 +109,7 @@ def verify_email(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([EmailSendThrottle])
 def resend_verification(request):
     """`POST /api/auth/resend-verification/` — tasdiqlash xatini qayta yuboradi."""
     user = request.user
@@ -126,10 +134,16 @@ def resend_verification(request):
 # ============================================================== parolni tiklash
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetIpThrottle, PasswordResetTargetThrottle])
 def forgot_password(request):
     """`POST /api/auth/forgot-password/` — tiklash havolasini yuboradi.
 
     Xavfsizlik uchun email bazada bor-yo'qligi oshkor qilinmaydi — javob doim bir xil.
+
+    Cheklov ikki tomonlama: IP bo'yicha va SO'RALGAN EMAIL bo'yicha. Faqat IP
+    bo'yicha cheklansa, hujumchi IP almashtirib bitta manzilga xat yog'dira
+    olardi; faqat email bo'yicha cheklansa — turli manzillarni sinab
+    ko'rishga yo'l ochiq qolardi.
     """
     email = (request.data.get("email") or "").strip().lower()
     if not email:
@@ -153,8 +167,12 @@ def forgot_password(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetIpThrottle])
 def reset_password(request):
-    """`POST /api/auth/reset-password/` — token bilan yangi parol o'rnatadi."""
+    """`POST /api/auth/reset-password/` — token bilan yangi parol o'rnatadi.
+
+    Cheklovsiz qolganda tokenni tanlab olishga urinish mumkin edi.
+    """
     token = (request.data.get("token") or "").strip()
     new_password = request.data.get("new_password") or ""
 
@@ -221,6 +239,7 @@ def _unique_username(base: str) -> str:
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([SocialAuthThrottle])
 def google_auth(request):
     """`POST /api/auth/google/` — Google Identity Services `credential` tokeni bilan kirish.
 

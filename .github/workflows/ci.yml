@@ -13,7 +13,29 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
+  # Lint alohida job: u sekundlarda tugaydi va xatoni butun test to'plami
+  # ishlab bo'lguncha kutmasdan ko'rsatadi.
+  lint-backend:
+    name: Backend lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ruff o'rnatish
+        run: pip install "ruff>=0.9,<1.0"
+
+      - name: Lint
+        working-directory: backend
+        run: ruff check --output-format=github .
+
   backend:
     name: Backend (Django + PostgreSQL)
     runs-on: ubuntu-latest
@@ -46,6 +68,9 @@ jobs:
       POSTGRES_HOST: localhost
       POSTGRES_PORT: "5432"
       CELERY_TASK_ALWAYS_EAGER: "True"
+      # Produksiyada loglar aynan shu formatda chiqadi — formatlovchi
+      # o'zi ham ishlashini shu yerda tekshirib qo'yamiz.
+      LOG_FORMAT: json
 
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +99,13 @@ jobs:
       - name: Migratsiyalarni toza bazaga qo'llash
         working-directory: backend
         run: python manage.py migrate --noinput
+
+      - name: Testlar
+        working-directory: backend
+        # Bu qadam bo'lmasa CI faqat «kod importlanadimi» ni tekshirardi:
+        # Elo hisobi, ruxsatlar va anti-plagiat jimgina buzilishi mumkin edi.
+        # `--shuffle` testlar bir-biriga bog'lanib qolganini ochib beradi.
+        run: python manage.py test --verbosity 2 --shuffle
 
       - name: Statik fayllarni yig'ish
         working-directory: backend
@@ -108,9 +140,19 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Lint
+        working-directory: frontend
+        # Ilgari loyihada ESLint konfiguratsiyasi umuman yo'q edi va build
+        # `ignoreDuringBuilds: true` bilan uni chetlab o'tardi.
+        run: npm run lint
+
       - name: Tiplarni tekshirish
         working-directory: frontend
         run: npm run typecheck
+
+      - name: Testlar
+        working-directory: frontend
+        run: npm test
 
       - name: Build
         working-directory: frontend
@@ -119,3 +161,33 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000
         run: npm run build
+
+  # Bog'liqliklardagi ma'lum zaifliklar. Bu job PR ni TO'XTATMAYDI: yangi
+  # CVE har kuni chiqadi va u o'zgarish muallifining aybi emas. Lekin
+  # natija Actions sahifasida ko'rinib turadi va e'tibordan chetda qolmaydi.
+  audit:
+    name: Bog'liqliklar auditi
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: pip-audit
+        working-directory: backend
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt

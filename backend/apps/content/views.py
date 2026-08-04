@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from django.db.models import F
 from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+
+from apps.core.throttling import ContentWriteThrottle, WriteThrottleMixin
 
 from .models import (
     Comment,
@@ -21,7 +23,7 @@ from .serializers import (
 )
 
 
-class DiscussionViewSet(viewsets.ModelViewSet):
+class DiscussionViewSet(WriteThrottleMixin, viewsets.ModelViewSet):
     """`/api/discussions/` — mustaqil muhokama mavzulari.
 
     Masalaga oid qisqa savollar bu yerga tushmaydi: ular masala sahifasidagi
@@ -87,7 +89,7 @@ class DiscussionViewSet(viewsets.ModelViewSet):
         return Response(PublicCommentSerializer(rows, many=True, context={"request": request}).data)
 
 
-class CommentViewSet(viewsets.ModelViewSet):
+class CommentViewSet(WriteThrottleMixin, viewsets.ModelViewSet):
     serializer_class = PublicCommentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     filterset_fields = ["discussion", "problem", "parent"]
@@ -141,7 +143,7 @@ class CommentViewSet(viewsets.ModelViewSet):
         return _apply_vote(request, target=comment, field="comment")
 
 
-class ReportViewSet(viewsets.GenericViewSet):
+class ReportViewSet(WriteThrottleMixin, viewsets.GenericViewSet):
     """`POST /api/reports/` — noto'g'ri kontent haqida xabar berish."""
 
     serializer_class = PublicReportSerializer
@@ -251,14 +253,15 @@ def _notify_comment(comment, *, actor) -> None:
 # ============================================================ bog'lanish
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([ContentWriteThrottle])
 def contact_submit(request):
     """`POST /api/contact/` — «Bog'lanish» formasi.
 
     Mehmon ham yozishi mumkin; tizimga kirgan bo'lsa ism/email avtomatik
     to'ldiriladi va xabar hisobga bog'lanadi.
     """
-    from django.core.validators import validate_email
     from django.core.exceptions import ValidationError as DjangoValidationError
+    from django.core.validators import validate_email
 
     user = request.user if request.user.is_authenticated else None
     data = request.data

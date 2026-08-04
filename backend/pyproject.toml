@@ -1,0 +1,69 @@
+# Ruff — linter va formatlovchi (flake8 + isort + qismati bandit o'rniga).
+#
+# Loyihada ilgari hech qanday Python linteri yo'q edi: ishlatilmayotgan
+# import, yetib bo'lmaydigan kod va xavfli shablonlar faqat ko'z bilan
+# topilardi. Ruff bitta binar va sekundlarda ishlaydi, shuning uchun uni
+# CI ga qo'shish qimmatga tushmaydi.
+
+[tool.ruff]
+# Kod amalda ~100 belgiga qurilgan (99% qator shundan qisqa), lekin bir
+# nechta joyda uzun izoh yoki manzil bor. 120 — «haqiqatan ham juda uzun»
+# qatorlarni ushlaydi va mavjud kodni qayta yozishga majburlamaydi.
+line-length = 120
+target-version = "py312"
+extend-exclude = [
+    "*/migrations/*",   # avtomatik yaratiladi — uslub tekshirilmaydi
+    ".venv",
+    "staticfiles",
+    "media",
+    "backups",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle xatolari
+    "W",    # pycodestyle ogohlantirishlari
+    "F",    # pyflakes — ishlatilmagan import/o'zgaruvchi, aniqlanmagan nom
+    "I",    # isort — import tartibi
+    "UP",   # pyupgrade — eskirgan sintaksis
+    "B",    # flake8-bugbear — tez-tez uchraydigan xato shablonlari
+    "C4",   # comprehension'larni soddalashtirish
+    "DJ",   # Django uchun maxsus qoidalar
+    "S",    # bandit — xavfsizlik
+    "BLE",  # keng `except` — mavjud `# noqa: BLE001` izohlari shu uchun
+    "RUF",  # ruff'ning o'z qoidalari
+]
+ignore = [
+    # Django'da `null=True` matn maydonlarida ba'zan zarur (unique bilan)
+    "DJ001",
+    # `assert` testlarda normal
+    "S101",
+    # `permission_classes = [...]` — Django/DRF ning standart uslubi.
+    # Bu qoida ularning hammasini `ClassVar` ga o'rashni talab qilardi.
+    "RUF012",
+    # O'zbek matnidagi `'` (U+2018/2019) belgilarini «shubhali» deb
+    # belgilaydi. Bizda ular ATAYLAB: «bo'lim», «o'zgaruvchi».
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    # Satr ichida `%` formatlash Django uslubida keng tarqalgan
+    "UP031",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Sozlamalarda uzun izohli bloklar va shartli import bor
+"config/settings.py" = ["E402", "F401"]
+# Testlarda uzunroq satr va qat'iy tekshiruvlar
+"**/tests/*" = ["S105", "S106", "E501"]
+# Seed skripti demo parollarni ataylab ishlatadi
+"**/management/commands/seed_demo.py" = ["S105", "S106", "S311"]
+# Kurs kontenti — nazariya matni uzun qatorlarda saqlanadi. Saytning
+# Markdown renderi HAR BIR QATORNI alohida paragraf deb chizadi, ya'ni
+# matnni 120 belgida o'rash sahifada uzilgan paragraflar bo'lib ko'rinardi.
+"apps/courses/seed_data/*.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.format]
+quote-style = "double"

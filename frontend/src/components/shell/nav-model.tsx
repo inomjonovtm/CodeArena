@@ -4,6 +4,7 @@ import {
   Bookmark,
   CalendarDays,
   CircleHelp,
+  GraduationCap,
   History,
   LayoutDashboard,
   ListChecks,
@@ -51,6 +52,13 @@ export function useNavModel() {
   const { t } = useI18n();
 
   const groups: NavGroup[] = [
+    {
+      key: "learn",
+      label: t.site.sections.learn,
+      links: [
+        { href: "/courses", label: t.site.nav.courses, icon: <GraduationCap className="size-[18px]" /> },
+      ],
+    },
     {
       key: "practice",
       label: t.site.sections.practice,

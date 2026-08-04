@@ -1,0 +1,5 @@
+# Faqat ishlab chiqish va CI uchun — produksiya image'iga tushmaydi.
+-r requirements.txt
+
+# Linter + formatlovchi (sozlamalar: pyproject.toml)
+ruff>=0.9,<1.0

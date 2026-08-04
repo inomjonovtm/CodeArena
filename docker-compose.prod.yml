@@ -6,7 +6,9 @@
 # xotira tugab qolishi kabi muammolar yo'qoladi.
 #
 # Serverda kerak bo'ladigan fayllar:
-#   docker-compose.prod.yml, .env, backend/.env, infra/nginx.conf, infra/judge0.conf
+#   docker-compose.prod.yml, .env, backend/.env,
+#   infra/nginx/{app.conf,entrypoint.sh}, infra/certbot/entrypoint.sh,
+#   infra/judge0.conf
 #
 # Ishga tushirish:
 #   docker compose -f docker-compose.prod.yml pull
@@ -160,8 +162,16 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      # Bo'sh bo'lsa sayt faqat HTTP'da ishlaydi. Domen ko'rsatilsa va
+      # certbot sertifikat olsa — konfig o'zi HTTPS'ga o'tadi.
+      DOMAIN: ${DOMAIN:-}
+    # Skript exec biti bo'lmasa ham ishlashi uchun `sh` orqali chaqiriladi
+    # (Windowsdan checkout qilinganda rejim yo'qoladi).
+    entrypoint: ["/bin/sh", "/docker-entrypoint-codearena.sh"]
     volumes:
-      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/nginx/entrypoint.sh:/docker-entrypoint-codearena.sh:ro
+      - ./infra/nginx/app.conf:/etc/nginx/app.conf:ro
       - static_data:/var/www/static:ro
       - media_data:/var/www/media:ro
       - ./infra/certbot/conf:/etc/letsencrypt:ro
@@ -169,6 +179,23 @@ services:
     depends_on:
       - backend
       - frontend
+
+  # Sertifikatni oladi va har 12 soatda yangilashni tekshiradi. DOMAIN
+  # bo'sh bo'lsa xizmat hech narsa qilmasdan kutib turadi.
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+      CERTBOT_STAGING: ${CERTBOT_STAGING:-false}
+    entrypoint: ["/bin/sh", "/entrypoint-codearena.sh"]
+    volumes:
+      - ./infra/certbot/entrypoint.sh:/entrypoint-codearena.sh:ro
+      - ./infra/certbot/conf:/etc/letsencrypt
+      - ./infra/certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
 
 volumes:
   postgres_data:

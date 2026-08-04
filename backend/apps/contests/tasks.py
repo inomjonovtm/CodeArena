@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from .models import Contest, ContestParticipant, ContestStatus
+from .models import Contest, ContestStatus
 from .rating import RatingRow, compute_rating_changes
 
 

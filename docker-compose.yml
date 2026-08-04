@@ -138,8 +138,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-}
+    entrypoint: ["/bin/sh", "/docker-entrypoint-codearena.sh"]
     volumes:
-      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./infra/nginx/entrypoint.sh:/docker-entrypoint-codearena.sh:ro
+      - ./infra/nginx/app.conf:/etc/nginx/app.conf:ro
       - static_data:/var/www/static:ro
       - media_data:/var/www/media:ro
       - ./infra/certbot/conf:/etc/letsencrypt:ro
@@ -147,6 +151,21 @@ services:
     depends_on:
       - backend
       - frontend
+
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+      CERTBOT_STAGING: ${CERTBOT_STAGING:-false}
+    entrypoint: ["/bin/sh", "/entrypoint-codearena.sh"]
+    volumes:
+      - ./infra/certbot/entrypoint.sh:/entrypoint-codearena.sh:ro
+      - ./infra/certbot/conf:/etc/letsencrypt
+      - ./infra/certbot/www:/var/www/certbot
+    depends_on:
+      - nginx
 
 volumes:
   postgres_data:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.core.utils import unique_slug
 from apps.core.serializer_fields import RankField
+from apps.core.utils import unique_slug
 
 from .models import Group, GroupMember
 

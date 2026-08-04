@@ -50,9 +50,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     NEXT_TELEMETRY_DISABLED=1 \
     PORT=8080
 
+# postgresql-client — zaxira uchun `pg_dump` (qarang: apps/moderation/backups.py)
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       nginx gettext-base curl libpq5 ca-certificates \
+       nginx gettext-base curl libpq5 postgresql-client ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
 

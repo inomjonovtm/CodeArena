@@ -140,9 +140,10 @@ class BulkActionMixin:
                 targets = [(str(o.pk), str(o)[:255]) for o in queryset]
                 queryset.delete()
                 for pk, repr_ in targets:
+                    label = getattr(self, "audit_label", "") or self.queryset.model.__name__.lower()
                     write_audit(
                         request,
-                        action_name=f"{getattr(self, 'audit_label', '') or self.queryset.model.__name__.lower()}.delete",
+                        action_name=f"{label}.delete",
                         target_type=self.queryset.model.__name__,
                         target_id=pk,
                         target_repr=repr_,
@@ -152,9 +153,10 @@ class BulkActionMixin:
             else:
                 result = self.handle_bulk_action(request, action_name, queryset, payload) or {}
                 result.setdefault("affected", affected)
+                label = getattr(self, "audit_label", "") or self.queryset.model.__name__.lower()
                 write_audit(
                     request,
-                    action_name=f"{getattr(self, 'audit_label', '') or self.queryset.model.__name__.lower()}.bulk.{action_name}",
+                    action_name=f"{label}.bulk.{action_name}",
                     target_type=self.queryset.model.__name__,
                     target_id="",
                     target_repr=f"{affected} ta obyekt",
