@@ -59,7 +59,7 @@ function TimeLeft() {
   return (
     <Chip tone="neutral" icon={<Timer className="size-3.5" />}>
       Yangilanishga{" "}
-      <span className="t-num font-semibold text-[var(--ink)]">
+      <span className="ts-num font-semibold text-[var(--text)]">
         {pad2(hours)}:{pad2(minutes)}:{pad2(seconds)}
       </span>
     </Chip>
@@ -77,7 +77,7 @@ function CalendarGrid({ days }: { days: DailyCalendarDay[] }) {
     <div>
       <div className="grid grid-cols-7 gap-1">
         {WEEKDAYS_UZ.map((day) => (
-          <span key={day} className="pb-1 text-center text-[10.5px] font-semibold text-[var(--ink-4)]">
+          <span key={day} className="pb-1 text-center text-[12px] font-semibold text-[var(--text-4)]">
             {day}
           </span>
         ))}
@@ -92,17 +92,17 @@ function CalendarGrid({ days }: { days: DailyCalendarDay[] }) {
               href={`/problems/${day.problem_slug}`}
               title={`${formatDate(day.date, false)} — ${day.problem_title}`}
               className={cn(
-                "flex aspect-square flex-col items-center justify-center gap-0.5 rounded-[var(--r-ctl)] border focus-ring",
-                "transition-colors duration-[var(--t-fast)]",
+                "flex aspect-square flex-col items-center justify-center gap-0.5 rounded-[var(--radius-sm)] border ring-focus",
+                "transition-colors duration-[var(--dur-1)]",
                 day.is_today
-                  ? "border-[var(--brand-edge)] bg-[var(--brand-wash)]"
-                  : "border-transparent hover:bg-[var(--pane-hover)]",
+                  ? "border-[var(--green-line)] bg-[var(--green-wash)]"
+                  : "border-transparent hover:bg-[var(--surface-hover)]",
               )}
             >
               <span
                 className={cn(
-                  "t-num text-[11.5px] font-medium",
-                  day.is_solved ? "text-[var(--ink)]" : "text-[var(--ink-3)]",
+                  "ts-num text-[12px] font-medium",
+                  day.is_solved ? "text-[var(--text)]" : "text-[var(--text-3)]",
                 )}
               >
                 {date.getDate()}
@@ -111,7 +111,7 @@ function CalendarGrid({ days }: { days: DailyCalendarDay[] }) {
                 aria-hidden
                 className={cn(
                   "size-1.5 rounded-full",
-                  day.is_solved ? "bg-[var(--ok)]" : "bg-[var(--edge-strong)]",
+                  day.is_solved ? "bg-[var(--ok)]" : "bg-[var(--line-strong)]",
                 )}
               />
             </Link>
@@ -121,16 +121,16 @@ function CalendarGrid({ days }: { days: DailyCalendarDay[] }) {
 
       {/* Belgilar izohi — rang yolg'iz signal bo'lmasin */}
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-        <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-4)]">
+        <span className="ts-sm inline-flex items-center gap-1.5 text-[var(--text-4)]">
           <span className="size-1.5 rounded-full bg-[var(--ok)]" />
           yechilgan
         </span>
-        <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-4)]">
-          <span className="size-1.5 rounded-full bg-[var(--edge-strong)]" />
+        <span className="ts-sm inline-flex items-center gap-1.5 text-[var(--text-4)]">
+          <span className="size-1.5 rounded-full bg-[var(--line-strong)]" />
           o&apos;tkazilgan
         </span>
-        <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-4)]">
-          <span className="size-2.5 rounded-[4px] border border-[var(--brand-edge)] bg-[var(--brand-wash)]" />
+        <span className="ts-sm inline-flex items-center gap-1.5 text-[var(--text-4)]">
+          <span className="size-2.5 rounded-[4px] border border-[var(--green-line)] bg-[var(--green-wash)]" />
           bugun
         </span>
       </div>
@@ -151,15 +151,15 @@ export default function DailyChallengePage() {
     /* Skelet kartalar ritmini takrorlaydi — kontent kelganda sahifa sakramaydi */
     return (
       <div className="flex flex-col gap-5">
-        <Block className="h-36 rounded-[var(--r-pane)]" />
+        <Block className="h-36 rounded-[var(--radius-lg)]" />
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="flex flex-col gap-5">
-            <Block className="h-56 rounded-[var(--r-pane-lg)]" />
-            <Block className="h-72 rounded-[var(--r-pane)]" />
+            <Block className="h-56 rounded-[var(--radius-xl)]" />
+            <Block className="h-72 rounded-[var(--radius-lg)]" />
           </div>
           <div className="flex flex-col gap-5">
-            <Block className="h-44 rounded-[var(--r-pane)]" />
-            <Block className="h-80 rounded-[var(--r-pane)]" />
+            <Block className="h-44 rounded-[var(--radius-lg)]" />
+            <Block className="h-80 rounded-[var(--radius-lg)]" />
           </div>
         </div>
       </div>
@@ -192,7 +192,7 @@ export default function DailyChallengePage() {
               ) : null}
               {challenge.bonus_points ? (
                 <Chip tone="brand" icon={<Trophy className="size-3.5" />}>
-                  +<span className="t-num">{challenge.bonus_points}</span> bonus ball
+                  +<span className="ts-num">{challenge.bonus_points}</span> bonus ball
                 </Chip>
               ) : null}
               {data?.is_solved ? (
@@ -208,11 +208,11 @@ export default function DailyChallengePage() {
       <SplitLayout
         className="gap-5"
         aside={
-          <div className="enter flex flex-col gap-5">
+          <div className="flex flex-col gap-5">
             {/* ----------------------------------------------- seriya statistikasi */}
             {user ? (
               <Pane inset="md">
-                <p className="t-eyebrow">Seriya</p>
+                <p className="ts-label">Seriya</p>
                 <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5">
                   <Stat
                     label="Joriy"
@@ -252,7 +252,7 @@ export default function DailyChallengePage() {
 
             {!user ? (
               <Pane inset="md">
-                <p className="t-meta text-[var(--ink-2)]">
+                <p className="ts-sm text-[var(--text-2)]">
                   Seriyangizni kuzatish va bonus ball olish uchun hisobingizga kiring.
                 </p>
                 <div className="mt-4 flex flex-col gap-2">
@@ -262,7 +262,7 @@ export default function DailyChallengePage() {
                   <LinkButton
                     href="/login"
                     size="sm"
-                    className="border-[var(--edge)] bg-[var(--pane-sunken)] hover:bg-[var(--pane-hover)]"
+                    className="border-[var(--line)] bg-[var(--surface-sunk)] hover:bg-[var(--surface-hover)]"
                   >
                     Kirish
                   </LinkButton>
@@ -285,31 +285,27 @@ export default function DailyChallengePage() {
             </Pane>
           ) : (
             <>
-              {/* Sahifaning yagona to'yingan ko'k bloki — bugungi chaqiriq */}
-              <div className="enter pane-brand rounded-[var(--r-pane-lg)] p-7 sm:p-9">
-                <p className="t-eyebrow text-[var(--brand-wash)]">
+              {/* Sahifaning yagona to'yingan yashil bloki — bugungi chaqiriq */}
+              <div className="wash rounded-[var(--radius-xl)] p-6 sm:p-7">
+                <p className="ts-label text-[var(--green-text)]">
                   {formatDate(challenge.date, false)}
                 </p>
-                <h2 className="t-title mt-3 text-[var(--ink-on-brand)]">
+                <h2 className="ts-h2 mt-2 text-[var(--text)]">
                   {challenge.problem_title}
                 </h2>
 
                 {challenge.note_uz ? (
-                  <p className="t-body mt-4 max-w-xl text-[var(--brand-wash)]">
+                  <p className="ts-sm mt-3 max-w-xl text-[var(--text-2)]">
                     {challenge.note_uz}
                   </p>
                 ) : null}
 
-                <div className="mt-7">
+                <div className="mt-5">
                   <LinkButton
                     href={`/problems/${challenge.problem_slug}`}
                     variant="primary"
-                    size="lg"
+                    size="md"
                     iconAfter={<ArrowRight className="size-4" />}
-                    className={cn(
-                      "bg-[var(--ink-on-brand)] text-[var(--brand-ink)] shadow-none",
-                      "hover:bg-[var(--brand-wash)] active:bg-[var(--brand-wash-strong)]",
-                    )}
                   >
                     {data?.is_solved ? "Qayta ko'rish" : "Yechishni boshlash"}
                   </LinkButton>
@@ -317,7 +313,7 @@ export default function DailyChallengePage() {
               </div>
 
               {detail ? (
-                <Pane tone="solid" inset="lg" className="enter">
+                <Pane tone="solid" inset="lg" className="">
                   <PaneHead eyebrow="Shart" title="Masala sharti" />
                   <div className="mt-5">
                     <Markdown source={detail.description_uz} />

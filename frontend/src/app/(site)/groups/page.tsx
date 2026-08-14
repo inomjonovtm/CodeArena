@@ -44,8 +44,8 @@ function GroupMark({
     <span
       style={{ width: size, height: size, fontSize: Math.max(11, size * 0.34) }}
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--r-ctl)]",
-        "border border-[var(--edge)] bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-sm)]",
+        "border border-[var(--line)] bg-[var(--green-wash)] font-semibold text-[var(--green-text)]",
         className,
       )}
     >
@@ -161,12 +161,12 @@ export default function GroupsPage() {
         </div>
 
         {isLoading ? (
-          <div className="border-t border-[var(--edge)] p-5 sm:p-6">
+          <div className="border-t border-[var(--line)] p-5 sm:p-6">
             <ListSkeleton rows={4} />
           </div>
         ) : isError ? (
           /* So'rov uzilganda "guruhingiz yo'q" deyish noto'g'ri bo'lardi */
-          <div className="border-t border-[var(--edge)] p-5 sm:p-6">
+          <div className="border-t border-[var(--line)] p-5 sm:p-6">
             <Alert
               tone="bad"
               title="Guruhlarni yuklab bo'lmadi"
@@ -180,7 +180,7 @@ export default function GroupsPage() {
             </Alert>
           </div>
         ) : rows.length === 0 ? (
-          <div className="border-t border-[var(--edge)]">
+          <div className="border-t border-[var(--line)]">
             <Empty
               icon={<Users className="size-5" />}
               title="Hali guruhingiz yo'q"
@@ -197,28 +197,28 @@ export default function GroupsPage() {
             />
           </div>
         ) : (
-          <ul className="enter-stagger divide-y divide-[var(--edge-soft)] border-t border-[var(--edge)]">
+          <ul className="divide-y divide-[var(--line-soft)] border-t border-[var(--line)]">
             {rows.map((group) => (
               <li key={group.id}>
                 <Link
                   href={`/groups/${group.slug}`}
                   className={cn(
                     "group flex items-center gap-4 px-5 py-4 transition-colors sm:px-7",
-                    "duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] focus-ring",
+                    "duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] ring-focus",
                   )}
                 >
                   <GroupMark src={group.avatar_url} name={group.name} />
 
                   <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 text-[14.5px] font-semibold text-[var(--ink)]">
-                      <span className="truncate transition-colors group-hover:text-[var(--brand-ink)]">
+                    <p className="flex items-center gap-1.5 text-[15.5px] font-semibold text-[var(--text)]">
+                      <span className="truncate transition-colors group-hover:text-[var(--green-text)]">
                         {group.name}
                       </span>
                       {group.is_verified ? (
-                        <BadgeCheck className="size-4 shrink-0 text-[var(--brand)]" />
+                        <BadgeCheck className="size-4 shrink-0 text-[var(--green)]" />
                       ) : null}
                     </p>
-                    <p className="t-meta mt-0.5 truncate text-[var(--ink-4)]">
+                    <p className="ts-sm mt-0.5 truncate text-[var(--text-4)]">
                       {group.owner_username ? `@${group.owner_username}` : "—"}
                       {" · "}
                       {group.is_private ? "yopiq" : "ochiq"}
@@ -226,17 +226,17 @@ export default function GroupsPage() {
                     </p>
                   </div>
 
-                  <span className="hidden items-center gap-1.5 text-[12.5px] text-[var(--ink-3)] sm:flex">
-                    <Users className="size-3.5 text-[var(--ink-4)]" />
+                  <span className="hidden items-center gap-1.5 text-[13px] text-[var(--text-3)] sm:flex">
+                    <Users className="size-3.5 text-[var(--text-4)]" />
                     <Count value={group.live_member_count || group.member_count} />
                     a&apos;zo
                   </span>
 
-                  <span className="t-num hidden rounded-[var(--r-ctl)] bg-[var(--pane-sunken)] px-2.5 py-1 font-mono text-[12px] text-[var(--ink-3)] md:block">
+                  <span className="ts-num hidden rounded-[var(--radius-sm)] bg-[var(--surface-sunk)] px-2.5 py-1 font-mono text-[12.5px] text-[var(--text-3)] md:block">
                     {group.invite_code}
                   </span>
 
-                  <ChevronRight className="size-4 shrink-0 text-[var(--ink-4)] transition-transform duration-[var(--t-fast)] group-hover:translate-x-0.5" />
+                  <ChevronRight className="size-4 shrink-0 text-[var(--text-4)] transition-transform duration-[var(--dur-1)] group-hover:translate-x-0.5" />
                 </Link>
               </li>
             ))}
@@ -330,7 +330,7 @@ export default function GroupsPage() {
             id="invite-code"
             autoFocus
             maxLength={16}
-            className={cn(inputClass, "text-center font-mono text-[18px] uppercase tracking-[0.3em]")}
+            className={cn(inputClass, "text-center font-mono text-[19px] uppercase tracking-[0.3em]")}
             placeholder="ABCD1234"
             value={inviteCode}
             onChange={(event) => setInviteCode(event.target.value.toUpperCase())}

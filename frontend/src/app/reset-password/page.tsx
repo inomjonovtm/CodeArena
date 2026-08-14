@@ -56,12 +56,11 @@ function ResetPasswordInner() {
     return (
       <AuthShell
         title="Havola topilmadi"
-        subtitle="Tiklash havolasi to'liq emas."
         error="Havolada token yo'q. Emaildagi tugmani to'liq nusxalab oching."
         footer={
           <Link
             href="/forgot-password"
-            className="focus-ring rounded-[var(--r-ctl)] font-medium text-[var(--brand)] hover:underline"
+            className="ring-focus rounded-[var(--radius-sm)] font-medium text-[var(--green)] hover:underline"
           >
             Yangi havola so&apos;rash
           </Link>
@@ -75,23 +74,22 @@ function ResetPasswordInner() {
   return (
     <AuthShell
       title="Yangi parol"
-      subtitle={done ? "Parol yangilandi." : "Hisobingiz uchun yangi parol o'rnating."}
       error={error}
       footer={
         <Link
           href="/login"
-          className="focus-ring rounded-[var(--r-ctl)] font-medium text-[var(--brand)] hover:underline"
+          className="ring-focus rounded-[var(--radius-sm)] font-medium text-[var(--green)] hover:underline"
         >
           Kirish sahifasi
         </Link>
       }
     >
       {done ? (
-        <div className="enter mt-6 flex flex-col items-center gap-4 text-center">
+        <div className="mt-6 flex flex-col items-center gap-4 text-center">
           <span className="flex size-12 items-center justify-center rounded-full border border-[var(--ok)] bg-[var(--ok-wash)] text-[var(--ok)]">
             <CheckCircle2 className="size-7" />
           </span>
-          <p className="t-body text-[var(--ink-3)]">
+          <p className="ts-body text-[var(--text-3)]">
             Parolingiz muvaffaqiyatli yangilandi va barcha eski sessiyalar yopildi.
             Kirish sahifasiga o&apos;tmoqdasiz...
           </p>
@@ -100,7 +98,7 @@ function ResetPasswordInner() {
         <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-4">
           <AuthField label="Yangi parol" htmlFor="password" required>
             <div className="relative">
-              <KeyRound className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[var(--ink-4)]" />
+              <KeyRound className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[var(--text-4)]" />
               <input
                 id="password"
                 type={show ? "text" : "password"}
@@ -116,7 +114,7 @@ function ResetPasswordInner() {
                 type="button"
                 onClick={() => setShow((value) => !value)}
                 aria-label={show ? "Parolni yashirish" : "Parolni ko'rsatish"}
-                className="focus-ring absolute top-1/2 right-3 -translate-y-1/2 rounded-[var(--r-ctl)] text-[var(--ink-4)] transition-colors hover:text-[var(--ink-2)]"
+                className="ring-focus absolute top-1/2 right-3 -translate-y-1/2 rounded-[var(--radius-sm)] text-[var(--text-4)] transition-colors hover:text-[var(--text-2)]"
               >
                 {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
@@ -141,14 +139,14 @@ function ResetPasswordInner() {
               <li
                 key={rule.label}
                 className={cn(
-                  "flex items-center gap-1.5 text-[12px]",
-                  rule.ok ? "text-[var(--ok)]" : "text-[var(--ink-4)]",
+                  "flex items-center gap-1.5 text-[12.5px]",
+                  rule.ok ? "text-[var(--ok)]" : "text-[var(--text-4)]",
                 )}
               >
                 <span
                   className={cn(
                     "size-1.5 rounded-full",
-                    rule.ok ? "bg-[var(--ok)]" : "bg-[var(--brand-wash-strong)]",
+                    rule.ok ? "bg-[var(--ok)]" : "bg-[var(--green-wash-2)]",
                   )}
                 />
                 {rule.label}
@@ -174,7 +172,7 @@ function ResetPasswordInner() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="aurora-canvas min-h-screen" />}>
+    <Suspense fallback={<div className="bg-[var(--bg)] min-h-screen" />}>
       <ResetPasswordInner />
     </Suspense>
   );

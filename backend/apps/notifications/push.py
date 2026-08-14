@@ -8,7 +8,7 @@ yetkazadi, sayt yopiq bo'lsa ham.
 **Kalitlar sozlanmagan bo'lsa modul jimgina o'chadi.** `VAPID_PUBLIC_KEY` /
 `VAPID_PRIVATE_KEY` bo'sh bo'lsa `is_enabled()` `False` qaytaradi, obuna
 endpointi buni ochiq aytadi va frontend tugmani ko'rsatmaydi. Shu tufayli
-loyihani kalitlarsiz ham ishga tushirish mumkin — judge0 bilan bir xil yondashuv.
+loyihani kalitlarsiz ham ishga tushirish mumkin.
 
 Kalit yaratish:  `python manage.py vapid_keys`
 """

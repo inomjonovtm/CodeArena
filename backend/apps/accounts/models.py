@@ -10,6 +10,9 @@ from django.utils import timezone
 
 class Role(models.TextChoices):
     USER = "user", "Foydalanuvchi"
+    # Muallif (setter) — Studio panelida masala, olimpiada va kurs tayyorlaydi.
+    # Sayt boshqaruviga (foydalanuvchi, moderatsiya, sozlama) tegmaydi.
+    SETTER = "setter", "Muallif"
     MODERATOR = "moderator", "Moderator"
     ADMIN = "admin", "Administrator"
 
@@ -142,6 +145,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = "users"
+        verbose_name = "Foydalanuvchi"
+        verbose_name_plural = "Foydalanuvchilar"
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["-total_points"]),
@@ -162,8 +167,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.role == Role.MODERATOR
 
     @property
+    def is_setter(self) -> bool:
+        return self.role == Role.SETTER
+
+    @property
     def is_staff_member(self) -> bool:
         return self.role in {Role.ADMIN, Role.MODERATOR}
+
+    @property
+    def is_studio_member(self) -> bool:
+        """Studio (muallif paneli) uchun ruxsat etilgan rollar."""
+        return self.role in {Role.ADMIN, Role.MODERATOR, Role.SETTER}
 
     @property
     def ban_is_active(self) -> bool:
@@ -227,31 +241,39 @@ PERMISSION_CATALOG: list[dict] = [
         ("testcases.edit", "Tahrirlash"),
         ("testcases.delete", "O'chirish"),
     ]},
+    {"key": "authoring", "label": "Muallif asboblari (Studio)", "codes": [
+        ("authoring.view", "Studio panelga kirish"),
+        ("authoring.edit", "Etalon yechim, checker va generator tahriri"),
+        ("authoring.run", "Kod ishga tushirish: generatsiya, tekshiruv, stress-test"),
+    ]},
     {"key": "tags", "label": "Teglar", "codes": [
         ("tags.view", "Ko'rish"),
         ("tags.edit", "Tahrirlash"),
         ("tags.delete", "O'chirish"),
     ]},
-    {"key": "courses", "label": "Kurslar", "codes": [
-        ("courses.view", "Ko'rish"),
-        ("courses.edit", "Qo'shish va tahrirlash"),
-        ("courses.publish", "Chop etish"),
-        ("courses.delete", "O'chirish"),
-    ]},
     {"key": "contests", "label": "Musobaqalar", "codes": [
         ("contests.view", "Ko'rish"),
         ("contests.edit", "Tahrirlash"),
+        ("contests.staff", "Hakam va mas'ullarni biriktirish"),
         ("contests.ratings", "Reyting hisoblash"),
         ("contests.delete", "O'chirish"),
+    ]},
+    {"key": "assessments", "label": "Test savollari va sinovlar", "codes": [
+        ("assessments.view", "Ko'rish"),
+        ("assessments.edit", "Savol va sinov tahriri"),
+        ("assessments.publish", "Sinovni chop etish"),
+        ("assessments.results", "Natijalarni ko'rish"),
+        ("assessments.delete", "O'chirish"),
     ]},
     {"key": "submissions", "label": "Yuborishlar", "codes": [
         ("submissions.view", "Ko'rish"),
         ("submissions.rejudge", "Qayta tekshirish"),
         ("submissions.delete", "O'chirish"),
     ]},
-    {"key": "judge", "label": "Judge0 va tillar", "codes": [
+    {"key": "judge", "label": "Kod bajarish xizmati", "codes": [
         ("judge.view", "Ko'rish"),
         ("judge.edit", "Sozlash"),
+        ("judge.delete", "Tilni o'chirish"),
     ]},
     {"key": "users", "label": "Foydalanuvchilar", "codes": [
         ("users.view", "Ko'rish"),
@@ -275,6 +297,10 @@ PERMISSION_CATALOG: list[dict] = [
     {"key": "moderation", "label": "Plagiat", "codes": [
         ("moderation.view", "Ko'rish"),
         ("moderation.review", "Qaror qabul qilish"),
+        # `delete` kodi bo'lmasa plagiat yozuvini HECH KIM (admin ham)
+        # o'chira olmaydi: `HasResourcePerm` `moderation.delete` so'raydi,
+        # katalogda esa bunday kod yo'q edi.
+        ("moderation.delete", "O'chirish"),
     ]},
     {"key": "announcements", "label": "E'lonlar", "codes": [
         ("announcements.view", "Ko'rish"),
@@ -298,6 +324,7 @@ PERMISSION_CATALOG: list[dict] = [
         ("settings.view", "Ko'rish"),
         ("settings.edit", "O'zgartirish"),
         ("settings.backup", "Zaxira nusxa"),
+        ("settings.delete", "Sozlamani o'chirish"),
     ]},
 ]
 
@@ -311,9 +338,10 @@ MODERATOR_PERMISSIONS: set[str] = {
     "dashboard.view",
     "problems.view", "problems.edit", "problems.publish",
     "testcases.view", "testcases.edit",
+    "authoring.view", "authoring.edit", "authoring.run",
     "tags.view", "tags.edit",
-    "courses.view", "courses.edit", "courses.publish",
-    "contests.view", "contests.edit",
+    "contests.view", "contests.edit", "contests.staff",
+    "assessments.view", "assessments.edit", "assessments.publish", "assessments.results",
     "submissions.view", "submissions.rejudge",
     "judge.view",
     "users.view", "users.ban",
@@ -326,9 +354,26 @@ MODERATOR_PERMISSIONS: set[str] = {
     "sessions.view",
 }
 
+# Muallif (setter): Studio panelida kontent tayyorlaydi. Sayt boshqaruvi —
+# foydalanuvchilar, moderatsiya, sozlamalar, audit — unga umuman ochilmaydi,
+# shuning uchun `IsStaff` dan o'tsa ham `/admin` bo'limlari 403 qaytaradi.
+# Chop etish huquqi ATAYLAB berilmagan: muallif qoralama tayyorlaydi, uni
+# ommaga chiqarish qarori moderatorda qoladi.
+SETTER_PERMISSIONS: set[str] = {
+    "problems.view", "problems.edit", "problems.import",
+    "testcases.view", "testcases.edit", "testcases.delete",
+    "authoring.view", "authoring.edit", "authoring.run",
+    "tags.view",
+    "contests.view", "contests.edit", "contests.staff",
+    "assessments.view", "assessments.edit", "assessments.results",
+    "submissions.view",
+    "judge.view",
+}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     Role.ADMIN: set(ALL_PERMISSIONS),
     Role.MODERATOR: MODERATOR_PERMISSIONS,
+    Role.SETTER: SETTER_PERMISSIONS,
     Role.USER: set(),
 }
 

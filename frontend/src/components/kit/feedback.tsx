@@ -37,28 +37,27 @@ export function Empty({
   return (
     <div
       className={cn(
-        "enter relative flex flex-col items-center justify-center overflow-hidden text-center",
+        " relative flex flex-col items-center justify-center overflow-hidden text-center",
         compact ? "px-6 py-12" : "px-6 py-20",
         className,
       )}
     >
-      <span aria-hidden className="grid-paper texture-fade absolute inset-0 opacity-70" />
 
       <div className="relative flex flex-col items-center">
         <span
           className={cn(
-            "flex size-11 items-center justify-center rounded-full",
-            "border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]",
+            "flex size-12 items-center justify-center rounded-[var(--radius-md)]",
+            "border border-[var(--line)] bg-[var(--surface-sunk)] text-[var(--text-4)]",
           )}
         >
-          {icon ?? <Info className="size-[18px]" />}
+          {icon ?? <Info className="size-6" />}
         </span>
 
-        <p className="t-section mt-5 text-[var(--ink)]">{title}</p>
+        <p className="ts-h3 mt-5 text-[var(--text)]">{title}</p>
         {description ? (
-          <p className="t-body mt-2 max-w-sm text-[var(--ink-3)]">{description}</p>
+          <p className="ts-body mt-3.5 max-w-md text-[var(--text-3)]">{description}</p>
         ) : null}
-        {action ? <div className="mt-6 flex items-center gap-2">{action}</div> : null}
+        {action ? <div className="mt-9 flex items-center gap-3">{action}</div> : null}
       </div>
     </div>
   );
@@ -91,15 +90,15 @@ export function TextLines({ lines = 3, className }: { lines?: number; className?
 /** Ro'yxat skeleti — qatorlar orasidagi masofa haqiqiy ro'yxatnikiga teng. */
 export function ListSkeleton({ rows = 6, className }: { rows?: number; className?: string }) {
   return (
-    <div className={cn("divide-y divide-[var(--edge-soft)]", className)}>
+    <div className={cn("divide-y divide-[var(--line-soft)]", className)}>
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="flex items-center gap-4 px-4 py-3.5">
-          <Block className="size-8 shrink-0 rounded-[var(--r-ctl)]" />
+          <Block className="size-10 shrink-0 rounded-[var(--radius-sm)]" />
           <div className="min-w-0 flex-1">
             <Block className="h-3.5 w-1/3 rounded-[4px]" />
             <Block className="mt-2 h-2.5 w-1/5 rounded-[4px]" />
           </div>
-          <Block className="h-5 w-14 shrink-0 rounded-[var(--r-chip)]" />
+          <Block className="h-5 w-14 shrink-0 rounded-[var(--radius-xs)]" />
         </div>
       ))}
     </div>
@@ -110,10 +109,10 @@ export function CardSkeleton({ count = 3, className }: { count?: number; classNa
   return (
     <div className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-3", className)}>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="rounded-[var(--r-pane)] border border-[var(--edge)] p-4.5">
+        <div key={index} className="rounded-[var(--radius-lg)] border border-[var(--line)] p-4.5">
           <Block className="h-3.5 w-2/3 rounded-[4px]" />
           <TextLines lines={2} className="mt-4" />
-          <Block className="mt-5 h-6 w-20 rounded-[var(--r-chip)]" />
+          <Block className="mt-5 h-6 w-20 rounded-[var(--radius-xs)]" />
         </div>
       ))}
     </div>
@@ -124,8 +123,8 @@ export function CardSkeleton({ count = 3, className }: { count?: number; classNa
 export function Spinner({ label, className }: { label?: string; className?: string }) {
   return (
     <div className={cn("flex items-center justify-center gap-2.5 py-10", className)}>
-      <Loader2 className="size-4 animate-spin text-[var(--brand)]" />
-      {label ? <span className="t-meta text-[var(--ink-3)]">{label}</span> : null}
+      <Loader2 className="size-5 animate-spin text-[var(--green)]" />
+      {label ? <span className="ts-sm text-[var(--text-3)]">{label}</span> : null}
     </div>
   );
 }
@@ -137,10 +136,10 @@ export function Spinner({ label, className }: { label?: string; className?: stri
 type AlertTone = "info" | "ok" | "warn" | "bad";
 
 const ALERT: Record<AlertTone, { icon: React.ReactNode; color: string; wash: string }> = {
-  info: { icon: <Info className="size-4" />, color: "var(--note)", wash: "var(--note-wash)" },
-  ok: { icon: <CheckCircle2 className="size-4" />, color: "var(--ok)", wash: "var(--ok-wash)" },
-  warn: { icon: <AlertTriangle className="size-4" />, color: "var(--warn)", wash: "var(--warn-wash)" },
-  bad: { icon: <XCircle className="size-4" />, color: "var(--bad)", wash: "var(--bad-wash)" },
+  info: { icon: <Info className="size-5" />, color: "var(--info)", wash: "var(--info-wash)" },
+  ok: { icon: <CheckCircle2 className="size-5" />, color: "var(--ok)", wash: "var(--ok-wash)" },
+  warn: { icon: <AlertTriangle className="size-5" />, color: "var(--warn)", wash: "var(--warn-wash)" },
+  bad: { icon: <XCircle className="size-5" />, color: "var(--danger)", wash: "var(--danger-wash)" },
 };
 
 /**
@@ -168,31 +167,23 @@ export function Alert({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[var(--r-field)] py-3 pr-4 pl-4",
-        "flex items-start gap-3",
+        "flex items-start gap-3 rounded-[var(--radius-md)] border px-4 py-3.5",
         className,
       )}
       style={{
         backgroundColor: meta.wash,
-        boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${meta.color} 20%, transparent)`,
+        borderColor: `color-mix(in oklab, ${meta.color} 22%, transparent)`,
       }}
     >
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-[2px]"
-        style={{ backgroundColor: meta.color }}
-      />
-      <span className="mt-0.5 shrink-0" style={{ color: meta.color }}>
+      <span className="mt-px shrink-0" style={{ color: meta.color }}>
         {meta.icon}
       </span>
       <div className="min-w-0 flex-1">
         {title ? (
-          <p className="text-[13.5px] font-semibold" style={{ color: meta.color }}>
-            {title}
-          </p>
+          <p className="text-[14px] font-semibold text-[var(--text)]">{title}</p>
         ) : null}
         {children ? (
-          <div className={cn("t-meta text-[var(--ink-2)]", title && "mt-1")}>{children}</div>
+          <div className={cn("ts-sm text-[var(--text-2)]", title && "mt-1")}>{children}</div>
         ) : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
@@ -224,24 +215,24 @@ export function Meter({
       : tone === "warn"
         ? "var(--warn)"
         : tone === "bad"
-          ? "var(--bad)"
+          ? "var(--danger)"
           : tone === "flare"
-            ? "var(--flare)"
-            : "var(--brand)";
+            ? "var(--text)"
+            : "var(--green)";
 
   return (
     <div className={cn("min-w-0", className)}>
       {label ? (
         <div className="mb-1.5 flex items-baseline justify-between gap-3">
-          <span className="t-meta text-[var(--ink-3)]">{label}</span>
-          <span className="t-num text-[12px] font-semibold text-[var(--ink-2)]">
+          <span className="ts-sm text-[var(--text-3)]">{label}</span>
+          <span className="ts-num text-[12.5px] font-semibold text-[var(--text-2)]">
             {Math.round(percent)}%
           </span>
         </div>
       ) : null}
-      <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--canvas-deep)]">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--green-wash)]">
         <div
-          className="h-full rounded-full transition-[width] duration-[var(--t-slow)] ease-[var(--ease-soft)]"
+          className="h-full rounded-full transition-[width] duration-[var(--dur-2)] ease-[var(--ease)]"
           style={{ width: `${percent}%`, backgroundColor: color }}
         />
       </div>

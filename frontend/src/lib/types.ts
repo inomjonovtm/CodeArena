@@ -10,10 +10,37 @@ export interface Paginated<T> {
 }
 
 export type Locale = "uz" | "en";
-export type Role = "user" | "moderator" | "admin";
+export type Role = "user" | "setter" | "moderator" | "admin";
 export type Difficulty = "easy" | "medium" | "hard";
 export type PublishState = "draft" | "published" | "archived";
-export type Language = "python" | "javascript" | "cpp";
+/** Yechim yozish mumkin bo'lgan tillar — backenddagi reyestr bilan bir xil
+ *  (`backend/apps/judge/languages.py`). To'liq metama'lumot (muharrir tili,
+ *  shablon, mavjudligi) `/api/judge/status/` javobidagi `catalog` da keladi. */
+export type Language =
+  | "python"
+  | "cpp"
+  | "c"
+  | "java"
+  | "javascript"
+  | "typescript"
+  | "go"
+  | "rust"
+  | "kotlin"
+  | "csharp"
+  | "php"
+  | "ruby";
+
+/** Bitta tilning interfeys uchun metama'lumoti. */
+export interface LanguageMeta {
+  key: Language;
+  label: string;
+  extension: string;
+  /** Monaco muharriridagi til identifikatori. */
+  monaco: string;
+  /** Bo'sh masala uchun boshlang'ich shablon. */
+  starter: string;
+  available: boolean;
+}
 
 export type SubmissionStatus =
   | "PENDING"
@@ -70,7 +97,11 @@ export interface Region {
 export interface Permissions {
   is_admin: boolean;
   is_moderator: boolean;
+  /** Muallif (setter) roli — faqat Studio paneliga kiradi. */
+  is_setter: boolean;
   can_access_admin: boolean;
+  /** Studio — muallif paneli. Admin va moderator ham kiradi. */
+  can_access_studio: boolean;
   can_manage_users: boolean;
   can_manage_problems: boolean;
   can_manage_settings: boolean;
@@ -184,6 +215,10 @@ export interface TestCase {
   time_limit_ms: number | null;
   memory_limit_kb: number | null;
   created_at?: string;
+  /** Qo'lda yozilganmi yoki generator yasaganmi (faqat o'qish uchun). */
+  source?: "manual" | "generated";
+  generator?: string | null;
+  seed?: number | null;
 }
 
 export interface ProblemListItem {
@@ -201,6 +236,9 @@ export interface ProblemListItem {
   accepted_submissions: number;
   acceptance_rate: number;
   test_case_count: number;
+  time_limit_ms: number;
+  memory_limit_kb: number;
+  checker_type: "exact" | "token" | "float" | "custom";
   author_username: string | null;
   published_at: string | null;
   publish_at: string | null;
@@ -224,11 +262,20 @@ export interface ProblemDetail extends Omit<ProblemListItem, "test_case_count"> 
   starter_code_python: string;
   starter_code_javascript: string;
   starter_code_cpp: string;
+  /** Yangi tillar uchun: til kaliti → boshlang'ich kod. */
+  starter_code?: Partial<Record<Language, string>>;
   solution_code_python: string;
   time_limit_ms: number;
   memory_limit_kb: number;
   cover_image_url: string;
   test_cases: TestCase[];
+  /** Javobni tekshirish usuli — Studio «Checker» tabida sozlanadi. */
+  checker_language: "python" | "javascript" | "cpp";
+  checker_code: string;
+  float_epsilon: number;
+  /** Test KIRISHINI tekshiruvchi dastur (ixtiyoriy). */
+  validator_language: "python" | "javascript" | "cpp";
+  validator_code: string;
 }
 
 export interface DailyChallenge {
@@ -335,6 +382,25 @@ export interface ContestDetail extends Contest {
   rating_k_experienced: number;
   contest_problems: ContestProblemRow[];
   updated_at: string;
+
+  // --- format (Studio «Olimpiada haqida» tabi)
+  scoring: "icpc" | "ioi";
+  participation: "normal" | "window";
+  team_mode: "solo" | "team";
+  allowed_languages: string[];
+  editorial_uz: string;
+  registration_ends_at: string | null;
+
+  // --- kirish shartlari va ko'rinish (Studio «Kengaytirilgan» tabi)
+  min_rating: number | null;
+  max_rating: number | null;
+  rules_url: string;
+  hide_authors: boolean;
+  hide_results: boolean;
+  hide_submissions: boolean;
+  public_scoreboard: boolean;
+  open_registration: boolean;
+  keep_problems_public: boolean;
 }
 
 export interface ContestParticipant {
@@ -803,10 +869,15 @@ export interface PublicProblemDetail extends Omit<PublicProblemListItem, "is_pre
   starter_code_python: string;
   starter_code_javascript: string;
   starter_code_cpp: string;
+  /** Yangi tillar uchun: til kaliti → boshlang'ich kod. */
+  starter_code?: Partial<Record<Language, string>>;
   time_limit_ms: number;
   memory_limit_kb: number;
   accepted_submissions: number;
   sample_test_cases: PublicSampleTest[];
+  /** Javob qanday tekshiriladi — «istalgan to'g'ri javob» holatini bildirish uchun. */
+  checker_type: "exact" | "token" | "float" | "custom";
+  float_epsilon: number;
 }
 
 export interface DailyCalendarDay {
@@ -958,15 +1029,15 @@ export interface FollowState {
 /** Judge holati — muharrir qaysi tillarni taklif qilishini hal qiladi. */
 export interface JudgeStatus {
   available: boolean;
-  backend: "judge0" | "local" | "none";
+  /** `runner` — izolyatsiyalangan xizmat, `local` — dev rejimi. */
+  backend: "runner" | "local" | "none";
   languages: Partial<Record<Language, boolean>>;
-  judge0_url?: string;
-  judge0_enabled?: boolean;
-  judge0_available?: boolean;
-  local_enabled?: boolean;
-  local_runner_available?: boolean;
-  local_fallback_allowed?: boolean;
-  local_languages?: Partial<Record<Language, boolean>>;
+  /** Tillar ro'yxati metama'lumoti bilan (shablon, muharrir tili). */
+  catalog?: LanguageMeta[];
+  runner_ok?: boolean;
+  runner_error?: string;
+  local_fallback?: boolean;
+  language_count?: number;
 }
 
 export interface MyProgress {
@@ -998,6 +1069,14 @@ export interface PublicContest {
   is_virtual_allowed: boolean;
   problem_count: number;
   participant_count: number;
+  /** Format — ro'yxatdan o'tishdan oldin bilish kerak bo'lgan narsalar. */
+  scoring: "icpc" | "ioi";
+  participation: "normal" | "window";
+  team_mode: "solo" | "team";
+  allowed_languages: string[];
+  min_rating: number | null;
+  max_rating: number | null;
+  rules_url: string;
 }
 
 export interface ContestParticipantRow {
@@ -1027,6 +1106,8 @@ export interface ContestParticipantRow {
 export interface PublicContestDetail extends PublicContest {
   max_participants: number | null;
   ratings_applied_at: string | null;
+  registration_ends_at: string | null;
+  open_registration: boolean;
   my_participation: ContestParticipantRow | null;
   can_see_problems: boolean;
   server_time: string;
@@ -1157,6 +1238,8 @@ export interface ContestProblemDetail {
   starter_code_python: string;
   starter_code_javascript: string;
   starter_code_cpp: string;
+  /** Yangi tillar uchun: til kaliti → boshlang'ich kod. */
+  starter_code?: Partial<Record<Language, string>>;
   samples: {
     input: string;
     expected_output: string;
@@ -1290,6 +1373,14 @@ export interface RunTestResult {
   runtime_ms: number | null;
   memory_kb: number | null;
   is_custom: boolean;
+  /**
+   * Maxsus checker izohi — «nega qabul qilinmadi» degan savolga javob.
+   *
+   * Bir nechta to'g'ri javobi bor masalalarda «kutilgan chiqish» ustuni
+   * kam narsa tushuntiradi: sizniki ham to'g'ri bo'lishi mumkin edi.
+   * Checker esa aniq sababni aytadi («yig'indi 9, kerak 10»).
+   */
+  checker_note?: string;
 }
 
 export interface RunResponse {
@@ -1432,346 +1523,19 @@ export interface GroupMemberRow {
   position?: number;
 }
 
-/* ================================================================ kurslar */
-
-export type CourseLanguage = "python" | "javascript" | "cpp";
-export type CourseLevel = "beginner" | "intermediate" | "advanced";
-
-/** Katalogda va kurs sahifasida ko'rinadigan shaxsiy holat. */
-export interface CourseProgress {
-  is_enrolled: boolean;
-  completed_lessons: number;
-  points_earned: number;
-  completed_at: string | null;
-  last_lesson_slug: string | null;
-}
-
-export interface LessonState {
-  is_read: boolean;
-  is_completed: boolean;
-  quiz_best_score: number;
-  quiz_total: number;
-  quiz_passed: boolean;
-  exercises_solved: number;
-}
-
-export interface PublicCourseCard {
-  id: string;
-  slug: string;
-  title_uz: string;
-  subtitle_uz: string;
-  language: CourseLanguage;
-  level: CourseLevel;
-  badge: string;
-  accent_color: string;
-  estimated_hours: number;
-  is_featured: boolean;
-  lesson_count: number;
-  module_count: number;
-  exercise_count: number;
-  my_progress: CourseProgress | null;
-}
-
-export interface PublicLessonNode {
-  id: string;
-  slug: string;
-  title_uz: string;
-  summary_uz: string;
-  order: number;
-  points: number;
-  estimated_minutes: number;
-  exercise_count: number;
-  quiz_count: number;
-  my_state: LessonState | null;
-}
-
-export interface PublicCourseModule {
-  id: string;
-  slug: string;
-  title_uz: string;
-  summary_uz: string;
-  order: number;
-  lessons: PublicLessonNode[];
-}
-
-export interface PublicCourseDetail extends PublicCourseCard {
-  description_uz: string;
-  total_points: number;
-  modules: PublicCourseModule[];
-}
-
-export interface CourseExample {
-  id: number;
-  title_uz: string;
-  language: CourseLanguage;
-  code: string;
-  expected_output: string;
-  explanation_uz: string;
-  is_runnable: boolean;
-  order: number;
-}
-
-export interface CourseQuizQuestion {
-  id: number;
-  question_uz: string;
-  options: string[];
-  order: number;
-}
-
-export interface CourseExerciseTest {
-  input: string;
-  expected_output: string;
-  explanation_uz: string;
-  order: number;
-}
-
-export interface CourseExercise {
-  id: string;
-  title_uz: string;
-  prompt_md: string;
-  language: CourseLanguage;
-  starter_code: string;
-  hint_uz: string;
-  points: number;
-  order: number;
-  sample_tests: CourseExerciseTest[];
-  is_solved: boolean;
-  /** Oxirgi urinishdagi kod — muharrir shundan ochiladi. */
-  my_code: string;
-  /** Faqat topshiriq bajarilgach to'ldiriladi. */
-  solution_code: string;
-}
-
-export interface PublicLessonDetail {
-  id: string;
-  slug: string;
-  title_uz: string;
-  summary_uz: string;
-  content_md: string;
-  order: number;
-  points: number;
-  estimated_minutes: number;
-  course_slug: string;
-  course_title: string;
-  course_language: CourseLanguage;
-  module_title: string;
-  examples: CourseExample[];
-  quiz_questions: CourseQuizQuestion[];
-  exercises: CourseExercise[];
-  my_state: LessonState | null;
-  previous: { slug: string; title_uz: string } | null;
-  next: { slug: string; title_uz: string } | null;
-}
-
-export interface SnippetRunResult {
-  status: string;
-  stdout: string;
-  stderr: string;
-  compile_output: string;
-  runtime_ms: number | null;
-}
-
-export interface ExerciseTestResult {
-  order: number;
-  status: string;
-  input: string;
-  expected_output: string | null;
-  stdout: string;
-  stderr: string;
-  compile_output: string;
-  runtime_ms: number | null;
-  explanation_uz?: string;
-  is_hidden: boolean;
-}
-
-export interface ExerciseRunResult {
-  results: ExerciseTestResult[];
-  passed: number;
-  total: number;
-  all_passed: boolean;
-  status: string;
-  runtime_ms: number | null;
-}
-
-export interface ExerciseSubmitResult extends ExerciseRunResult {
-  attempt_id: string;
-  is_solved: boolean;
-  solution_code: string;
-  lesson_completed: boolean;
-  points: number;
-}
-
-export interface QuizAnswerResult {
-  id: number;
-  given_index: number | null;
-  correct_index: number;
-  is_correct: boolean;
-  explanation_uz: string;
-}
-
-export interface QuizResult {
-  score: number;
-  total: number;
-  percent: number;
-  is_passed: boolean;
-  pass_percent: number;
-  results: QuizAnswerResult[];
-  is_completed: boolean;
-  /** Mehmon topshirsa `false` — javob ko'rsatiladi, lekin progressga yozilmaydi. */
-  is_saved: boolean;
-}
-
-export interface MyCourseRow {
-  slug: string;
-  title_uz: string;
-  language: CourseLanguage;
-  badge: string;
-  accent_color: string;
-  lesson_count: number;
-  completed_lessons: number;
-  points_earned: number;
-  completed_at: string | null;
-  last_lesson_slug: string | null;
-  last_lesson_title: string | null;
-  updated_at: string;
-}
-
-/* --------------------------------------------------- kurslar: admin panel */
-
-export interface AdminCourse {
-  id: string;
-  slug: string;
-  title_uz: string;
-  subtitle_uz: string;
-  description_uz: string;
-  language: CourseLanguage;
-  level: CourseLevel;
-  status: PublishState;
-  badge: string;
-  accent_color: string;
-  order: number;
-  is_featured: boolean;
-  estimated_hours: number;
-  author: string | null;
-  author_username: string | null;
-  published_at: string | null;
-  module_count: number;
-  lesson_count: number;
-  exercise_count: number;
-  enrollment_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AdminCourseModule {
-  id: string;
-  course: string;
-  title_uz: string;
-  slug: string;
-  summary_uz: string;
-  order: number;
-  lesson_count: number;
-}
-
-export interface AdminCourseExample {
-  id: number;
-  lesson: string;
-  title_uz: string;
-  language: CourseLanguage;
-  code: string;
-  expected_output: string;
-  explanation_uz: string;
-  is_runnable: boolean;
-  order: number;
-}
-
-export interface AdminCourseQuizQuestion {
-  id: number;
-  lesson: string;
-  question_uz: string;
-  options: string[];
-  correct_index: number;
-  explanation_uz: string;
-  order: number;
-}
-
-export interface AdminCourseExerciseTest {
-  id?: number;
-  input: string;
-  expected_output: string;
-  is_sample: boolean;
-  explanation_uz: string;
-  order: number;
-}
-
-export interface AdminCourseExercise {
-  id: string;
-  lesson: string;
-  title_uz: string;
-  prompt_md: string;
-  language: CourseLanguage;
-  starter_code: string;
-  solution_code: string;
-  hint_uz: string;
-  points: number;
-  order: number;
-  time_limit_ms: number;
-  memory_limit_kb: number;
-  tests: AdminCourseExerciseTest[];
-}
-
-export interface AdminCourseLesson {
-  id: string;
-  course: string;
-  course_title: string;
-  course_slug: string;
-  module: string;
-  module_title: string;
-  title_uz: string;
-  slug: string;
-  summary_uz: string;
-  content_md: string;
-  order: number;
-  status: PublishState;
-  points: number;
-  estimated_minutes: number;
-  example_count: number;
-  quiz_count: number;
-  exercise_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface AdminCourseLessonDetail extends AdminCourseLesson {
-  examples: AdminCourseExample[];
-  quiz_questions: AdminCourseQuizQuestion[];
-  exercises: AdminCourseExercise[];
-}
-
-export interface AdminCourseTree {
-  course: AdminCourse;
-  modules: {
-    id: string;
-    title_uz: string;
-    slug: string;
-    summary_uz: string;
-    order: number;
-    lessons: {
-      id: string;
-      title_uz: string;
-      slug: string;
-      order: number;
-      status: PublishState;
-      points: number;
-      estimated_minutes: number;
-      example_count: number;
-      quiz_count: number;
-      exercise_count: number;
-    }[];
-  }[];
-}
-
 /* ------------------------------------------------------------- sayt meta */
+
+/** Maxfiylik/shartlar sahifasi — matni admin panelda tahrirlanadi. */
+export interface LegalDocumentPayload {
+  slug: string;
+  title: string;
+  summary: string;
+  /** Markdown: `## sarlavha` har bir bo'limni ochadi. */
+  body_md: string;
+  version: string;
+  effective_from: string | null;
+  updated_at: string;
+}
 
 export interface SiteStats {
   problems: number;
@@ -1803,7 +1567,7 @@ export interface SiteAnnouncement {
 }
 
 export interface SiteSearchItem {
-  type: "problem" | "course" | "lesson" | "contest" | "user";
+  type: "problem" | "contest" | "user";
   id: string;
   title: string;
   title_en: string;

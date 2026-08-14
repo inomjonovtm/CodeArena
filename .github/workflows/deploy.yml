@@ -74,13 +74,34 @@ jobs:
           push: true
           # Brauzer `/api/...` ga so'raydi, Next uni konteyner tarmog'idagi
           # backendga uzatadi — shuning uchun bu manzil ichki nom.
+          #
+          # `SITE_URL` — repozitoriy o'zgaruvchisi (Settings → Variables →
+          # Actions), masalan `https://codearena.uz`. U aynan BUILD PAYTIDA
+          # kerak: Next `NEXT_PUBLIC_*` qiymatlarini kodga singdiradi va
+          # konteyner ishga tushganda berilgan qiymat e'tiborga olinmaydi.
+          # Qo'yilmasa sitemap, robots.txt va `og:image` localhost'ga
+          # ishora qiladi.
           build-args: |
             NEXT_PUBLIC_API_URL=http://backend:8000
+            NEXT_PUBLIC_SITE_URL=${{ vars.SITE_URL }}
           tags: |
             ${{ steps.meta.outputs.prefix }}-frontend:${{ steps.meta.outputs.tag }}
             ${{ steps.meta.outputs.prefix }}-frontend:latest
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,scope=frontend,mode=max
+
+      # Kod bajarish konteyneri — alohida image: unda til kompilyatorlari
+      # bor, sayt kodi va maxfiy ma'lumot esa yo'q.
+      - name: Runner image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./infra/runner
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-runner:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.prefix }}-runner:latest
+          cache-from: type=gha,scope=runner
+          cache-to: type=gha,scope=runner,mode=max
 
   deploy:
     name: Serverga yetkazish
@@ -155,7 +176,7 @@ jobs:
           # `docker compose` faqat shu fayldan yoki muhitdan o'qiydi.
           export IMAGE_PREFIX IMAGE_TAG
 
-          docker compose -f docker-compose.prod.yml pull backend frontend
+          docker compose -f docker-compose.prod.yml pull backend frontend runner
           # `migrate` xizmati alohida va bir martalik: u tugamaguncha
           # backend ko'tarilmaydi (compose'dagi service_completed_successfully).
           docker compose -f docker-compose.prod.yml up -d --remove-orphans

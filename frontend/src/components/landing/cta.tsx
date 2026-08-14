@@ -3,57 +3,74 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-import { Reveal } from "./reveal";
-
 /* ==========================================================================
-   Yakuniy chaqiriq
+   O'RTA CHAQIRIQ — och yashil plitka, markazlashgan
    --------------------------------------------------------------------------
-   Sahifadagi oxirgi blok va YAGONA markazga tekislangan sarlavha: butun
-   sahifa chapdan o'qilgani uchun markazlashgan matn bu yerda "to'xtash
-   nuqtasi" bo'lib ishlaydi.
+   Ilgari bu to'liq to'yingan yashil lenta edi ("yashil devor"). Yangi
+   tizimda to'yingan yashil faqat TUGMADA yashaydi — blok esa och yashil
+   yuvindida qoladi va sahifaning karta tiliga qo'shiladi.
 
-   Fon oq qoladi. Ilgari bu blok to'yingan ko'k edi, lekin ostidagi futer
-   qora — ikki og'ir blok ketma-ket kelib, sahifa oxiri "qorong'i devor"ga
-   aylanardi. Endi ritm shunday: oq CTA → qora futer, ya'ni kontrast oxirgi
-   qadamda beriladi.
+   Kompozitsiya markazda: bosh sahifaning hamma bo'limi endi bitta markaziy
+   o'qda teriladi, chaqiriq undan chetga chiqmaydi.
    ========================================================================== */
 
-const PRIMARY = [
-  "focus-ring inline-flex h-12 items-center gap-2.5 rounded-[var(--r-ctl)] px-7",
-  "bg-[var(--ink)] text-[15px] font-semibold text-[var(--canvas)]",
-  "transition-[background-color,transform] duration-[var(--t-base)] ease-[var(--ease-snap)]",
-  "hover:-translate-y-0.5 hover:bg-[var(--brand)] active:scale-[0.97]",
-].join(" ");
-
-const SECONDARY = [
-  "focus-ring inline-flex h-12 items-center rounded-[var(--r-ctl)] px-7",
-  "border border-[var(--ink)] text-[15px] font-semibold text-[var(--ink)]",
-  "transition-[color,border-color,transform] duration-[var(--t-base)] ease-[var(--ease-snap)]",
-  "hover:border-[var(--brand)] hover:text-[var(--brand)] active:scale-[0.97]",
-].join(" ");
+/* Uchta va'da — har biri tekshirib bo'ladigan fakt. Tillar ro'yxati
+   ataylab yozilmagan: u vaqt o'tishi bilan o'zgaradi va bosh sahifada
+   eskirib qoladi. To'liq ro'yxat masala sahifasidagi tanlagichda. */
+const POINTS = [
+  { value: "Bepul", label: "Barcha masalalar va musobaqalar" },
+  { value: "O'zbekcha", label: "Shartlar va tahlillar ona tilida" },
+  { value: "Soniyalar", label: "Tekshiruv natijasi shu zahoti" },
+];
 
 export function CTA() {
   return (
-    <section className="band shell">
-      <Reveal className="mx-auto max-w-2xl text-center">
-        <h2 className="t-title text-[var(--ink)]">
-          Bugunoq birinchi kodingizni yozing va{" "}
-          <span className="text-[var(--brand)]">reytingingizni oshiring</span>.
+    <section className="section-sm wrap">
+      <div className="wash flex flex-col items-center rounded-[var(--radius-xl)] px-6 py-10 text-center sm:py-12">
+        <p className="ts-label text-[var(--green-text)]">Tayyormisiz?</p>
+        <h2 className="ts-h2 mt-2 max-w-[22ch] text-[var(--text)]">
+          Bugunoq birinchi kodingizni yozing.
         </h2>
-        <p className="mt-5 text-[18px] leading-[1.6] text-[var(--ink-2)]">
-          Ro&apos;yxatdan o&apos;tish bepul. Birinchi masalani yechish uchun besh daqiqa yetadi.
+        <p className="ts-sm mt-2.5 max-w-[46ch] text-[var(--text-3)]">
+          Ro&apos;yxatdan o&apos;tish bepul. Birinchi masalani yechish uchun besh
+          daqiqa yetadi.
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/register" className={PRIMARY}>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+          <Link
+            href="/register"
+            className={[
+              "ring-focus inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] px-4",
+              "bg-[var(--green)] text-[14px] font-medium text-[var(--text-on-green)]",
+              "shadow-[var(--shadow-xs)] transition-colors duration-[var(--dur-1)]",
+              "hover:bg-[var(--green-hover)] active:translate-y-px",
+            ].join(" ")}
+          >
             Bepul boshlash
-            <ArrowRight className="size-[18px]" />
+            <ArrowRight className="size-4" />
           </Link>
-          <Link href="/problems" className={SECONDARY}>
-            Avval masalalarni ko&apos;rish
+          <Link
+            href="/problems"
+            className={[
+              "ring-focus inline-flex h-10 items-center rounded-[var(--radius-md)] px-4",
+              "border border-[var(--green-line)] bg-[var(--surface)] text-[14px] font-medium text-[var(--text)]",
+              "transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] active:translate-y-px",
+            ].join(" ")}
+          >
+            Masalalar
           </Link>
         </div>
-      </Reveal>
+
+        {/* Uchta va'da — plitkaning pastki qatori */}
+        <ul className="mt-8 grid w-full max-w-[40rem] gap-x-8 gap-y-5 border-t border-[var(--green-line)] pt-7 sm:grid-cols-3">
+          {POINTS.map((point) => (
+            <li key={point.value} className="min-w-0">
+              <p className="text-[17px] font-semibold text-[var(--green-text)]">{point.value}</p>
+              <p className="mt-1 text-[12.5px] leading-[1.5] text-[var(--text-3)]">{point.label}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

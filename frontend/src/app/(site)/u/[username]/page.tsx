@@ -47,14 +47,22 @@ const LANGUAGE_LABEL: Record<string, string> = {
   cpp: "C++",
 };
 
-/* Faollik darajalari — ko'k shkalaning qat'iy pog'onalari.
-   Shaffoflik yo'q: har bir katak o'z rangiga ega, fon bilan aralashmaydi. */
+/* Faollik darajalari — yashil shkalaning qat'iy pog'onalari.
+
+   Shaffoflik YO'Q: har bir katak o'z rangiga ega va fon bilan aralashmaydi.
+   Pog'onalar `color-mix` orqali brend yashilini KANVAS bilan aralashtirib
+   olinadi, ya'ni shkala qorong'i rejimda o'zi teskari tomonga buriladi
+   (u yerda kanvas to'q, demak aralashma quyuqlashadi).
+
+   Ilgari bu yerda `bg-aurora-200/300/400` yozilgan edi — Tailwind'da bunday
+   rang umuman e'lon qilinmagan, shuning uchun 1-3 pog'onalar FONSIZ chiqib,
+   kalendar faqat ikki holatni ko'rsatardi. */
 const HEAT_LEVELS = [
-  "bg-[var(--pane-sunken)]",
-  "bg-aurora-200",
-  "bg-aurora-300",
-  "bg-aurora-400",
-  "bg-[var(--brand)]",
+  "bg-[var(--surface-sunk)]",
+  "bg-[color-mix(in_oklab,var(--green)_22%,var(--bg))]",
+  "bg-[color-mix(in_oklab,var(--green)_46%,var(--bg))]",
+  "bg-[color-mix(in_oklab,var(--green)_72%,var(--bg))]",
+  "bg-[var(--green)]",
 ];
 
 /** GitHub uslubidagi faollik kalendari — oxirgi 26 hafta. */
@@ -98,9 +106,9 @@ function ActivityHeatmap({ activity }: { activity: ActivityDay[] }) {
   return (
     <Pane tone="solid" inset="md">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[13px] font-medium text-[var(--ink-2)]">Faollik</p>
-        <p className="t-meta text-[var(--ink-4)]">
-          Oxirgi yilda <span className="t-num text-[var(--ink-2)]">{formatNumber(total)}</span> ta yuborish
+        <p className="text-[14px] font-medium text-[var(--text-2)]">Faollik</p>
+        <p className="ts-sm text-[var(--text-4)]">
+          Oxirgi yilda <span className="ts-num text-[var(--text-2)]">{formatNumber(total)}</span> ta yuborish
         </p>
       </div>
 
@@ -120,7 +128,7 @@ function ActivityHeatmap({ activity }: { activity: ActivityDay[] }) {
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-[var(--ink-4)]">
+      <div className="mt-3 flex items-center justify-end gap-1.5 text-[12px] text-[var(--text-4)]">
         <span>kam</span>
         {HEAT_LEVELS.map((className) => (
           <span key={className} className={cn("size-[10px] rounded-[3px]", className)} />
@@ -149,15 +157,15 @@ export default function ProfilePage() {
     /* Skelet — haqiqiy tartib shaklida: shapka kartasi + ikki ustun kartalari */
     return (
       <div className="flex flex-col gap-5">
-        <Block className="h-44 rounded-[var(--r-pane)]" />
+        <Block className="h-44 rounded-[var(--radius-lg)]" />
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="flex flex-col gap-5">
-            <Block className="h-44 rounded-[var(--r-pane)]" />
-            <Block className="h-56 rounded-[var(--r-pane)]" />
+            <Block className="h-44 rounded-[var(--radius-lg)]" />
+            <Block className="h-56 rounded-[var(--radius-lg)]" />
           </div>
           <div className="flex flex-col gap-5">
-            <Block className="h-32 rounded-[var(--r-pane)]" />
-            <Block className="h-72 rounded-[var(--r-pane)]" />
+            <Block className="h-32 rounded-[var(--radius-lg)]" />
+            <Block className="h-72 rounded-[var(--radius-lg)]" />
           </div>
         </div>
       </div>
@@ -187,7 +195,7 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col gap-5">
       {/* ------------------------------------ 1. identifikatsiya kartasi */}
-      <Pane className="enter" inset="lg">
+      <Pane className="" inset="lg">
         <header className="flex flex-wrap items-start gap-6">
           <RankAvatar
             src={data.avatar_url}
@@ -198,24 +206,24 @@ export default function ProfilePage() {
 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="t-title truncate text-[var(--ink)]">{data.username}</h1>
+              <h1 className="ts-h1 truncate text-[var(--text)]">{data.username}</h1>
               <RankBadge rank={data.rank} size="md" />
             </div>
             {data.full_name ? (
-              <p className="t-body mt-1 truncate text-[var(--ink-3)]">{data.full_name}</p>
+              <p className="ts-body mt-1 truncate text-[var(--text-3)]">{data.full_name}</p>
             ) : null}
             {data.bio ? (
-              <p className="t-body mt-2.5 max-w-xl text-[var(--ink-3)]">{data.bio}</p>
+              <p className="ts-body mt-2.5 max-w-xl text-[var(--text-3)]">{data.bio}</p>
             ) : null}
 
             {/* ------------------------------------------------------ obunalar */}
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-[13.5px]">
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-[14.5px]">
               <button
                 type="button"
                 onClick={() => setFollowList("followers")}
-                className="focus-ring rounded-[var(--r-ctl)] text-[var(--ink-3)] transition-colors hover:text-[var(--ink)]"
+                className="ring-focus rounded-[var(--radius-sm)] text-[var(--text-3)] transition-colors hover:text-[var(--text)]"
               >
-                <span className="t-num font-semibold text-[var(--ink)]">
+                <span className="ts-num font-semibold text-[var(--text)]">
                   {formatNumber(data.followers_count)}
                 </span>{" "}
                 {t.site.profile.followers}
@@ -223,9 +231,9 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setFollowList("following")}
-                className="focus-ring rounded-[var(--r-ctl)] text-[var(--ink-3)] transition-colors hover:text-[var(--ink)]"
+                className="ring-focus rounded-[var(--radius-sm)] text-[var(--text-3)] transition-colors hover:text-[var(--text)]"
               >
-                <span className="t-num font-semibold text-[var(--ink)]">
+                <span className="ts-num font-semibold text-[var(--text)]">
                   {formatNumber(data.following_count)}
                 </span>{" "}
                 {t.site.profile.followingCount}
@@ -233,26 +241,26 @@ export default function ProfilePage() {
             </div>
 
             {/* ------------------------------------------------------ meta qatori */}
-            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-[var(--ink-3)]">
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[14px] text-[var(--text-3)]">
               {data.region ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="size-3.5 text-[var(--ink-4)]" />
+                  <MapPin className="size-3.5 text-[var(--text-4)]" />
                   {data.district ? `${data.district}, ${data.region}` : data.region}
                 </span>
               ) : data.country ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="size-3.5 text-[var(--ink-4)]" />
+                  <MapPin className="size-3.5 text-[var(--text-4)]" />
                   {data.country}
                 </span>
               ) : null}
               {data.education_place ? (
                 <span className="inline-flex items-center gap-1.5">
-                  <GraduationCap className="size-3.5 text-[var(--ink-4)]" />
+                  <GraduationCap className="size-3.5 text-[var(--text-4)]" />
                   {data.education_place}
                 </span>
               ) : null}
               <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="size-3.5 text-[var(--ink-4)]" />
+                <CalendarDays className="size-3.5 text-[var(--text-4)]" />
                 {joined} dan beri
               </span>
               {data.github_url ? (
@@ -260,9 +268,9 @@ export default function ProfilePage() {
                   href={data.github_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] transition-colors hover:text-[var(--ink)]"
+                  className="ring-focus inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] transition-colors hover:text-[var(--text)]"
                 >
-                  <Github className="size-3.5 text-[var(--ink-4)]" />
+                  <Github className="size-3.5 text-[var(--text-4)]" />
                   GitHub
                 </a>
               ) : null}
@@ -271,9 +279,9 @@ export default function ProfilePage() {
                   href={data.website_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] transition-colors hover:text-[var(--ink)]"
+                  className="ring-focus inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] transition-colors hover:text-[var(--text)]"
                 >
-                  <Globe className="size-3.5 text-[var(--ink-4)]" />
+                  <Globe className="size-3.5 text-[var(--text-4)]" />
                   Veb-sayt
                 </a>
               ) : null}
@@ -286,7 +294,7 @@ export default function ProfilePage() {
                 href="/settings"
                 size="sm"
                 icon={<Settings className="size-4" />}
-                className="border-[var(--edge)] bg-[var(--pane-sunken)] hover:bg-[var(--pane-hover)]"
+                className="border-[var(--line)] bg-[var(--surface-sunk)] hover:bg-[var(--surface-hover)]"
               >
                 {t.site.nav.settings}
               </LinkButton>
@@ -311,16 +319,16 @@ export default function ProfilePage() {
             {/* --------------------------------------------- rank va yo'l */}
             <Pane inset="md">
               <RankProgress rank={data.rank} rating={data.rating} />
-              <div className="t-meta mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[var(--ink-4)]">
+              <div className="ts-sm mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[var(--text-4)]">
                 <span>
-                  eng yuqori: <span className="t-num text-[var(--ink-2)]">{data.max_rating}</span>
+                  eng yuqori: <span className="ts-num text-[var(--text-2)]">{data.max_rating}</span>
                   {data.max_rank.tier > data.rank.tier ? (
                     <span className="ml-1">({data.max_rank.name_uz})</span>
                   ) : null}
                 </span>
                 <span>
                   global o&apos;rin:{" "}
-                  <span className="t-num text-[var(--ink-2)]">#{data.global_rank}</span>
+                  <span className="ts-num text-[var(--text-2)]">#{data.global_rank}</span>
                 </span>
               </div>
             </Pane>
@@ -356,12 +364,12 @@ export default function ProfilePage() {
             {/* ------------------------------------------------ tillar */}
             {data.languages.length ? (
               <Pane inset="md">
-                <p className="t-eyebrow mb-4">Ishlatgan tillari</p>
+                <p className="ts-label mb-4">Ishlatgan tillari</p>
                 <div className="flex flex-wrap gap-1.5">
                   {data.languages.map((row) => (
                     <Chip key={row.language} tone="neutral">
                       {LANGUAGE_LABEL[row.language] ?? row.language}
-                      <span className="t-num text-[var(--ink-4)]">{row.count}</span>
+                      <span className="ts-num text-[var(--text-4)]">{row.count}</span>
                     </Chip>
                   ))}
                 </div>
@@ -390,8 +398,8 @@ export default function ProfilePage() {
                     label={
                       <>
                         {row.label} ·{" "}
-                        <span className="t-num text-[var(--ink-2)]">{solved}</span>
-                        <span className="text-[var(--ink-4)]"> / {total}</span>
+                        <span className="ts-num text-[var(--text-2)]">{solved}</span>
+                        <span className="text-[var(--text-4)]"> / {total}</span>
                       </>
                     }
                   />
@@ -402,29 +410,29 @@ export default function ProfilePage() {
 
           {/* --------------------------------------------- oxirgi yechilganlar */}
           <Pane tone="solid" inset="none">
-            <div className="border-b border-[var(--edge)] px-5 py-4">
-              <h2 className="t-section text-[var(--ink)]">Oxirgi yechilganlar</h2>
+            <div className="border-b border-[var(--line)] px-5 py-4">
+              <h2 className="ts-h2 text-[var(--text)]">Oxirgi yechilganlar</h2>
             </div>
 
             {data.recent_solved.length === 0 ? (
               <div className="p-5">
-                <p className="t-meta pane-sunken rounded-[var(--r-field)] px-4 py-5 text-center text-[var(--ink-4)]">
+                <p className="ts-sm well rounded-[var(--radius-sm)] px-4 py-5 text-center text-[var(--text-4)]">
                   Hali masala yechilmagan.
                 </p>
               </div>
             ) : (
-              <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+              <ul className="divide-y divide-[var(--line-soft)]">
                 {data.recent_solved.map((row) => (
                   <li key={row.slug}>
                     <Link
                       href={`/problems/${row.slug}`}
-                      className="group focus-ring flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--pane-hover)] sm:px-5"
+                      className="group ring-focus flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--surface-hover)] sm:px-5"
                     >
                       <DifficultyMark value={row.difficulty} showLabel={false} />
-                      <span className="min-w-0 flex-1 truncate text-[13.5px] font-medium text-[var(--ink)] transition-colors group-hover:text-[var(--brand-ink)]">
+                      <span className="min-w-0 flex-1 truncate text-[14.5px] font-medium text-[var(--text)] transition-colors group-hover:text-[var(--green-text)]">
                         {row.title_uz}
                       </span>
-                      <span className="t-meta shrink-0 text-[var(--ink-4)]">
+                      <span className="ts-sm shrink-0 text-[var(--text-4)]">
                         {formatRelative(row.solved_at)}
                       </span>
                     </Link>

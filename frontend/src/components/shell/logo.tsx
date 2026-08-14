@@ -5,29 +5,30 @@ import { cn } from "@/lib/utils";
 /* ==========================================================================
    Logotip
    --------------------------------------------------------------------------
-   Belgi — buyruq qatori kursori: QORA kvadrat ichida monoshriftdagi `>`.
-   So'z ham to'liq qora. Logotipda ko'k YO'Q: dizayn tizimida ko'k faqat
-   bosiladigan yoki muhim narsani bildiradi, brend nomi esa ikkalasi ham
-   emas — u shunchaki turadi.
+   Belgi — buyruq qatori kursori: YASHIL kvadrat ichida monoshriftdagi `>`.
+   Yashil bu yerda o'rinli: logotip brendning o'zi, ya'ni tizimdagi eng
+   muhim "detal". So'z esa siyoh rangida qoladi — ikkalasi ham yashil bo'lsa
+   belgi ajralib turmaydi.
 
-   Ko'k faqat bitta joyda ko'rinadi: sichqoncha logotipga kelganda belgi
-   ko'kga o'tadi. Ya'ni bu yerda ham qoida bir xil — hover = ko'k.
+   Sichqoncha kelganda belgi SIYOHGA o'tadi (yashilga emas). Ya'ni hover
+   javobi rang almashuvi bilan beriladi, lekin teskari yo'nalishda: yashil
+   allaqachon tinch holat.
 
-   Ranglar `--ink`/`--canvas` orqali olinadi, shuning uchun qora futer yoki
-   to'q bo'lim ichida (`on-dark`) logotip o'zi teskari tomonga ag'dariladi:
-   oq kvadrat, qora belgi. Alohida "oq versiya" saqlash shart emas.
+   Ranglar `--green`/`--text` orqali olinadi, shuning uchun yashil blok ichida
+   (`on-green`) logotip o'zi teskari tomonga ag'dariladi: oq kvadrat, yashil
+   belgi, oq so'z. Alohida "oq versiya" saqlash shart emas.
    ========================================================================== */
 
 const MARK_SIZES = {
-  sm: "size-[28px] rounded-[8px] text-[14px]",
-  md: "size-[32px] rounded-[9px] text-[16px]",
-  lg: "size-10 rounded-[10px] text-[19px]",
+  sm: "size-[28px] rounded-[var(--radius-sm)] text-[14px]",
+  md: "size-[34px] rounded-[var(--radius-sm)] text-[16px]",
+  lg: "size-[42px] rounded-[var(--radius-md)] text-[20px]",
 } as const;
 
 const WORD_SIZES = {
-  sm: "text-[16px]",
-  md: "text-[18px]",
-  lg: "text-[21px]",
+  sm: "text-[15px]",
+  md: "text-[17px]",
+  lg: "text-[20px]",
 } as const;
 
 export function LogoMark({
@@ -41,9 +42,9 @@ export function LogoMark({
     <span
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center bg-[var(--ink)] font-mono font-bold",
-        "text-[var(--canvas)] transition-colors duration-[var(--t-base)]",
-        "group-hover/logo:bg-[var(--brand)] group-hover/logo:text-[var(--ink-on-brand)]",
+        "flex shrink-0 items-center justify-center bg-[var(--green)] font-mono font-bold",
+        "text-[var(--text-on-green)] transition-colors duration-[var(--dur-2)]",
+        "group-hover/logo:bg-[var(--text)] group-hover/logo:text-[var(--bg)]",
         MARK_SIZES[size],
         className,
       )}
@@ -69,7 +70,7 @@ export function Logo({
       {showWord ? (
         <span
           className={cn(
-            "font-[family-name:var(--font-display)] font-bold tracking-[-0.035em] text-[var(--ink)]",
+            "font-semibold tracking-[-0.03em] text-[var(--text)]",
             WORD_SIZES[size],
           )}
         >
@@ -96,7 +97,7 @@ export function LogoLink({
     <Link
       href={href}
       aria-label="CodeArena — bosh sahifa"
-      className={cn("focus-ring shrink-0 rounded-[var(--r-ctl)]", className)}
+      className={cn("ring-focus shrink-0 rounded-[var(--radius-sm)]", className)}
     >
       <Logo size={size} showWord={showWord} />
     </Link>

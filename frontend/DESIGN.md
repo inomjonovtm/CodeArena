@@ -1,239 +1,250 @@
-# CodeArena dizayn tizimi — "MONO" (v5)
+# CodeArena dizayn tizimi — "SKOG"
 
 Bu hujjat ekran quruvchi har bir ishtirokchi uchun MAJBURIY qo'llanma.
 Maqsad: sayt har bir sahifada bitta ovozda gapirsin.
 
-Manba fayllar: `src/styles/aurora.css` (tokenlar va utility'lar),
-`src/app/globals.css` (animatsiya, markdown, to'q sahna).
+Manba fayllar: `src/styles/skog.css` (tokenlar, tipografika, sirtlar,
+utility'lar), `src/app/globals.css` (hujjat asosi, markdown, chop etish),
+`src/styles/studio.css` (muallif paneli qatlami).
 
 ---
 
 ## Konsepsiya
 
-Butun sayt **UCH rangdan** quriladi va to'rtinchisi yo'q:
+**Skandinaviya minimalizmi + zamonaviy clean-tech.** Sahifa oq, karta oq,
+ular bir-biridan RANG bilan emas — bir piksel chiziq va deyarli
+sezilmaydigan soya bilan ajraladi. Yashil faqat HARAKAT bo'lgan joyda
+ko'rinadi.
 
-| Rang | Token | Qiymat | Vazifa |
-| --- | --- | --- | --- |
-| QORA | `--ink` | `#0A0A0A` | Matn, asosiy tugma foni, futer, to'q bo'limlar |
-| OQ | `--canvas` / `--pane` | `#FFFFFF` | Sahifa foni, karta foni, to'q fondagi matn |
-| KO'K | `--brand` | `#1E5EFF` | CTA, havola, aksent chiziq, statistik raqam |
+### Oltita qaror
 
-**Kulrang RANG hisoblanmaydi.** U faqat chegara (`--edge` #E5E5E5), ajratgich
-va ikkinchi darajali matn (`--ink-2` #4A4A4A, `--ink-3` #737373) uchun neytral.
-
-**Yashil/sariq/qizil YO'Q.** Holat farqi rang bilan emas — SHAKL, YORLIQ va
-OG'IRLIK bilan beriladi (pastda "Rangsiz semantika" bo'limiga qarang).
-
-### To'rt qaror
-
-1. **Ko'k kam va qimmat.** Sahifaning ~10% dan ortig'i ko'k bo'lmaydi. Ko'k
-   ko'rinsa — u yerda harakat bor: bosiladigan joy yoki muhim raqam.
-2. **Bo'sh joy — material.** Bo'limlar orasida 120px, sarlavhalar yirik.
-   Element qo'shishdan oldin bo'shliqni kengaytirish tekshiriladi.
-3. **Soya faqat hoverda.** Tinch holatda sirt tekis: karta 1px kulrang chegara
-   bilan turadi. Soya — javob, bezak emas.
-4. **Yumaloq, lekin qat'iy.** Tugma 10px, karta 16px, katta panel 24px.
-   Bitta shkala, o'rtasida tasodifiy qiymat yo'q.
+1. **Oq sahifa, oq karta.** Fon `#FFFFFF`, karta ham `#FFFFFF`. Bo'lim
+   ajratish kerak bo'lsa — juda och yashil-oq lenta (`--bg-tint`,
+   `#F6FAF7`). Kulrang fon tizimda yo'q.
+2. **Yashil — harakat rangi.** `#2E7D32` faqat tugma, havola, faol holat
+   va ijobiy natijada. Bezak uchun yashil ISHLATILMAYDI.
+3. **Siyoh neytral.** Matn deyarli qora (`#16191B`) va uning uch
+   pog'onasi. Sovuq ham, iliq ham emas — yashil yonida toza ko'rinadi.
+4. **O'lcham aniq.** Asosiy matn 15px, sarlavhalar 20–48px. Ulkan
+   tipografika yo'q: ierarxiyani o'lcham emas, BO'SHLIQ yaratadi.
+5. **Burchak yumshoq, kapsula yo'q.** Tugma 10px, karta 14px, maydon 8px.
+   To'liq yumaloq shakl faqat avatar, nuqta va yuklanish chizig'ida.
+6. **Harakat deyarli yo'q.** Faqat rang/soya o'tishi (120–180ms) va tugma
+   bosilganda 1px cho'kish. Parallax, scroll animatsiyasi, masshtab,
+   porlash, suzuvchi panel — tizimda YO'Q.
 
 ---
 
-## 1. Tipografika
+## 1. Ranglar
 
-**Bitta shrift — Inter.** Sarlavha ham, interfeys ham, raqam ham, yorliq ham.
+### Sirtlar
 
-### Monoshrift qachon ruxsat etiladi
+| Token | Yorug' | Vazifa |
+| --- | --- | --- |
+| `--bg` | `#FFFFFF` | Sahifa foni |
+| `--bg-tint` | `#F6FAF7` | Bo'lim lentasi — juda och yashil-oq |
+| `--surface` | `#FFFFFF` | Karta, panel, suzuvchi qatlam |
+| `--surface-hover` | `#F4F8F5` | Qator ustida sichqoncha |
+| `--surface-sunk` | `#F3F7F4` | Botiq maydon: bo'sh holat, chip foni |
 
-JetBrains Mono faqat **mashina chiqargan yoki mashina o'qiydigan** matn uchun.
-Odam o'qiydigan HAR QANDAY yozuv — hatto eng kichigi ham — Inter'da:
+### Chiziqlar
 
-| ✅ Monoshrift | ❌ Inter (interfeys shrifti) |
-| --- | --- |
-| Kod bloki, muharrir, markdown manbasi | Yorliq, sarlavha, tugma, menyu |
-| Dastur chiqishi, `stderr`, kompilyator xatosi | Til nomi (`Python`, `C++`) va nishonlar |
-| Test kirish/chiqishi | Klaviatura ko'rsatkichi (`⌘K`, `Enter`) |
-| Fayl nomi va yo'li | Non ushoqlari (breadcrumb) ajratgichi `/` |
-| Belgima-belgi ko'chiriladigan kod: taklif kodi, 2FA, zaxira kaliti | Sahifalash, hisoblagich, statistika raqami |
-| Logotipdagi `>` belgisi (brend) | Jadval ustuni nomi, meta-matn |
+| Token | Yorug' | Qayerda |
+| --- | --- | --- |
+| `--line` | `#E4EAE6` | Odatiy chegara |
+| `--line-soft` | `#EFF3F0` | Ro'yxat ichidagi ajratgich |
+| `--line-strong` | `#D2DCD6` | Kirish maydoni, ikkinchi darajali tugma |
 
-Sabab: raqamlar endi Inter'ning `tabular-nums` xususiyati bilan tekislanadi,
-shuning uchun jadval ustunlari monoshriftsiz ham tik turadi. Monoshrift esa
-"bu — mashina matni" degan ma'noni tashiydi; uni oddiy yorliqqa qo'ysak, shu
-ma'no yo'qoladi va sahifada ikkita shrift beso'naqay aralashadi.
+### Siyoh
 
-| Klass | O'lcham (mobil → desktop) | Weight | Qayerda |
+To'rtala pog'ona ham oq fonda WCAG AA dan o'tadi.
+
+| Token | Qiymat | Kontrast | Qayerda |
 | --- | --- | --- | --- |
-| `t-display` | 36 → 64px | 700 | Hero sarlavhasi |
-| `t-title` | 28 → 40px | 700 | Sahifa va bo'lim sarlavhasi |
-| `t-section` | 20px | 600 | Panel/karta sarlavhasi |
-| `t-body` | 16px / 1.65 | 400 | Asosiy matn |
-| `t-meta` | 14px | 400 | Meta: sana, muallif, izoh |
-| `t-eyebrow` | 13px, +0.12em, UPPERCASE | 600 | Bo'lim yorlig'i — kulrang (interfeys ichida) |
-| `t-eyebrow-brand` | 13px, +0.12em, UPPERCASE | 600 | Marketing bo'limi yorlig'i — **KO'K** |
-| `t-num` | — | — | Raqam (`tabular-nums`, ustunlar tik turadi) |
-| `t-metric` | 28 → 36px | 700 | Interfeys ichidagi ko'rsatkich |
-| `t-metric-lg` | 40 → 56px | 700 | Marketing statistikasi — **doim KO'K** |
+| `--text` | `#16191B` | 16.9:1 | Sarlavha, asosiy matn |
+| `--text-2` | `#3A443F` | 9.6:1 | Ikkinchi darajali matn |
+| `--text-3` | `#5A655F` | 6.2:1 | Meta, izoh |
+| `--text-4` | `#6F7A74` | 4.7:1 | Yorliq, sokin qiymat |
+
+### Yashil
+
+| Token | Qiymat | Vazifa |
+| --- | --- | --- |
+| `--green` | `#2E7D32` | Amal: tugma foni, faol holat |
+| `--green-hover` | `#276E2B` | Hover |
+| `--green-active` | `#1F5C23` | Bosilgan |
+| `--green-text` | `#2A6E2E` | Oq fondagi YOZUV (5.6:1) |
+| `--green-mid` | `#4CAF50` | Faqat bezak: diagramma, daraja |
+| `--green-pale` | `#81C784` | Faqat bezak |
+| `--green-wash` | `#EEF6EF` | Tanlangan holat foni |
+| `--green-line` | `#C3DFC5` | Yashil elementning chegarasi |
+
+**Ko'k, qizil, sariq, binafsha — YO'Q.** Holat farqi rang bilan emas,
+YORLIQ, IKONKA va OG'IRLIK bilan beriladi:
+
+- ijobiy natija — yashil (`--ok`)
+- salbiy natija — to'q siyoh (`--danger`), doim matnli yorliq bilan
+- kutish — tinch kulrang (`--warn`)
+
+Qiyinlik darajasi ham shu qoidada: bitta yashil oilaning uch toni
+(`--easy` / `--medium` / `--hard`) + uch ustunli SHAKL belgisi, ya'ni
+rang ko'rmaydigan foydalanuvchi ham farqni ko'radi.
+
+### Qorong'i rejim
+
+`.dark` sinfida xuddi shu tizim teskari: sahifa `#0F1311`, karta
+`#161B18`, yashil `#6FCF74` (to'q fonda AA uchun yorug'roq). Yorug' rejim
+asosiy va sukut bo'yicha.
+
+---
+
+## 2. Tipografika
+
+**Bitta shrift — Inter.** Sarlavha ham, interfeys ham, raqam ham.
+Monoshrift (JetBrains Mono) faqat MASHINA matni uchun: kod, terminal
+chiqishi, test ma'lumotlari, fayl yo'li.
+
+| Klass | O'lcham | Weight | Qayerda |
+| --- | --- | --- | --- |
+| `ts-display` | 34 → 48px | 700 | Bosh sahifa sarlavhasi |
+| `ts-h1` | 26 → 34px | 650 | Sahifa sarlavhasi |
+| `ts-h2` | 20 → 24px | 600 | Bo'lim sarlavhasi |
+| `ts-h3` | 17px | 600 | Karta/panel sarlavhasi |
+| `ts-lead` | 16 → 18px | 400 | Yetakchi xatboshi |
+| `ts-body` | 15px | 400 | Asosiy matn |
+| `ts-sm` | 14px | 400 | Ikkinchi darajali qator |
+| `ts-xs` | 13px | 400 | Meta, izoh, hisoblagich |
+| `ts-label` | 12px, +0.06em, UPPERCASE | 600 | Ustun va bo'lim yorlig'i |
+| `ts-num` | — | — | Raqam (`tabular-nums`) |
+| `ts-metric` | 28 → 36px | 650 | Interfeys ko'rsatkichi |
+
+`<body>` ning o'zi `font-size: 0.9375rem` (15px).
 
 **Qoidalar**
 
-- Sarlavhalar **faqat chapdan** tekislanadi. Yagona istisno: sahifa
-  oxiridagi CTA bloki va 404.
-- Matn qatori maksimal **68 belgi** (`max-w-[68ch]` yoki `shell-tight`).
-- Sarlavha ichidagi ko'k aksent — **bitta so'z yoki bitta qisqa ibora**.
-  Ikkita ko'k bo'lak bitta sarlavhada bo'lmaydi.
-- `--ink-4` (#A3A3A3) matn uchun ISHLATILMAYDI — oq fonda 3.45:1, AA dan past.
-  U faqat ikonka va ajratgich uchun.
+- Harf oralig'i o'lchamga TESKARI: 48px sarlavhada `-0.026em`, 12px
+  yorliqda `+0.06em`.
+- Sarlavhalar faqat chapdan tekislanadi.
+- Sarlavha kengligi `max-w-[24ch]`, matn ustuni `max-w-[62ch]`.
+- Markdown (`prose-ca`) interfeysdan bir pog'ona YIRIKROQ: 16px/1.75 —
+  masala sharti eng ko'p o'qiladigan matn.
 
 ---
 
-## 2. Tartib (layout)
-
-| Token | Qiymat | Nima |
-| --- | --- | --- |
-| `--page` | 1200px | Konteyner kengligi (`shell`) |
-| `--page-tight` | 720px | Matn ustuni (`shell-tight`) |
-| `--bar` | 72px | Yopishqoq panel balandligi |
-| `--sec` / `--sec-md` / `--sec-sm` | 120 / 88 / 64px | Bo'lim vertikal paddingi (`band`) |
-
-**Utility'lar:** `shell` (gorizontal konteyner), `shell-tight` (matn ustuni),
-`band` (bo'lim paddingi), `band-sm` (zich bo'lim).
-
-Yangi marketing bo'limi shu ikkitadan quriladi: `<section className="band shell">`.
-
-### Sahifa ritmi
-
-Bo'limlar fon bo'yicha almashinadi, shuning uchun uzun sahifa "nafas oladi":
-
-```
-oq → oq → OCH KULRANG (#F5F5F5) → oq → QORA (#0A0A0A) → oq → OCH KULRANG → oq → QORA (futer)
-```
-
-To'q bo'lim sahifada **bittadan ortiq bo'lmaydi** (futer alohida hisoblanadi).
-Ikki og'ir blok ketma-ket kelsa, sahifa oxiri "qorong'i devor"ga aylanadi.
-
----
-
-## 3. Tugmalar
-
-Ikkita qoida butun tizimni ushlab turadi:
-
-1. **Asosiy (`primary`)** — QORA fon, oq matn → hoverda fon **KO'KGA** o'tadi.
-2. **Ikkinchi darajali (`quiet` / `outline`)** — shaffof fon, qora chegara va
-   matn → hoverda chegara ham, matn ham **ko'kka** o'tadi.
-
-Ya'ni ko'k tugmaning tinch holati emas, balki **javobi**.
-
-| Variant | Tinch holat | Hover |
-| --- | --- | --- |
-| `primary` / `ink` | Qora fon, oq matn | Ko'k fon |
-| `quiet` / `outline` | Shaffof, qora chegara | Ko'k chegara + ko'k matn |
-| `brand` / `secondary` | To'yingan ko'k | Ochroq ko'k |
-| `brand-soft` | Ko'k yuvindi | To'yingan ko'k |
-| `ghost` | Faqat matn | Ko'k matn + yengil fon |
-| `danger` | Qora | Quyuqroq — **ko'kka o'tmaydi** |
-
-**O'lchamlar:** `sm` 36px · `md` 40px · `lg` 48px (padding 14/28 — CTA) ·
-`xl` 56px. `lg` va `xl` hoverda 2px yuqoriga siljiydi; kichiklari siljimaydi
-(jadval ichida sakraydigan tugma qatorni titratadi).
-
-**Barcha tugmalarda:** radius 10px, o'tish 250ms `ease-snap`,
-bosilganda `scale(0.97)`. Rang hech qachon to'satdan almashmaydi.
-
----
-
-## 4. Sirtlar
-
-| Utility | Nima |
-| --- | --- |
-| `pane` / `pane-solid` | Karta: oq fon + 1px kulrang chegara, **soyasiz** |
-| `pane-sunken` | Karta ICHIDAGI botiq maydon |
-| `pane-float` | Suzuvchi qatlam (menyu, modal) — yagona doimiy soya |
-| `pane-interactive` | Hoverda `translateY(-4px)` + soya + ko'k chegara |
-| `pane-ink` | Qora blok (CTA lentasi, hero vizuali) |
-| `pane-brand` | To'yingan ko'k blok — sahifada bittadan ko'p emas |
-| `on-dark` | To'q bo'lim: sirt/siyoh tokenlarini ag'daradi |
-
-**Karta ichida karta — TAQIQ.** Ichki maydon kerak bo'lsa `pane-sunken`.
-
-`on-dark` ichida `--ink` oq, `--brand` ochroq ko'k (#5B8CFF) va
-`--ink-on-brand` qora bo'ladi — komponentlar o'z kodiga tegmasdan moslashadi.
-
----
-
-## 5. Animatsiya
+## 3. Shakl va soya
 
 | Token | Qiymat | Qayerda |
 | --- | --- | --- |
-| `--t-fast` | 200ms | Hover, rang |
-| `--t-base` | 250ms | Tugma, menyu |
-| `--t-slow` | 300ms | Akkordeon, karta ko'tarilishi |
-| `--t-reveal` | 500ms | Scroll bo'yicha paydo bo'lish |
+| `--radius-xs` | 6px | Chip, nishon, segment tugmasi |
+| `--radius-sm` | 8px | Kirish maydoni, menyu bandi |
+| `--radius-md` | 10px | **Tugma** |
+| `--radius-lg` | 14px | Karta |
+| `--radius-xl` | 20px | Modal, katta panel |
+| `--radius-full` | 999px | FAQAT avatar, nuqta, progress |
 
-**Easing:** `--ease-snap` (boshqaruv), `--ease-soft` (kirish).
-
-- **Hech bir animatsiya 0.6s dan uzoq emas.**
-- Kirish qonuni bitta: **20px pastdan + shaffoflikdan**. Masshtab yo'q —
-  masshtablangan blok matnni kirish paytida xiralashtiradi.
-- Ro'yxatlarda stagger **100ms**, 6 elementdan keyin kechikish to'xtaydi.
-- Scroll animatsiyasi `Reveal` komponenti orqali (IntersectionObserver).
-- Sahifa almashganda `page-in`: 220ms fade + 8px ko'tarilish. Siljish
-  ataylab kichik — yirik siljish yopishqoq panel bilan to'qnashadi.
-- Sahifa ichidagi havolalar — silliq scroll
-  (`scroll-behavior: smooth` + `scroll-padding-top`).
-- `prefers-reduced-motion` barcha animatsiyani bir joyda o'chiradi.
+Soyalar juda yengil va neytral (yashil emas): `--shadow-xs` kartada,
+`--shadow-sm` hoverda, `--shadow-lg` faqat suzuvchi qatlamda (menyu,
+modal). Tinch holatdagi karta "suzmaydi".
 
 ---
 
-## 6. Rangsiz semantika
+## 4. Sirt sinflari
 
-Palitrada yashil/sariq/qizil yo'q. Ma'no shunday beriladi:
+| Sinf | Nima |
+| --- | --- |
+| `card` | Oq yuza + 1px chiziq + `shadow-xs` |
+| `card-link` | Bosiladigan karta: hoverda chiziq quyuqlashadi |
+| `well` | Botiq maydon karta ICHIDA |
+| `float` | Suzuvchi qatlam: menyu, popover, modal |
+| `wash` | Yashil yuvindi — tanlangan holat |
+| `divider` / `divider-soft` | Gorizontal ajratgich |
+| `edge-green` | Chap qirradagi yashil chiziq — faol element |
+| `on-green` | To'yingan yashil blok (futer): tokenlarni ag'daradi |
+| `on-code` | Kod sirti (muharrir, terminal) |
 
-| Token | Qiymat | Mantiq |
+**Karta ichida karta bo'lmasin** — ichki maydon kerak bo'lsa `well`.
+
+---
+
+## 5. Tartib
+
+Tepada 60px NAVIGATSIYA LENTASI: asosiy besh bo'lim tekis havolalar
+bo'lib turadi (ochiluvchi menyu ortida emas), faol bo'limning ostida
+panel qirrasiga tegib turgan 2px yashil chiziq yonadi. Qolgan bo'limlar
+"Yana" menyusida. O'ngda qidiruv (⌘K), tema, bildirishnoma, hisob.
+
+Kontent MARKAZLASHGAN (`wrap`, 1120px). Har bir sahifa `PageHead` bilan
+boshlanadi — u OCH YASHIL PANEL (`--bg-tint`, 20px radius): sahifaning
+"boshi" fon bilan e'lon qilinadi, kontent esa ostida oq qog'ozda davom
+etadi. Panel ichida: sarlavha + amallar bitta qatorda, izoh, so'ng meta
+— chegarali OQ stat-chiplar.
+
+Futer — bitta ingichka qator (© + huquqiy havolalar + email). To'yingan
+yashil bloklar tizimda YO'Q. 1024px dan tor ekranda: navbar burger bilan,
+pastda tab-panel.
+
+| Token | Qiymat | Vazifa |
 | --- | --- | --- |
-| `--ok` | Ko'k | Tizimda ko'k = "ishladi, davom et" |
-| `--bad` | Qora | Eng og'ir vizual og'irlik |
-| `--warn` | `--ink-2` | Qoradan bir pog'ona past |
-| `--easy` / `--medium` / `--hard` | Och → quyuq ton | Yoniga uchta ustunli belgi qo'shiladi |
+| `--nav-h` | 60px | Yuqori panel |
+| `--container` | 1120px | Sahifa konteyneri (`wrap`) |
+| `--container-narrow` | 704px | Matn ustuni (`wrap-narrow`) |
 
-**Majburiy:** har bir holat yonida DOIM matnli yorliq yoki ikonka turadi.
-Rang bitta o'zi ma'no tashimasligi kerak (WCAG 1.4.1).
+**Bo'lim** (`Section`): sarlavha yonida kichik yashil belgi — ajratgich
+chiziqlar yo'q. **Statistika** (`Stat`): karta-plitka, yorliq tepada.
 
-**Forma xatosi** uch signal bilan: qalinlashgan siyoh chegara + ichki halqa +
-ostidagi ikonkali qalin matn.
+**Katalog sahifalari** (masalalar): filtrlar chap relsda EMAS — karta
+ichidagi asboblar qatorida (qidiruv + ochiluvchi filtrlar + saralash),
+jadval o'sha kartaning ichida. **Musobaqalar**: bitta jadval emas, uch
+guruh — jonli (wash-karta), kutilmoqda (sana-plitkali qatorlar),
+tugagan (ixcham jadval).
 
 ---
 
-## 7. Kontrast (tekshirilgan)
+## 6. Boshqaruv elementlari
 
-| Juftlik | Nisbat | Holat |
+**Tugma** (`kit/primitives.tsx`) — 10px burchak, balandligi 36/40/44/48px.
+
+| Variant | Ko'rinish | Qachon |
 | --- | --- | --- |
-| `#1E5EFF` oq ustida | 5.12:1 | ✅ AA |
-| oq `#1E5EFF` ustida | 5.12:1 | ✅ AA (tugma matni) |
-| `#1E5EFF` **qora ustida** | 3.80:1 | ❌ — to'q fonda `--brand-light` (#5B8CFF, 6.16:1) |
-| `#4A4A4A` oq ustida | 8.86:1 | ✅ |
-| `#737373` oq ustida | 4.74:1 | ✅ |
-| `#A3A3A3` oq ustida | 3.45:1 | ❌ matn uchun ishlatilmaydi |
+| `primary` | To'yingan yashil, oq matn | Ekranda BITTA |
+| `quiet` | Oq yuza + chiziq | Ikkinchi darajali amal |
+| `ghost` | Fonsiz, faqat matn | Uchinchi daraja, ikonka |
+| `brand-soft` | Yashil yuvindi | Yumshoq chaqiriq |
+| `danger` | To'q siyoh | Xavfli amal |
 
-**Qorong'i rejimda** `--brand` ochroq (#4C7FFF), shuning uchun ko'k fondagi
-matn QORA bo'ladi — `--ink-on-brand` tokeni buni avtomatik hal qiladi.
-Ko'k tugmada `text-white` yozmang, `text-[var(--ink-on-brand)]` yozing.
+Javob: hoverda fon bir pog'ona o'zgaradi (120ms), bosilganda 1px
+cho'kish. **Masshtab, siljish va soya sakrashi yo'q.**
+
+**Maydon** — 40px balandlik, 8px burchak, 14px matn; fokusda chegara
+yashilga o'tadi va tizimning umumiy konturi chiziladi.
+
+**Chip** — 6px burchak, haqiqiy chegara, 12px matn.
+
+**Jadval** (`grid-table`) — katalog sahifalarining asosiy tartibi:
+ustun sarlavhalari 12px UPPERCASE, raqamli ustunlar (`col-num`) o'ngdan
+tekislangan, tor ekranda jadval `table-scroll` ichida o'zi suriladi.
 
 ---
 
-## 8. Qat'iy taqiqlar
+## 7. Harakat
 
-- Palitradan tashqari rang: yashil, sariq, qizil, binafsha, kehribar.
-- Ko'k tugmada `text-white` (qorong'i rejimda kontrast yo'qoladi —
-  `--ink-on-brand` ishlating).
-- `bg-[var(--ink)]` ustida `text-white` (qorong'i rejimda oq ustiga oq —
-  `text-[var(--canvas)]` ishlating).
-- Ikonka rangli plitkada. Ikonka yalang'och turadi yoki chegarali doirada.
-- Sarlavhani kartaga solish; karta ichida karta.
-- Sahifada ikkita to'q bo'lim ketma-ket.
-- Sarlavhada ikkita ko'k bo'lak.
-- Bo'sh yoki nol statistikani ko'rsatish (`0+` kabi) — raqam bo'lmasa,
-  raqam chizilmaydi.
-- O'ylab topilgan statistika, sharh yoki mijoz nomi. Bosh sahifadagi
-  raqamlar `site.stats` API'dan keladi; sharhlar bo'limi (`testimonials.tsx`)
-  haqiqiy matn kelmaguncha shablon holatida turadi.
-- `spacing` shkalasidan tashqari qiymat (4, 8, 12, 16, 20, 24, 32, 40, 48,
-  64, 80, 96, 120, 160).
+Tizimda BOR bo'lgan harakatlar ro'yxati to'liq shu:
+
+| Nima | Qancha |
+| --- | --- |
+| Rang/chegara/soya o'tishi | 120ms (`--dur-1`) |
+| Panel soyasi, modal varaq | 180ms (`--dur-2`) |
+| Tugma bosilganda | `translate-y-px` |
+| Menyu/modal ochilishi | `pop-in` / `enter-sheet` (8px, 120–180ms) |
+| Jarayon belgisi | `pulse-soft` (shaffoflik) |
+
+`prefers-reduced-motion` da hammasi o'chadi.
+
+---
+
+## 8. Fokus
+
+Butun sayt bo'ylab BITTA ko'rinish: `ring-focus` sinfi,
+`:focus-visible` da 2px yashil kontur va 2px chekinish. Komponentning
+o'z halqasi bo'lmaydi — ikkalasi ustma-ust tushsa qo'sh ramka hosil
+bo'ladi.

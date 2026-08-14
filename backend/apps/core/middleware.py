@@ -69,6 +69,9 @@ class SecurityHeadersMiddleware:
     Sayt sahifalarining CSP'si bu yerdan EMAS, Next.js tomonidan qo'yiladi
     (`frontend/next.config.mjs`) — u o'z skriptlari va Monaco muharriri
     haqida biladi.
+
+    Django HTML QAYTARADIGAN uchta yo'l bor va ularning har biriga alohida
+    siyosat kerak: API (`none`), Swagger hujjatlari va boshqaruv paneli.
     """
 
     API_CSP = (
@@ -87,6 +90,31 @@ class SecurityHeadersMiddleware:
         "frame-ancestors 'none'; "
         "base-uri 'none'"
     )
+    # Boshqaruv paneli (Django admin + unfold temasi).
+    #
+    # `API_CSP` bu yerda YARAMAYDI: `default-src 'none'` CSS va JS ni
+    # bloklaydi (panel bezaksiz oddiy HTML bo'lib qoladi), `form-action
+    # 'none'` esa kirish formasini umuman yubortirmaydi.
+    #
+    # `unsafe-eval` — unfold Alpine.js'ga tayanadi, u esa `x-on`, `x-show`
+    # kabi atributlardagi ifodalarni `new Function()` bilan bajaradi.
+    # Usiz yon menyu, filtr paneli va to'q rejim tugmasi ishlamaydi.
+    # `unsafe-inline` — Django admin sahifaga inline `<script>` va `style`
+    # joylaydi (`ManifestStaticFilesStorage` bilan ham shunday qoladi).
+    #
+    # Panel FAQAT `is_staff` foydalanuvchilarga ochiq, shuning uchun bu
+    # yumshatish ommaviy sahifalarga tarqalmaydi.
+    ADMIN_CSP = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: blob:; "
+        "font-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'"
+    )
     PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 
     def __init__(self, get_response):
@@ -99,6 +127,8 @@ class SecurityHeadersMiddleware:
             path = request.path
             if path.startswith("/api/docs") or path.startswith("/api/schema"):
                 response["Content-Security-Policy"] = self.DOCS_CSP
+            elif path.startswith("/admin/") or path.startswith("/static/"):
+                response["Content-Security-Policy"] = self.ADMIN_CSP
             else:
                 response["Content-Security-Policy"] = self.API_CSP
 

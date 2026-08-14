@@ -10,10 +10,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.core.exports import ExportMixin
-from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
+from apps.core.mixins import AuditLogMixin, BulkActionMixin, OwnScopedMixin, write_audit
 from apps.core.permissions import HasResourcePerm, IsStaff
 from apps.core.trash import SoftDeleteViewSetMixin
-from apps.core.utils import unique_slug
+from apps.core.utils import to_int, unique_slug
 
 from .models import (
     DailyChallenge,
@@ -54,7 +54,8 @@ class ProblemFilter(filters.FilterSet):
 
 
 class AdminProblemViewSet(
-    SoftDeleteViewSetMixin, ExportMixin, AuditLogMixin, BulkActionMixin, viewsets.ModelViewSet
+    OwnScopedMixin, SoftDeleteViewSetMixin, ExportMixin, AuditLogMixin, BulkActionMixin,
+    viewsets.ModelViewSet,
 ):
     """`/api/admin/problems/` — masalalar CRUD (5-bo'lim: Masala CRUD)."""
 
@@ -74,6 +75,7 @@ class AdminProblemViewSet(
     ordering = ["-created_at"]
     audit_label = "problem"
     bulk_allowed_actions = ("delete", "publish", "unpublish", "archive", "set_difficulty", "add_tags", "remove_tags")
+    bulk_perm_actions = {"publish": "publish", "unpublish": "publish"}
     export_filename = "codearena-masalalar"
     export_columns = [
         ("slug", "Slug"),
@@ -170,7 +172,9 @@ class AdminProblemViewSet(
     def test_cases(self, request, pk=None):
         problem = self.get_object()
         if request.method == "GET":
-            rows = problem.test_cases.order_by("order")
+            # Studio bitta masalada ko'pi bilan bir necha yuz test saqlaydi;
+            # 2000 — himoya chegarasi, "hammasini yukla"ning oldini oladi.
+            rows = problem.test_cases.order_by("order")[:2000]
             return Response(TestCaseSerializer(rows, many=True).data)
 
         serializer = TestCaseSerializer(data=request.data)
@@ -205,7 +209,17 @@ class AdminProblemViewSet(
 
     def handle_bulk_action(self, request, action_name, queryset, payload):
         if action_name == "publish":
-            affected = queryset.filter(~Q(description_uz="")).update(
+            # Yakka `publish` bilan bir xil talab: shart ham, kamida bitta
+            # test ham bo'lsin — testsiz masala foydalanuvchiga chiqmasin.
+            # (`update()` aggregat filtri bilan ishlamaydi, shuning uchun
+            # avval ID lar yig'iladi.)
+            ready_ids = list(
+                queryset.filter(~Q(description_uz=""))
+                .annotate(_tc=Count("test_cases"))
+                .filter(_tc__gt=0)
+                .values_list("pk", flat=True)
+            )
+            affected = Problem.objects.filter(pk__in=ready_ids).update(
                 status=ProblemStatus.PUBLISHED, published_at=timezone.now()
             )
             return {"affected": affected}
@@ -235,7 +249,9 @@ class AdminProblemViewSet(
 
     @action(detail=False, methods=["get"])
     def summary(self, request):
-        qs = Problem.objects.all()
+        # Jadval bilan bir xil manba: muallif chegarasi ham, faol filtrlar
+        # ham hisob kartalariga birdek ta'sir qiladi.
+        qs = self.filter_queryset(self.get_queryset())
         return Response(
             {
                 "total": qs.count(),
@@ -295,8 +311,8 @@ class AdminDailyChallengeViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelV
     def calendar(self, request):
         """Oy bo'yicha kalendar ko'rinishi: `?year=2026&month=7`."""
         today = timezone.localdate()
-        year = int(request.query_params.get("year", today.year))
-        month = int(request.query_params.get("month", today.month))
+        year = to_int(request.query_params.get("year"), today.year, low=2000, high=2100)
+        month = to_int(request.query_params.get("month"), today.month, low=1, high=12)
         rows = self.get_queryset().filter(date__year=year, date__month=month).order_by("date")
         return Response(
             {
@@ -313,33 +329,49 @@ class AdminDailyChallengeViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelV
         import random
 
         start = request.data.get("start_date")
-        days = int(request.data.get("days", 7))
+        days = to_int(request.data.get("days"), 7, low=1, high=90)
         difficulty = request.data.get("difficulty")
 
-        start_date = (
-            datetime.date.fromisoformat(start) if start else timezone.localdate() + datetime.timedelta(days=1)
-        )
+        try:
+            start_date = (
+                datetime.date.fromisoformat(start)
+                if start
+                else timezone.localdate() + datetime.timedelta(days=1)
+            )
+        except ValueError:
+            return Response(
+                {"detail": "start_date `YYYY-MM-DD` ko'rinishida bo'lishi kerak."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         pool = Problem.objects.filter(status=ProblemStatus.PUBLISHED, is_contest_only=False)
         if difficulty:
             pool = pool.filter(difficulty=difficulty)
-        used = set(
+        used = (
             DailyChallenge.objects.filter(date__gte=start_date - datetime.timedelta(days=60))
             .values_list("problem_id", flat=True)
         )
-        candidates = [p for p in pool if p.id not in used]
-        if not candidates:
+        # Bazadan faqat ID lar: butun masala jadvalini xotiraga yuklamaymiz.
+        candidate_ids = list(pool.exclude(id__in=used).values_list("id", flat=True))
+        if not candidate_ids:
             return Response({"detail": "Mos masala topilmadi."}, status=status.HTTP_400_BAD_REQUEST)
 
-        random.shuffle(candidates)
+        random.shuffle(candidate_ids)
+        taken_dates = set(
+            DailyChallenge.objects.filter(
+                date__gte=start_date,
+                date__lt=start_date + datetime.timedelta(days=days),
+            ).values_list("date", flat=True)
+        )
         created = []
         cursor = 0
         for offset in range(days):
             date = start_date + datetime.timedelta(days=offset)
-            if DailyChallenge.objects.filter(date=date).exists():
+            if date in taken_dates:
                 continue
-            if cursor >= len(candidates):
+            if cursor >= len(candidate_ids):
                 break
-            challenge = DailyChallenge.objects.create(problem=candidates[cursor], date=date)
+            challenge = DailyChallenge.objects.create(problem_id=candidate_ids[cursor], date=date)
             created.append(challenge)
             cursor += 1
 

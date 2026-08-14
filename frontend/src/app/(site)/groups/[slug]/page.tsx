@@ -65,8 +65,8 @@ function GroupMark({
     <span
       style={{ width: size, height: size, fontSize: Math.max(11, size * 0.34) }}
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--r-field)]",
-        "bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-sm)]",
+        "bg-[var(--green-wash)] font-semibold text-[var(--green-text)]",
         className,
       )}
     >
@@ -86,7 +86,7 @@ function MemberMark({ src, name }: { src?: string | null; name: string }) {
     <span
       className={cn(
         "flex size-8.5 shrink-0 items-center justify-center overflow-hidden rounded-full",
-        "border border-[var(--edge)] bg-[var(--pane-sunken)] text-[11px] font-semibold text-[var(--ink-3)]",
+        "border border-[var(--line)] bg-[var(--surface-sunk)] text-[12px] font-semibold text-[var(--text-3)]",
       )}
     >
       {src ? (
@@ -139,10 +139,10 @@ function RemoveMemberButton({ onRemove }: { onRemove: () => void }) {
       aria-label="A'zoni chiqarish"
       onClick={onRemove}
       className={cn(
-        "focus-ring flex size-8 shrink-0 items-center justify-center rounded-[var(--r-ctl)]",
-        "text-[var(--ink-4)] opacity-0 transition-opacity duration-[var(--t-fast)]",
+        "ring-focus flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+        "text-[var(--text-4)] opacity-0 transition-opacity duration-[var(--dur-1)]",
         "group-hover:opacity-100 focus-visible:opacity-100",
-        "hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]",
+        "hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]",
       )}
     >
       <Trash2 className="size-3.5" />
@@ -238,7 +238,7 @@ export default function GroupDetailPage() {
           <Block className="h-16" />
         </Pane>
         <Pane inset="sm">
-          <Block className="h-9 w-56 rounded-[var(--r-field)]" />
+          <Block className="h-9 w-56 rounded-[var(--radius-sm)]" />
         </Pane>
         <Pane inset="lg">
           <Block className="h-72" />
@@ -276,7 +276,7 @@ export default function GroupDetailPage() {
     <Pane inset="md">
       <div className="flex flex-col gap-1.5">
         {Array.from({ length: 5 }).map((_, index) => (
-          <Block key={index} className="h-14 rounded-[var(--r-field)]" />
+          <Block key={index} className="h-14 rounded-[var(--radius-sm)]" />
         ))}
       </div>
     </Pane>
@@ -308,7 +308,7 @@ export default function GroupDetailPage() {
     /* Har bir mazmun bloki alohida kartada, orasi bir tekis 20px */
     <div className="flex flex-col gap-5">
       {/* ------------------------------------------------ identifikatsiya kartasi */}
-      <Pane className="enter" inset="lg">
+      <Pane className="" inset="lg">
         <Breadcrumb
           items={[{ label: "Guruhlar", href: "/groups" }, { label: group.name }]}
           className="mb-5"
@@ -318,40 +318,40 @@ export default function GroupDetailPage() {
           <GroupMark src={group.avatar_url} name={group.name} size={64} />
 
           <div className="min-w-0 flex-1">
-            <h1 className="t-title flex flex-wrap items-center gap-2 text-[var(--ink)]">
+            <h1 className="ts-h1 flex flex-wrap items-center gap-2 text-[var(--text)]">
               {group.name}
               {group.is_verified ? (
-                <BadgeCheck className="size-5 shrink-0 text-[var(--brand)]" />
+                <BadgeCheck className="size-5 shrink-0 text-[var(--green)]" />
               ) : null}
             </h1>
 
             {group.description ? (
-              <p className="t-body mt-2 max-w-2xl text-[var(--ink-3)]">{group.description}</p>
+              <p className="ts-body mt-2 max-w-2xl text-[var(--text-3)]">{group.description}</p>
             ) : null}
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               <Chip tone={group.is_private ? "neutral" : "ok"} icon={group.is_private ? <Lock className="size-3" /> : undefined}>
                 {group.is_private ? "Yopiq guruh" : "Ochiq guruh"}
               </Chip>
-              <span className="t-meta text-[var(--ink-4)]">
+              <span className="ts-sm text-[var(--text-4)]">
                 Egasi: {group.owner_username ? `@${group.owner_username}` : "—"}
               </span>
-              <span className="t-meta text-[var(--ink-4)]">
+              <span className="ts-sm text-[var(--text-4)]">
                 {formatDate(group.created_at, false)} dan beri
               </span>
-              <span className="t-meta flex items-center gap-1.5 text-[var(--ink-4)]">
+              <span className="ts-sm flex items-center gap-1.5 text-[var(--text-4)]">
                 <Users className="size-3.5" />
-                <span className="t-num text-[var(--ink-2)]">{memberCount}</span>/
-                <span className="t-num">{group.max_members}</span> a&apos;zo
+                <span className="ts-num text-[var(--text-2)]">{memberCount}</span>/
+                <span className="ts-num">{group.max_members}</span> a&apos;zo
               </span>
             </div>
           </div>
 
           <div className="flex shrink-0 flex-col items-stretch gap-2.5 sm:items-end">
             {/* Taklif kodi — karta ichidagi botiq maydon */}
-            <div className="pane-sunken flex items-center gap-3 rounded-[var(--r-field)] px-3.5 py-2.5">
-              <span className="t-eyebrow">Taklif kodi</span>
-              <span className="t-num font-mono text-[15px] font-semibold tracking-[0.2em] text-[var(--brand-ink)]">
+            <div className="well flex items-center gap-3 rounded-[var(--radius-sm)] px-3.5 py-2.5">
+              <span className="ts-label">Taklif kodi</span>
+              <span className="ts-num font-mono text-[16px] font-semibold tracking-[0.2em] text-[var(--green-text)]">
                 {group.invite_code}
               </span>
             </div>
@@ -434,7 +434,7 @@ export default function GroupDetailPage() {
               ]}
             />
           </div>
-          <p className="t-meta text-[var(--ink-4)]">
+          <p className="ts-sm text-[var(--text-4)]">
             {tab === "rank"
               ? "To'plangan ball bo'yicha saralangan."
               : "Rol, so'ng nom bo'yicha saralangan."}
@@ -451,17 +451,17 @@ export default function GroupDetailPage() {
                 className={cn(
                   "grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3.5 sm:px-6",
                   "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto_auto]",
-                  "border-b border-[var(--edge)]",
+                  "border-b border-[var(--line)]",
                 )}
               >
-                <span className="t-eyebrow">#</span>
-                <span className="t-eyebrow">A&apos;zo</span>
-                <span className="t-eyebrow hidden text-right sm:block">Yechgan</span>
-                <span className="t-eyebrow hidden text-right sm:block">Reyting</span>
-                <span className="t-eyebrow text-right">Ball</span>
+                <span className="ts-label">#</span>
+                <span className="ts-label">A&apos;zo</span>
+                <span className="ts-label hidden text-right sm:block">Yechgan</span>
+                <span className="ts-label hidden text-right sm:block">Reyting</span>
+                <span className="ts-label text-right">Ball</span>
               </div>
 
-              <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+              <ul className="divide-y divide-[var(--line-soft)]">
                 {rows.map((row, index) => {
                   const isMe = user?.username === row.username;
                   return (
@@ -470,11 +470,11 @@ export default function GroupDetailPage() {
                       className={cn(
                         "group grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-4 px-5 py-3 sm:px-6",
                         "sm:grid-cols-[2.5rem_minmax(0,1fr)_auto_auto_auto]",
-                        "transition-colors duration-[var(--t-fast)]",
-                        isMe ? "bg-[var(--brand-wash)]" : "hover:bg-[var(--pane-hover)]",
+                        "transition-colors duration-[var(--dur-1)]",
+                        isMe ? "bg-[var(--green-wash)]" : "hover:bg-[var(--surface-hover)]",
                       )}
                     >
-                      <span className="t-num text-[13px] font-semibold text-[var(--ink-4)]">
+                      <span className="ts-num text-[14px] font-semibold text-[var(--text-4)]">
                         {row.position ?? index + 1}
                       </span>
 
@@ -484,8 +484,8 @@ export default function GroupDetailPage() {
                           <Link
                             href={`/u/${row.username}`}
                             className={cn(
-                              "focus-ring flex items-center gap-1.5 truncate rounded-[6px] text-[14px] font-medium",
-                              "text-[var(--ink)] transition-colors hover:text-[var(--brand-ink)]",
+                              "ring-focus flex items-center gap-1.5 truncate rounded-[6px] text-[15px] font-medium",
+                              "text-[var(--text)] transition-colors hover:text-[var(--green-text)]",
                             )}
                           >
                             {row.username}
@@ -493,13 +493,13 @@ export default function GroupDetailPage() {
                               <Crown className="size-3.5 shrink-0 text-[var(--warn)]" />
                             ) : null}
                             {isMe ? (
-                              <span className="text-[11px] font-semibold text-[var(--brand)]">
+                              <span className="text-[12px] font-semibold text-[var(--green)]">
                                 siz
                               </span>
                             ) : null}
                           </Link>
                           {row.full_name ? (
-                            <p className="t-meta truncate text-[var(--ink-4)]">{row.full_name}</p>
+                            <p className="ts-sm truncate text-[var(--text-4)]">{row.full_name}</p>
                           ) : null}
                         </div>
 
@@ -513,13 +513,13 @@ export default function GroupDetailPage() {
                         ) : null}
                       </div>
 
-                      <span className="t-num hidden text-right text-[13px] text-[var(--ink-3)] sm:block">
+                      <span className="ts-num hidden text-right text-[14px] text-[var(--text-3)] sm:block">
                         {row.problems_solved}
                       </span>
-                      <span className="t-num hidden text-right text-[13px] text-[var(--ink-3)] sm:block">
+                      <span className="ts-num hidden text-right text-[14px] text-[var(--text-3)] sm:block">
                         {row.rating}
                       </span>
-                      <span className="t-num text-right text-[15px] font-semibold text-[var(--brand-ink)]">
+                      <span className="ts-num text-right text-[16px] font-semibold text-[var(--green-text)]">
                         {formatNumber(row.total_points)}
                       </span>
                     </li>
@@ -531,7 +531,7 @@ export default function GroupDetailPage() {
         ) : (
           listState ?? (
             <Pane inset="none" className="overflow-hidden">
-              <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+              <ul className="divide-y divide-[var(--line-soft)]">
                 {directory.map((row) => {
                   const isMe = user?.username === row.username;
                   const role = ROLE[row.role];
@@ -540,8 +540,8 @@ export default function GroupDetailPage() {
                       key={row.id}
                       className={cn(
                         "group flex items-center gap-3.5 px-5 py-3.5 sm:px-6",
-                        "transition-colors duration-[var(--t-fast)]",
-                        isMe ? "bg-[var(--brand-wash)]" : "hover:bg-[var(--pane-hover)]",
+                        "transition-colors duration-[var(--dur-1)]",
+                        isMe ? "bg-[var(--green-wash)]" : "hover:bg-[var(--surface-hover)]",
                       )}
                     >
                       <MemberMark src={row.avatar_url} name={row.full_name || row.username} />
@@ -550,18 +550,18 @@ export default function GroupDetailPage() {
                         <Link
                           href={`/u/${row.username}`}
                           className={cn(
-                            "focus-ring flex items-center gap-1.5 truncate rounded-[6px] text-[14px] font-medium",
-                            "text-[var(--ink)] transition-colors hover:text-[var(--brand-ink)]",
+                            "ring-focus flex items-center gap-1.5 truncate rounded-[6px] text-[15px] font-medium",
+                            "text-[var(--text)] transition-colors hover:text-[var(--green-text)]",
                           )}
                         >
                           {row.username}
                           {isMe ? (
-                            <span className="text-[11px] font-semibold text-[var(--brand)]">
+                            <span className="text-[12px] font-semibold text-[var(--green)]">
                               siz
                             </span>
                           ) : null}
                         </Link>
-                        <p className="t-meta truncate text-[var(--ink-4)]">
+                        <p className="ts-sm truncate text-[var(--text-4)]">
                           {row.full_name ? `${row.full_name} · ` : ""}
                           {formatDate(row.joined_at, false)} dan beri
                         </p>
@@ -569,14 +569,14 @@ export default function GroupDetailPage() {
 
                       {row.user_rank?.name_uz ? (
                         <span
-                          className="hidden text-[12.5px] font-medium md:block"
+                          className="hidden text-[13px] font-medium md:block"
                           style={{ color: row.user_rank.color }}
                         >
                           {row.user_rank.name_uz}
                         </span>
                       ) : null}
 
-                      <span className="t-num hidden w-16 text-right text-[13px] text-[var(--ink-3)] sm:block">
+                      <span className="ts-num hidden w-16 text-right text-[14px] text-[var(--text-3)] sm:block">
                         {formatNumber(row.total_points)}
                       </span>
 

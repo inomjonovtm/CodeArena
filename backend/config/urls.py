@@ -1,11 +1,14 @@
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from apps.core import health
 
 urlpatterns = [
+    # --- boshqaruv paneli (Django admin + unfold temasi)
+    path("admin/", admin.site.urls),
     # `/health/` — jarayon tirikmi (Docker HEALTHCHECK shuni so'raydi).
     # `/health/ready/` — baza, kesh, migratsiya, judge (monitoring va deploy).
     path("health/", health.liveness),
@@ -19,11 +22,12 @@ urlpatterns = [
     path("api/", include("apps.problems.urls")),
     path("api/", include("apps.judge.urls")),
     path("api/", include("apps.contests.urls")),
-    path("api/", include("apps.courses.urls")),
     path("api/", include("apps.content.urls")),
     path("api/", include("apps.community.urls")),
     path("api/", include("apps.notifications.urls")),
     path("api/", include("apps.core.public_urls")),
+    # --- Studio API (muallif paneli: masala va olimpiada tayyorlash)
+    path("api/studio/", include("apps.problems.studio_urls")),
     # --- admin panel API (rol: admin/moderator)
     path("api/admin/", include("apps.core.admin_urls")),
     path("api/admin/", include("apps.dashboard.urls")),
@@ -31,7 +35,7 @@ urlpatterns = [
     path("api/admin/", include("apps.problems.admin_urls")),
     path("api/admin/", include("apps.judge.admin_urls")),
     path("api/admin/", include("apps.contests.admin_urls")),
-    path("api/admin/", include("apps.courses.admin_urls")),
+    path("api/admin/", include("apps.assessments.admin_urls")),
     path("api/admin/", include("apps.content.admin_urls")),
     path("api/admin/", include("apps.community.admin_urls")),
     path("api/admin/", include("apps.moderation.admin_urls")),

@@ -6,7 +6,6 @@ import {
   ArrowUpDown,
   Bookmark,
   BookmarkCheck,
-  CalendarDays,
   Check,
   Flame,
   ListChecks,
@@ -22,21 +21,16 @@ import {
   Alert,
   Block,
   Button,
-  Chip,
-  ChipRail,
   DifficultyMark,
-  Divider,
   Empty,
+  FilterSelect,
   LinkButton,
   MenuItem,
-  Meter,
   PageHead,
   Pagination,
   Pane,
   Popover,
   SearchField,
-  Segmented,
-  SplitLayout,
 } from "@/components/kit";
 import { publicApi } from "@/lib/public-api";
 import type { Difficulty, PublicProblemListItem } from "@/lib/types";
@@ -69,30 +63,42 @@ const SORTS: { value: string; label: string }[] = [
   { value: "title_uz", label: "Nomi bo'yicha" },
 ];
 
-/* Qator va sarlavha bir xil ustun o'lchamlarini bo'lishadi */
-const COL_ACCEPT = "hidden w-14 text-right sm:block";
-const COL_POINTS = "hidden w-12 text-right md:block";
-const COL_DIFF = "w-21 shrink-0";
-const COL_MARK = "w-7 shrink-0";
-const COL_SAVE = "w-8 shrink-0";
+/* Ustun kengliklari — sarlavha va qator bitta manbadan oladi.
+   Tor ustunlar `w-*` bilan qotiriladi, "Masala" ustuni esa qolgan
+   bo'shliqni to'liq egallaydi: uzun sarlavhalar shu yerda nafas oladi. */
+const COL_NO = "w-14";
+const COL_DIFF = "w-32";
+const COL_ACCEPT = "w-24";
+const COL_POINTS = "w-20";
+const COL_SAVE = "w-12";
 
-/** Ro'yxat skeleti — haqiqiy qator tartibini takrorlaydi. */
-function RowsSkeleton({ rows = 8 }: { rows?: number }) {
+/** Jadval skeleti — haqiqiy ustun tartibini takrorlaydi. */
+function RowsSkeleton({ rows = 8, authenticated }: { rows?: number; authenticated: boolean }) {
   return (
-    <div className="divide-y divide-[var(--edge-soft)]">
-      {Array.from({ length: rows }).map((_, index) => (
-        <div key={index} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-          <span className={cn(COL_MARK, "flex justify-center")}>
-            <Block className="size-2 rounded-full" />
-          </span>
-          <Block className="h-3.5 w-1/3" />
-          <Block className={cn(COL_ACCEPT, "ml-auto h-3")} />
-          <Block className={cn(COL_POINTS, "h-3")} />
-          <Block className={cn(COL_DIFF, "h-3.5")} />
-          <span className={COL_SAVE} aria-hidden />
-        </div>
-      ))}
-    </div>
+    <table className="grid-table">
+      <tbody>
+        {Array.from({ length: rows }).map((_, index) => (
+          <tr key={index}>
+            <td className={COL_NO}>
+              <Block className="size-7 rounded-full" />
+            </td>
+            <td>
+              <Block className="h-3.5 w-1/3" />
+            </td>
+            <td className={COL_DIFF}>
+              <Block className="h-3.5 w-16" />
+            </td>
+            <td className={COL_ACCEPT}>
+              <Block className="ml-auto h-3 w-10" />
+            </td>
+            <td className={COL_POINTS}>
+              <Block className="ml-auto h-3 w-8" />
+            </td>
+            {authenticated ? <td className={COL_SAVE} /> : null}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -108,7 +114,7 @@ function SortMenu({ value, onChange }: { value: string; onChange: (next: string)
     <div className="relative">
       <Button
         variant="quiet"
-        icon={<ArrowUpDown className="size-4 text-[var(--ink-4)]" />}
+        icon={<ArrowUpDown className="size-4 text-[var(--text-4)]" />}
         aria-haspopup="menu"
         aria-expanded={open}
         onMouseDown={() => {
@@ -124,7 +130,7 @@ function SortMenu({ value, onChange }: { value: string; onChange: (next: string)
             key={item.value}
             icon={
               item.value === value ? (
-                <Check className="size-4 text-[var(--brand)]" />
+                <Check className="size-4 text-[var(--green)]" />
               ) : (
                 <span className="block size-4" />
               )
@@ -142,107 +148,117 @@ function SortMenu({ value, onChange }: { value: string; onChange: (next: string)
   );
 }
 
-/** Faol filtr chipi — bosilsa olib tashlanadi. */
-function FilterChip({ label, onClear }: { label: React.ReactNode; onClear: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClear}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-[var(--r-chip)] border px-2.5 py-1",
-        "border-[var(--brand-edge)] bg-[var(--brand-wash)] text-[12px] font-medium text-[var(--brand-ink)]",
-        "transition-colors duration-[var(--t-fast)] hover:bg-[var(--brand-wash-strong)] focus-ring",
-      )}
-    >
-      {label}
-      <X className="size-3" />
-    </button>
-  );
-}
+/* ==========================================================================
+   MASALALAR JADVALI
+   --------------------------------------------------------------------------
+   Ilgari ro'yxat erkin qatorlardan iborat edi: qabul foizi, ball va
+   qiyinlik qatorning o'ng chetiga "yopishtirilgan" bo'lib, ustun sarlavhasi
+   yo'q edi — foydalanuvchi 63% nimani anglatishini faqat taxmin qilardi.
 
-/** Bitta masala qatori — nuqta/belgi, nom, qiyinlik, qabul va saqlash. */
+   Endi bu HAQIQIY jadval: har bir ustun atalgan, raqamlar o'ngdan
+   tekislangan va `tabular-nums` bilan tik turadi. Ko'z ustun bo'ylab
+   pastga yugurib, eng arzon yoki eng ko'p qabul qilingan masalani darhol
+   topadi.
+
+   Birinchi ustun — TARTIB RAQAMI, ustidan holat belgisi tushadi: yechilgan
+   masalada raqam o'rniga yashil belgi turadi, ya'ni bitta katakda ikkita
+   ma'lumot.
+   ========================================================================== */
 function ProblemRow({
   problem,
+  index,
   onToggleBookmark,
   authenticated,
 }: {
   problem: PublicProblemListItem;
+  /** Sahifadagi tartib raqami (1 dan boshlanadi). */
+  index: number;
   onToggleBookmark: (slug: string) => void;
   authenticated: boolean;
 }) {
   return (
-    <div className="group row-mark relative flex items-center gap-3 px-4 py-3 transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] sm:px-5">
-      {/* Holat: yechilgan — belgi, urinilgan — to'q nuqta, qolgani — bo'sh halqa */}
-      <span className={cn(COL_MARK, "flex justify-center")} aria-hidden>
+    <tr className="group">
+      {/* Raqam yoki holat: yechilgan — yashil belgi, urinilgan — halqa */}
+      <td className={COL_NO}>
         {problem.is_solved ? (
-          <Check className="size-4 text-[var(--ok)]" strokeWidth={3} />
-        ) : problem.is_attempted ? (
-          <span className="size-2 rounded-full bg-[var(--warn)]" />
-        ) : (
-          <span className="size-2 rounded-full border-[1.5px] border-[var(--edge-strong)]" />
-        )}
-      </span>
-
-      <div className="min-w-0 flex-1">
-        <Link href={`/problems/${problem.slug}`} className="focus-ring rounded-[6px]">
-          <span className="absolute inset-0" aria-hidden />
-          <span className="block truncate text-[13.5px] font-medium text-[var(--ink)] transition-colors group-hover:text-[var(--brand)]">
-            {problem.title_uz}
+          <span
+            className="grid size-7 place-items-center rounded-full bg-[var(--green)]"
+            title="Yechilgan"
+          >
+            <Check className="size-4 text-[var(--text-on-green)]" strokeWidth={3} />
           </span>
+        ) : (
+          <span
+            className={cn(
+              "ts-num grid size-7 place-items-center rounded-full text-[13px] font-semibold",
+              problem.is_attempted
+                ? "bg-[var(--green-wash)] text-[var(--green-text)] ring-1 ring-[var(--green-line)] ring-inset"
+                : "text-[var(--text-4)]",
+            )}
+            title={problem.is_attempted ? "Urinilgan" : undefined}
+          >
+            {index}
+          </span>
+        )}
+      </td>
+
+      <td className="min-w-64">
+        <Link
+          href={`/problems/${problem.slug}`}
+          className="ring-focus block truncate rounded-[6px] text-[16px] font-medium text-[var(--text)] transition-colors group-hover:text-[var(--green)]"
+        >
+          {problem.title_uz}
         </Link>
         {problem.tags.length ? (
-          <p className="t-meta mt-0.5 truncate text-[var(--ink-4)]">
+          <p className="mt-1 truncate text-[13px] text-[var(--text-4)]">
             {problem.tags.slice(0, 3).map((item) => item.name_uz).join(" · ")}
             {problem.tags.length > 3 ? ` · +${problem.tags.length - 3}` : ""}
           </p>
         ) : null}
-      </div>
+      </td>
 
-      <span className={cn(COL_ACCEPT, "t-num text-[12.5px] text-[var(--ink-3)]")}>
-        {Math.round(problem.acceptance_rate)}%
-      </span>
-      <span className={cn(COL_POINTS, "t-num text-[12.5px] text-[var(--ink-3)]")}>
-        {problem.points}
-      </span>
-
-      <span className={COL_DIFF}>
+      <td className={COL_DIFF}>
         <DifficultyMark value={problem.difficulty} label={DIFF_LABEL[problem.difficulty]} />
-      </span>
+      </td>
 
-      <span className={cn(COL_SAVE, "flex justify-center")}>
-        {authenticated ? (
+      <td className={cn(COL_ACCEPT, "col-num text-[14px] text-[var(--text-3)]")}>
+        {Math.round(problem.acceptance_rate)}%
+      </td>
+
+      <td className={cn(COL_POINTS, "col-num text-[14px] font-medium text-[var(--text-2)]")}>
+        {problem.points}
+      </td>
+
+      {authenticated ? (
+        <td className={COL_SAVE}>
           <button
             type="button"
             aria-label={
               problem.is_bookmarked ? "Saqlanganlardan olib tashlash" : "Saqlanganlarga qo'shish"
             }
             title={problem.is_bookmarked ? "Saqlanganlardan olib tashlash" : "Saqlanganlarga qo'shish"}
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onToggleBookmark(problem.slug);
-            }}
+            onClick={() => onToggleBookmark(problem.slug)}
             className={cn(
-              "relative z-10 flex size-8 items-center justify-center rounded-[var(--r-ctl)] focus-ring",
-              "transition-[opacity,background-color,color] duration-[var(--t-fast)]",
+              "ring-focus flex size-9 items-center justify-center rounded-full",
+              "transition-[opacity,background-color,color] duration-[var(--dur-1)]",
               problem.is_bookmarked
-                ? "text-[var(--brand)] hover:bg-[var(--brand-wash)]"
+                ? "text-[var(--green)] hover:bg-[var(--surface-hover)]"
                 : cn(
-                    "text-[var(--ink-4)] hover:bg-[var(--canvas-deep)] hover:text-[var(--ink-2)]",
+                    "text-[var(--text-4)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                     // Saqlash tugmasi faqat hoverda ko'rinadi; sensor ekranda doim
                     "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-100",
                   ),
             )}
           >
             {problem.is_bookmarked ? (
-              <BookmarkCheck className="size-4" />
+              <BookmarkCheck className="size-[18px]" />
             ) : (
-              <Bookmark className="size-4" />
+              <Bookmark className="size-[18px]" />
             )}
           </button>
-        ) : null}
-      </span>
-    </div>
+        </td>
+      ) : null}
+    </tr>
   );
 }
 
@@ -370,352 +386,260 @@ function ProblemsInner() {
   const activeTagName = tags?.find((item) => item.slug === tag)?.name_uz ?? tag;
 
   return (
-    <div className="flex flex-col gap-7">
-      {/* --------------------------------------------- 1. sahifa sarlavhasi */}
+    <div className="flex flex-col gap-5">
+      {/* ------------------------------------------------ sahifa sarlavhasi
+          Amallar sarlavha QATORIDA, ko'rsatkichlar chegarali chiplarda. */}
       <PageHead
-        eyebrow="Katalog"
         title="Masalalar"
         lead="Qiyinlik yoki mavzu bo'yicha tanlang va yechishni boshlang."
         actions={
-          <LinkButton
-            href="/daily"
-            icon={<CalendarDays className="size-4 text-[var(--brand)]" />}
+          <Button
+            variant="quiet"
+            size="sm"
+            icon={<Shuffle className="size-4" />}
+            onClick={randomPick}
+            disabled={!rows.length}
           >
-            Kunlik masala
-          </LinkButton>
+            Tasodifiy
+          </Button>
         }
         meta={
           <>
-            <Chip tone="neutral">
-              Jami <span className="t-num font-semibold">{data?.count ?? "—"}</span> ta masala
-            </Chip>
+            <span className="text-[var(--text-3)]">
+              Jami{" "}
+              <span className="ts-num font-semibold text-[var(--text)]">{data?.count ?? "—"}</span>
+            </span>
             {user && progress ? (
-              <>
-                <Meter
-                  value={solvedTotal}
-                  max={problemsTotal}
-                  label={
-                    <>
-                      Yechilgan: <span className="t-num">{solvedTotal}</span> /{" "}
-                      <span className="t-num">{problemsTotal}</span>
-                    </>
-                  }
-                  tone="ok"
-                  className="w-56"
-                />
-                <Chip tone="warn" icon={<Flame className="size-3.5" />}>
-                  <span className="t-num">{progress.current_streak}</span> kun seriya
-                </Chip>
-              </>
+              <span className="text-[var(--text-3)]">
+                Yechilgan{" "}
+                <span className="ts-num font-semibold text-[var(--green-text)]">{solvedTotal}</span>
+                <span className="ts-num text-[var(--text-4)]"> / {problemsTotal}</span>
+              </span>
+            ) : null}
+            {user && progress ? (
+              <span className="text-[var(--text-3)]">
+                <Flame className="size-3.5 text-[var(--green)]" />
+                <span className="ts-num font-semibold text-[var(--text)]">
+                  {progress.current_streak}
+                </span>
+                kun seriya
+              </span>
             ) : null}
           </>
         }
       />
 
-      <SplitLayout
-        className="gap-5"
-        aside={
-          <div className="enter flex flex-col gap-5">
-            {/* ------------------------------------------------ shaxsiy jarayon */}
-            {user && progress ? (
-              <Pane inset="md">
-                <p className="t-eyebrow">Mening jarayonim</p>
-                <Meter value={solvedTotal} max={problemsTotal} label="Umumiy" tone="ok" className="mt-4" />
-                <div className="mt-5 flex flex-col gap-3">
-                  {(Object.keys(DIFF_LABEL) as Difficulty[]).map((level) => (
-                    <div key={level} className="flex items-center justify-between gap-3">
-                      <DifficultyMark value={level} label={DIFF_LABEL[level]} />
-                      <span className="t-num text-[12.5px] text-[var(--ink-3)]">
-                        <span className="font-semibold text-[var(--ink)]">
-                          {progress.solved[level] ?? 0}
-                        </span>{" "}
-                        / {progress.totals[level] ?? 0}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <Divider className="my-4" />
-                <div className="flex items-center justify-between gap-3">
-                  <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-3)]">
-                    <Flame className="size-4 text-[var(--warn)]" />
-                    Seriya
-                  </span>
-                  <span className="t-num text-[13px] font-semibold text-[var(--ink)]">
-                    {progress.current_streak} kun
-                  </span>
-                </div>
-              </Pane>
-            ) : null}
-
-            {/* ------------------------------------------------- kunlik masala
-                Sahifadagi yagona to'yingan ko'k blok — asosiy chaqiriq. */}
-            {daily?.problem_slug ? (
-              <Link href="/daily" className="focus-ring block rounded-[var(--r-pane)]">
-                <div
-                  className={cn(
-                    "pane-brand rounded-[var(--r-pane)] p-5",
-                    "transition-colors duration-[var(--t-base)] ease-[var(--ease-soft)]",
-                    "hover:bg-[var(--brand-hover)]",
-                  )}
-                >
-                  <p className="t-eyebrow text-[var(--brand-wash)]">
-                    Bugungi masala
-                    {daily.bonus_points ? ` · +${daily.bonus_points} ball` : ""}
-                  </p>
-                  <p className="mt-2.5 truncate text-[15px] font-semibold text-[var(--ink-on-brand)]">
-                    {daily.problem_title}
-                  </p>
-                  <div className="mt-3.5 flex items-center justify-between gap-3">
-                    {daily.problem_difficulty ? (
-                      <span className="text-[12.5px] font-medium text-[var(--brand-wash)]">
-                        {DIFF_LABEL[daily.problem_difficulty]}
-                      </span>
-                    ) : (
-                      <span />
-                    )}
-                    {daily.is_solved ? (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-[var(--r-chip)] px-2.5 py-1",
-                          "bg-[var(--ink-on-brand)] text-[12px] font-semibold text-[var(--brand-ink)]",
-                        )}
-                      >
-                        <Check className="size-3" strokeWidth={3} />
-                        Yechilgan
-                      </span>
-                    ) : (
-                      <ArrowRight className="size-4 text-[var(--ink-on-brand)]" />
-                    )}
-                  </div>
-                </div>
-              </Link>
-            ) : null}
-
-            {!user ? (
-              <Pane inset="md">
-                <p className="t-meta text-[var(--ink-2)]">
-                  Jarayoningizni kuzatish va masalalarni saqlash uchun hisobingizga kiring.
-                </p>
-                <LinkButton href="/login" size="sm" variant="brand-soft" className="mt-4 w-full">
-                  Kirish
-                </LinkButton>
-              </Pane>
-            ) : null}
-          </div>
-        }
-      >
-        <div className="flex min-w-0 flex-col gap-5">
-          {/* ------------------------------------------- 2. boshqaruv paneli */}
-          <Pane className="enter" inset="md">
-            {/* 1-qator: qidiruv va ro'yxat boshqaruvi.
-                Saralash/tasodifiy guruh `sm:ml-auto` bilan — tor ekranda
-                o'ralib, o'ng chekkada yolg'iz qator bo'lib qolmaydi. */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <SearchField
-                value={searchDraft}
-                onValueChange={setSearchDraft}
-                placeholder="Masala nomi bo'yicha..."
-                className="min-w-56 flex-1 sm:max-w-xs"
-              />
-              <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-                <SortMenu
-                  value={ordering}
-                  onChange={(next) => {
-                    setOrdering(next);
-                    setPage(1);
-                  }}
-                />
-                {/* Omadni sinash — ro'yxatdan tasodifiy masala */}
-                <Button
-                  variant="quiet"
-                  icon={<Shuffle className="size-4 text-[var(--ink-4)]" />}
-                  onClick={randomPick}
-                  disabled={!rows.length}
-                >
-                  Tasodifiy masala
-                </Button>
-              </div>
-            </div>
-
-            {/* 2-qator: holat va qiyinlik — ikkalasi ham ixcham, yonma-yon sig'adi */}
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2.5 border-t border-[var(--edge)] pt-4">
-              {user ? (
-                <Segmented
-                  size="sm"
-                  value={statusFilter}
-                  items={STATUS_FILTERS}
-                  onChange={(value) => {
-                    setStatusFilter(value);
-                    setPage(1);
-                  }}
-                />
+      {/* ------------------------------------------------- bugungi masala
+          Yashil lenta EMAS — oq karta, chapida yashil qirra. Sahifadagi
+          asosiy ish ro'yxat; kunlik masala unga xalaqit bermaydigan
+          eslatma bo'lib turadi. */}
+      {daily?.problem_slug ? (
+        <Link
+          href="/daily"
+          className="edge-green card-link ring-focus flex flex-wrap items-center gap-x-5 gap-y-2 px-5 py-3.5"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="ts-label block text-[var(--green-text)]">
+              Bugungi masala
+              {daily.bonus_points ? ` · +${daily.bonus_points} ball` : ""}
+            </span>
+            <span className="mt-0.5 block truncate text-[15px] font-medium text-[var(--text)]">
+              {daily.problem_title}
+              {daily.problem_difficulty ? (
+                <span className="ml-2 text-[13px] font-normal text-[var(--text-4)]">
+                  {DIFF_LABEL[daily.problem_difficulty]}
+                </span>
               ) : null}
-              {user ? <Divider vertical className="h-5 max-sm:hidden" /> : null}
-              <ChipRail
-                value={difficulty ? [difficulty] : []}
-                items={(Object.keys(DIFF_LABEL) as Difficulty[]).map((level) => ({
-                  value: level as string,
-                  label: DIFF_LABEL[level],
-                }))}
-                onChange={(next) => {
-                  // Bitta qiyinlik tanlanadi: yangisi eskisini almashtiradi
-                  setDifficulty(next.find((value) => value !== difficulty) ?? "");
-                  setPage(1);
-                }}
-                className="shrink-0"
-              />
-            </div>
-
-            {/* 3-qator: mavzular — BUTUN kenglik.
-                Ilgari ular qiyinlik chiplari bilan bitta qatorni bo'lishardi
-                va sig'magan teglarga (ro'yxatning yarmiga) yetib bo'lmasdi. */}
-            {tags?.length ? (
-              <div className="mt-3">
-                <ChipRail
-                  value={tag ? [tag] : []}
-                  items={tags.slice(0, 24).map((item) => ({
-                    value: item.slug,
-                    label: item.name_uz,
-                    count: item.problem_count || undefined,
-                  }))}
-                  onChange={(next) => {
-                    // Bitta teg tanlanadi
-                    setTag(next.find((value) => value !== tag) ?? "");
-                    setPage(1);
-                  }}
-                />
-              </div>
-            ) : null}
-
-            {/* ----------------------------------------------- faol filtrlar */}
-            {hasFilters ? (
-              <div className="enter mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--edge)] pt-4">
-                {search ? (
-                  <FilterChip label={`«${search}»`} onClear={() => setSearchDraft("")} />
-                ) : null}
-                {difficulty ? (
-                  <FilterChip
-                    label={DIFF_LABEL[difficulty as Difficulty] ?? difficulty}
-                    onClear={() => {
-                      setDifficulty("");
-                      setPage(1);
-                    }}
-                  />
-                ) : null}
-                {tag ? (
-                  <FilterChip
-                    label={activeTagName}
-                    onClear={() => {
-                      setTag("");
-                      setPage(1);
-                    }}
-                  />
-                ) : null}
-                {statusFilter ? (
-                  <FilterChip
-                    label={STATUS_FILTERS.find((item) => item.value === statusFilter)?.label}
-                    onClear={() => {
-                      setStatusFilter("");
-                      setPage(1);
-                    }}
-                  />
-                ) : null}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={<X className="size-3.5" />}
-                  onClick={resetFilters}
-                >
-                  Tozalash
-                </Button>
-              </div>
-            ) : null}
-          </Pane>
-
-          {/* ----------------------------------------------------- 3. ro'yxat */}
-          {isLoading ? (
-            <Pane tone="solid" inset="none">
-              <RowsSkeleton rows={8} />
-            </Pane>
-          ) : isError ? (
-            <Alert
-              tone="bad"
-              title="Masalalarni yuklab bo'lmadi"
-              action={
-                <Button size="sm" onClick={() => refetch()}>
-                  Qayta urinish
-                </Button>
-              }
-            >
-              Internet aloqasini tekshirib, qayta urinib ko&apos;ring.
-            </Alert>
-          ) : rows.length === 0 ? (
-            /* Bo'sh holat kartaning O'ZIDA turadi — karta ichida karta yo'q */
-            <Pane tone="solid" inset="none" className="overflow-hidden">
-              <Empty
-                icon={<ListChecks className="size-[18px]" />}
-                title="Masala topilmadi"
-                description={
-                  hasFilters
-                    ? "Filtrlarni o'zgartirib ko'ring."
-                    : "Hozircha chop etilgan masala yo'q."
-                }
-                action={
-                  hasFilters ? (
-                    <Button onClick={resetFilters} icon={<X className="size-4" />}>
-                      Filtrlarni tozalash
-                    </Button>
-                  ) : undefined
-                }
-              />
-            </Pane>
+            </span>
+          </span>
+          {daily.is_solved ? (
+            <span className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--green-text)]">
+              <Check className="size-4" strokeWidth={2.5} />
+              Yechilgan
+            </span>
           ) : (
-            <Pane tone="solid" inset="none" className="enter">
-              {/* Yopishqoq ro'yxat sarlavhasi — sayt paneli ostida qoladi.
-                  Kartada `overflow-hidden` BO'LMAYDI: u kartani yopishqoq
-                  elementning scroll konteyneriga aylantiradi va `top: var(--bar)`
-                  oyna emas, KARTA chekkasidan hisoblanadi — sarlavha 60px pastga
-                  surilib, birinchi qatorlarni bosib qolardi. Burchaklarni
-                  qatorlar o'ramining o'zi qirqadi. */}
-              <div
-                className="sticky-edge flex items-center gap-3 rounded-t-[calc(var(--r-pane)-1px)] border-b border-[var(--edge)] px-4 py-2 sm:px-5"
-                style={{ top: "var(--bar)" }}
-              >
-                <span className={COL_MARK} aria-hidden />
-                <span className="t-eyebrow flex-1">Masala</span>
-                <span className={cn(COL_ACCEPT, "t-eyebrow")}>Qabul</span>
-                <span className={cn(COL_POINTS, "t-eyebrow")}>Ball</span>
-                <span className={cn(COL_DIFF, "t-eyebrow")}>Qiyinlik</span>
-                <span className={COL_SAVE} aria-hidden />
-              </div>
+            <span className="flex items-center gap-1.5 text-[13px] font-medium text-[var(--green-text)]">
+              Yechish
+              <ArrowRight className="size-3.5" />
+            </span>
+          )}
+        </Link>
+      ) : null}
 
-              <div className="enter-stagger divide-y divide-[var(--edge-soft)] overflow-hidden rounded-b-[calc(var(--r-pane)-1px)]">
-                {rows.map((problem) => (
+      {/* --------------------------------------- katalog: BITTA karta ichida
+          Tepada asboblar qatori (qidiruv + ochiluvchi filtrlar + saralash),
+          ostida jadval, eng pastda sahifalash. Filtrlar endi chap relsda
+          emas: yon panel navigatsiyani egallagani uchun ikkinchi ustun
+          sahifani torlashtirardi. */}
+      <Pane inset="none" className="overflow-hidden">
+        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] p-3">
+          <SearchField
+            value={searchDraft}
+            onValueChange={setSearchDraft}
+            placeholder="Masala nomi..."
+            className="w-full sm:w-60"
+          />
+          {user ? (
+            <FilterSelect
+              value={statusFilter}
+              onChange={(next) => {
+                setStatusFilter(next as StatusFilter);
+                setPage(1);
+              }}
+              options={STATUS_FILTERS.filter((item) => item.value).map((item) => ({
+                value: item.value,
+                label: item.label,
+              }))}
+              allLabel="Holat: hammasi"
+            />
+          ) : null}
+          <FilterSelect
+            value={difficulty}
+            onChange={(next) => {
+              setDifficulty(next);
+              setPage(1);
+            }}
+            options={(Object.keys(DIFF_LABEL) as Difficulty[]).map((level) => ({
+              value: level,
+              label: DIFF_LABEL[level],
+            }))}
+            allLabel="Qiyinlik: hammasi"
+          />
+          {tags?.length ? (
+            <FilterSelect
+              value={tag}
+              onChange={(next) => {
+                setTag(next);
+                setPage(1);
+              }}
+              options={tags.map((item) => ({
+                value: item.slug,
+                label: item.problem_count ? `${item.name_uz} (${item.problem_count})` : item.name_uz,
+              }))}
+              allLabel="Mavzu: hammasi"
+              searchable
+            />
+          ) : null}
+          {hasFilters ? (
+            <Button variant="ghost" size="sm" icon={<X className="size-4" />} onClick={resetFilters}>
+              Tozalash
+            </Button>
+          ) : null}
+          <span className="ms-auto" />
+          <SortMenu
+            value={ordering}
+            onChange={(next) => {
+              setOrdering(next);
+              setPage(1);
+            }}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className="px-2">
+            <RowsSkeleton rows={8} authenticated={Boolean(user)} />
+          </div>
+        ) : isError ? (
+          <Alert
+            tone="bad"
+            title="Masalalarni yuklab bo'lmadi"
+            className="m-4"
+            action={
+              <Button size="sm" onClick={() => refetch()}>
+                Qayta urinish
+              </Button>
+            }
+          >
+            Internet aloqasini tekshirib, qayta urinib ko&apos;ring.
+          </Alert>
+        ) : rows.length === 0 ? (
+          <Empty
+            icon={<ListChecks className="size-6" />}
+            title="Masala topilmadi"
+            compact
+            description={
+              hasFilters ? "Filtrlarni o'zgartirib ko'ring." : "Hozircha chop etilgan masala yo'q."
+            }
+            action={
+              hasFilters ? (
+                <Button onClick={resetFilters} icon={<X className="size-4" />}>
+                  Filtrlarni tozalash
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="table-scroll px-2">
+            <table className="grid-table">
+              <thead>
+                <tr>
+                  <th className={COL_NO} scope="col">
+                    №
+                  </th>
+                  <th scope="col">
+                    Masala
+                    {tag && activeTagName ? (
+                      <span className="ml-2 font-normal normal-case tracking-normal text-[var(--text-4)]">
+                        · {activeTagName}
+                      </span>
+                    ) : null}
+                  </th>
+                  <th className={COL_DIFF} scope="col">
+                    Qiyinlik
+                  </th>
+                  <th className={cn(COL_ACCEPT, "col-num")} scope="col">
+                    Qabul
+                  </th>
+                  <th className={cn(COL_POINTS, "col-num")} scope="col">
+                    Ball
+                  </th>
+                  {user ? (
+                    <th className={COL_SAVE} scope="col">
+                      <span className="sr-only">Saqlash</span>
+                    </th>
+                  ) : null}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((problem, index) => (
                   <ProblemRow
                     key={problem.id}
                     problem={problem}
+                    index={(page - 1) * PAGE_SIZE + index + 1}
                     authenticated={Boolean(user)}
                     onToggleBookmark={(slug) => bookmarkMutation.mutate(slug)}
                   />
                 ))}
-              </div>
-            </Pane>
-          )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-          {/* -------------------------------------------------- 4. sahifalash
-              Kartasiz: sahifalash ro'yxatning davomi, alohida blok emas. */}
-          {data && data.total_pages > 1 ? (
+        {data && data.total_pages > 1 ? (
+          <div className="border-t border-[var(--line)] px-4 py-3">
             <Pagination
               page={page}
               pageCount={data.total_pages}
               total={data.count}
               pageSize={PAGE_SIZE}
               onPage={setPage}
-              className="px-1"
             />
-          ) : null}
-        </div>
-      </SplitLayout>
+          </div>
+        ) : null}
+      </Pane>
+
+      {!user ? (
+        <Alert
+          tone="info"
+          action={
+            <LinkButton href="/login" size="sm" variant="primary">
+              Kirish
+            </LinkButton>
+          }
+        >
+          Jarayoningizni kuzatish va masalalarni saqlash uchun hisobingizga kiring.
+        </Alert>
+      ) : null}
     </div>
   );
 }
@@ -724,15 +648,12 @@ export default function ProblemsPage() {
   return (
     <Suspense
       fallback={
-        /* Skelet ham kartalar ritmini takrorlaydi */
-        <div className="flex flex-col gap-5">
-          <Block className="h-40 rounded-[var(--r-pane)]" />
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="flex flex-col gap-5">
-              <Block className="h-32 rounded-[var(--r-pane)]" />
-              <Block className="h-[28rem] rounded-[var(--r-pane)]" />
-            </div>
-            <Block className="h-64 rounded-[var(--r-pane)]" />
+        /* Skelet yangi tartibni takrorlaydi: chapda rels, o'ngda ro'yxat */
+        <div className="flex flex-col gap-14">
+          <Block className="h-40 rounded-[var(--radius-lg)]" />
+          <div className="grid gap-12 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-16">
+            <Block className="h-[26rem] rounded-[var(--radius-lg)]" />
+            <Block className="h-[32rem] rounded-[var(--radius-lg)]" />
           </div>
         </div>
       }

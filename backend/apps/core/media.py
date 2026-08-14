@@ -8,9 +8,11 @@ import uuid
 from django.core.files.storage import default_storage
 from django.db import models
 from rest_framework import serializers, status, viewsets
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
+from apps.core.mixins import write_audit
 from apps.core.models import TimeStampedModel
 from apps.core.permissions import IsStaff
 
@@ -129,9 +131,21 @@ class MediaFileViewSet(viewsets.ModelViewSet):
             kind=request.data.get("kind", "attachment"),
             uploaded_by=request.user if request.user.is_authenticated else None,
         )
+        write_audit(request, action_name="media.upload", obj=media,
+                    changes={"name": media.original_name, "size": media.size_bytes})
         return Response(self.get_serializer(media).data, status=status.HTTP_201_CREATED)
 
     def perform_destroy(self, instance):
+        # Fayl o'chirish — qaytarib bo'lmaydigan amal: muallif faqat O'ZI
+        # yuklaganini o'chira oladi, boshqalarniki uchun `content.delete`
+        # huquqi kerak (masalan, masala shartiga ulangan rasmni begona
+        # muallif o'chirib qo'ymasin).
+        user = self.request.user
+        if instance.uploaded_by_id != user.id and not user.has_perm_code("content.delete"):
+            raise PermissionDenied("Faqat o'zingiz yuklagan faylni o'chira olasiz.")
+
+        write_audit(self.request, action_name="media.delete", obj=instance,
+                    changes={"name": instance.original_name})
         # Diskdagi faylni ham tozalaymiz
         if instance.file and default_storage.exists(instance.file.name):
             default_storage.delete(instance.file.name)

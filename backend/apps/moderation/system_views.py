@@ -1,4 +1,4 @@
-"""Tizim bo'limi: zaxira nusxalar va Judge0 tillari."""
+"""Tizim bo'limi: zaxira nusxalar va kod bajarish tillari."""
 from __future__ import annotations
 
 import shutil
@@ -6,14 +6,14 @@ import shutil
 from django.conf import settings
 from django.http import FileResponse, Http404
 from rest_framework import serializers, status, viewsets
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
-from apps.core.mixins import AuditLogMixin, write_audit
-from apps.core.permissions import HasResourcePerm, IsStaff
+from apps.core.mixins import write_audit
+from apps.core.permissions import HasResourcePerm, IsStaff, require
 
 from . import backups
-from .models import BackupRecord, JudgeLanguage
+from .models import BackupRecord
 
 
 # ------------------------------------------------------------- zaxira
@@ -123,66 +123,26 @@ class BackupViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
 
-# --------------------------------------------------------- judge tillari
-class JudgeLanguageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JudgeLanguage
-        fields = (
-            "id", "key", "label", "judge0_id", "version", "monaco_id",
-            "file_extension", "starter_template", "is_active", "order",
-            "created_at", "updated_at",
-        )
-        read_only_fields = ("id", "created_at", "updated_at")
+# ---------------------------------------------------- kod bajarish tillari
+@api_view(["GET"])
+@permission_classes([require("judge.view")])
+def judge_languages(request):
+    """`GET /api/admin/judge-languages/` — tillar va ularning holati.
 
+    Ro'yxat kodda (`apps.judge.languages`), holat esa runner xizmatidan
+    keladi: qaysi kompilyator o'sha konteynerda haqiqatan o'rnatilgan.
+    Shuning uchun bu endpoint faqat O'QISH uchun — bazada boshqariladigan
+    til jadvali endi yo'q va sinxronlash kerak emas.
+    """
+    from apps.judge import engine, languages
 
-class JudgeLanguageViewSet(AuditLogMixin, viewsets.ModelViewSet):
-    """`/api/admin/judge-languages/` — tillarni kodga tegmasdan boshqarish."""
-
-    queryset = JudgeLanguage.objects.all()
-    serializer_class = JudgeLanguageSerializer
-    permission_classes = [IsStaff, HasResourcePerm]
-    perm_resource = "judge"
-    perm_actions = {"sync": "edit"}
-    filterset_fields = ["is_active"]
-    search_fields = ["key", "label"]
-    ordering = ["order", "label"]
-    pagination_class = None
-    audit_label = "judge_language"
-
-    @action(detail=False, methods=["post"])
-    def sync(self, request):
-        """Judge0'dagi mavjud tillar ro'yxatini olib keladi."""
-        import requests
-
-        from apps.judge.judge0 import Judge0Client
-
-        client = Judge0Client()
-        try:
-            response = requests.get(
-                f"{client.base_url}/languages", headers=client.headers, timeout=10
-            )
-            response.raise_for_status()
-            rows = response.json()
-        except Exception as exc:  # noqa: BLE001
-            return Response(
-                {"detail": f"Judge0 ga ulanib bo'lmadi: {exc}"},
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
-
-        available = [
-            {"judge0_id": row.get("id"), "name": row.get("name", "")} for row in rows
-        ]
-        known = set(JudgeLanguage.objects.values_list("judge0_id", flat=True))
-        write_audit(
-            request,
-            action_name="judge_language.sync",
-            target_type="JudgeLanguage",
-            target_repr=f"{len(available)} ta til",
-        )
-        return Response(
-            {
-                "available": available,
-                "configured_ids": sorted(known),
-                "detail": f"Judge0 da {len(available)} ta til mavjud.",
-            }
-        )
+    available = engine.supported_languages(refresh=True)
+    return Response(
+        {
+            "languages": [
+                {**row, "available": bool(available.get(row["key"]))}
+                for row in languages.as_payload()
+            ],
+            "backend": engine.active_backend(),
+        }
+    )

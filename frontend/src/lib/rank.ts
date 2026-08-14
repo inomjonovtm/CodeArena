@@ -40,7 +40,7 @@ export function rankChipStyle(rank: RankInfo | null | undefined): React.CSSPrope
   // nishon har qanday sirt ustida bir xil ko'rinadi.
   return {
     color: rank.color,
-    backgroundColor: `color-mix(in oklab, ${rank.color} 12%, var(--pane-solid))`,
+    backgroundColor: `color-mix(in oklab, ${rank.color} 12%, var(--surface))`,
   };
 }
 

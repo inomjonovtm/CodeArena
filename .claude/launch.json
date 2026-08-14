@@ -3,6 +3,11 @@
   "configurations": [
     {
       "name": "backend",
+      "url": "http://localhost:8001",
+      "port": 8001
+    },
+    {
+      "name": "backend-run",
       "runtimeExecutable": "backend/.venv/Scripts/python.exe",
       "runtimeArgs": ["backend/manage.py", "runserver", "8001"],
       "port": 8001,

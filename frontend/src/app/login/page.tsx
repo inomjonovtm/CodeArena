@@ -80,18 +80,13 @@ function LoginForm() {
   return (
     <AuthShell
       title={needsTotp ? "Ikki bosqichli tasdiqlash" : "Xush kelibsiz"}
-      subtitle={
-        needsTotp
-          ? "Authenticator ilovasidagi 6 xonali kodni kiriting."
-          : "Davom etish uchun hisobingizga kiring."
-      }
       error={error}
       footer={
         <>
           Hisobingiz yo&apos;qmi?{" "}
           <Link
             href="/register"
-            className="focus-ring rounded-[var(--r-ctl)] font-medium text-[var(--brand)] hover:underline"
+            className="ring-focus rounded-[var(--radius-sm)] font-medium text-[var(--green)] hover:underline"
           >
             Ro&apos;yxatdan o&apos;tish
           </Link>
@@ -103,14 +98,14 @@ function LoginForm() {
           <>
             <AuthField label="Tasdiqlash kodi" htmlFor="totp" required>
               <div className="relative">
-                <ShieldCheck className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[var(--brand)]" />
+                <ShieldCheck className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-[var(--green)]" />
                 <input
                   id="totp"
                   ref={totpRef}
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={6}
-                  className={`${authInputClass} pl-11 text-center font-mono text-[18px] tracking-[0.4em]`}
+                  className={`${authInputClass} pl-11 text-center font-mono text-[19px] tracking-[0.4em]`}
                   placeholder="000000"
                   value={totpCode}
                   onChange={(event) => setTotpCode(event.target.value.replace(/\D/g, ""))}
@@ -126,7 +121,7 @@ function LoginForm() {
                 setTotpCode("");
                 setError(null);
               }}
-              className="focus-ring inline-flex items-center gap-1.5 self-start rounded-[var(--r-ctl)] text-[13px] text-[var(--ink-3)] transition-colors hover:text-[var(--ink)]"
+              className="ring-focus inline-flex items-center gap-1.5 self-start rounded-[var(--radius-sm)] text-[14px] text-[var(--text-3)] transition-colors hover:text-[var(--text)]"
             >
               <ArrowLeft className="size-3.5" />
               Boshqa hisob bilan kirish
@@ -163,7 +158,7 @@ function LoginForm() {
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                   aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
-                  className="focus-ring absolute top-1/2 right-3 -translate-y-1/2 rounded-[var(--r-ctl)] text-[var(--ink-4)] transition-colors hover:text-[var(--ink-2)]"
+                  className="ring-focus absolute top-1/2 right-3 -translate-y-1/2 rounded-[var(--radius-sm)] text-[var(--text-4)] transition-colors hover:text-[var(--text-2)]"
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
@@ -172,7 +167,7 @@ function LoginForm() {
 
             <Link
               href="/forgot-password"
-              className="focus-ring -mt-1 self-end rounded-[var(--r-ctl)] text-[13px] text-[var(--ink-3)] transition-colors hover:text-[var(--brand)]"
+              className="ring-focus -mt-1 self-end rounded-[var(--radius-sm)] text-[14px] text-[var(--text-3)] transition-colors hover:text-[var(--green)]"
             >
               Parolni unutdingizmi?
             </Link>
@@ -198,7 +193,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="aurora-canvas min-h-screen" />}>
+    <Suspense fallback={<div className="bg-[var(--bg)] min-h-screen" />}>
       <LoginForm />
     </Suspense>
   );

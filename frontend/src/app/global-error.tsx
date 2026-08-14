@@ -33,7 +33,7 @@ export default function GlobalError({
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#ffffff",
-          color: "#0a0a0a",
+          color: "#0b221a",
           fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
           padding: "2rem 1.25rem",
         }}
@@ -46,7 +46,7 @@ export default function GlobalError({
               fontWeight: 600,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              color: "#1e5eff",
+              color: "#00814e",
             }}
           >
             CodeArena
@@ -61,7 +61,7 @@ export default function GlobalError({
           >
             Ilova ishga tushmadi
           </h1>
-          <p style={{ margin: "0.75rem 0 0", lineHeight: 1.65, color: "#4a4a4a" }}>
+          <p style={{ margin: "0.75rem 0 0", lineHeight: 1.65, color: "#2f4a3e" }}>
             Kutilmagan xatolik yuz berdi. Sahifani qayta yuklab ko&apos;ring.
           </p>
           {error.digest ? (
@@ -70,7 +70,7 @@ export default function GlobalError({
                 margin: "1rem 0 0",
                 fontFamily: "ui-monospace, Consolas, monospace",
                 fontSize: "0.8125rem",
-                color: "#737373",
+                color: "#5e7c6f",
               }}
             >
               {error.digest}
@@ -83,9 +83,9 @@ export default function GlobalError({
               marginTop: "2rem",
               height: "3rem",
               padding: "0 1.75rem",
-              borderRadius: "10px",
+              borderRadius: "999px",
               border: "none",
-              backgroundColor: "#0a0a0a",
+              backgroundColor: "#00814e",
               color: "#fff",
               fontSize: "1rem",
               fontWeight: 600,

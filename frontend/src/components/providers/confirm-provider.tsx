@@ -146,12 +146,12 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
       >
         <div className="flex flex-col gap-4">
           {options?.danger && !isPrompt ? (
-            <div className="flex gap-3 rounded-[var(--r-field)] bg-[var(--bad-wash)] p-3.5">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[var(--bad)]" />
-              <p className="text-[13px] leading-relaxed text-[var(--ink)]">{options.message}</p>
+            <div className="flex gap-3 rounded-[var(--radius-sm)] bg-[var(--danger-wash)] p-3.5">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[var(--danger)]" />
+              <p className="text-[14px] leading-relaxed text-[var(--text)]">{options.message}</p>
             </div>
           ) : options?.message ? (
-            <p className="t-body text-[var(--ink-2)]">{options.message}</p>
+            <p className="ts-body text-[var(--text-2)]">{options.message}</p>
           ) : null}
 
           {promptOptions ? (

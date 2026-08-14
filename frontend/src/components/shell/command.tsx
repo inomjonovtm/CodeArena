@@ -36,8 +36,6 @@ type Row = {
 
 const TYPE_LABELS: Record<string, string> = {
   problem: "Masalalar",
-  course: "Kurslar",
-  lesson: "Mavzular",
   contest: "Musobaqalar",
   user: "Foydalanuvchilar",
 };
@@ -136,7 +134,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
   return createPortal(
     <div className="fixed inset-0 z-110 flex items-start justify-center px-4 pt-[14vh]">
-      <div className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]" onClick={onClose} />
+      <div className="enter-veil absolute inset-0 bg-[rgb(16_24_20/0.45)] backdrop-blur-[2px]" onClick={onClose} />
 
       <div
         role="dialog"
@@ -144,16 +142,16 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
         aria-label="Buyruq paneli"
         className={cn(
           "enter-pop relative flex w-full max-w-xl flex-col overflow-hidden",
-          "rounded-[var(--r-pane)] border border-[var(--edge)] bg-[var(--pane-solid)]",
-          "shadow-[var(--lift-pop)]",
+          "rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)]",
+          "shadow-[var(--shadow-lg)]",
         )}
       >
-        <div className="flex items-center gap-3 border-b border-[var(--edge)] px-4">
+        <div className="flex items-center gap-3 border-b border-[var(--line)] px-4">
           {isFetching ? (
-            <Loader2 className="size-4 shrink-0 animate-spin text-[var(--brand)]" />
+            <Loader2 className="size-5 shrink-0 animate-spin text-[var(--green)]" />
           ) : (
             /* Kursor belgisi — logotip bilan bir xil, panel "buyruq qatori" */
-            <span className="shrink-0 font-mono text-[15px] font-bold text-[var(--brand)]">&gt;</span>
+            <span className="shrink-0 font-mono text-[19px] font-bold text-[var(--green)]">&gt;</span>
           )}
           <input
             autoFocus
@@ -163,8 +161,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             placeholder="Masala, musobaqa, foydalanuvchi yoki bo'lim..."
             aria-label="Qidiruv"
             className={cn(
-              "h-13 min-w-0 flex-1 bg-transparent text-[14.5px] text-[var(--ink)] outline-none",
-              "placeholder:text-[var(--ink-4)]",
+              "h-16 min-w-0 flex-1 bg-transparent text-[17px] text-[var(--text)] outline-none",
+              "placeholder:text-[var(--text-4)]",
             )}
           />
           <KeyHint className="shrink-0">Esc</KeyHint>
@@ -172,7 +170,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
         <div ref={listRef} className="max-h-[52vh] min-h-0 overflow-y-auto p-2">
           {rows.length === 0 ? (
-            <p className="px-3 py-10 text-center text-[13.5px] text-[var(--ink-4)]">
+            <p className="px-3 py-10 text-center text-[14.5px] text-[var(--text-4)]">
               Hech narsa topilmadi.
             </p>
           ) : (
@@ -183,33 +181,33 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
               return (
                 <div key={row.id}>
-                  {showGroup ? <p className="t-eyebrow px-3 pt-3 pb-1.5">{row.group}</p> : null}
+                  {showGroup ? <p className="ts-label px-3 pt-3 pb-1.5">{row.group}</p> : null}
                   <button
                     type="button"
                     data-active={active}
                     onMouseMove={() => setCursor(index)}
                     onClick={() => go(row)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-[6px] px-3 py-2 text-left",
+                      "flex w-full items-center gap-3 rounded-[14px] px-3.5 py-3 text-left",
                       "transition-colors duration-75",
-                      active ? "bg-[var(--brand-wash)]" : "hover:bg-[var(--pane-hover)]",
+                      active ? "bg-[var(--green-wash)]" : "hover:bg-[var(--surface-hover)]",
                     )}
                   >
                     <span
                       className={cn(
-                        "min-w-0 flex-1 truncate text-[13.5px] font-medium",
-                        active ? "text-[var(--brand-ink)]" : "text-[var(--ink)]",
+                        "min-w-0 flex-1 truncate text-[15.5px] font-medium",
+                        active ? "text-[var(--green-text)]" : "text-[var(--text)]",
                       )}
                     >
                       {row.label}
                     </span>
                     {row.hint ? (
-                      <span className="shrink-0 text-[12px] text-[var(--ink-4)]">{row.hint}</span>
+                      <span className="shrink-0 text-[14px] text-[var(--text-4)]">{row.hint}</span>
                     ) : null}
                     {active ? (
-                      <CornerDownLeft className="size-3.5 shrink-0 text-[var(--brand)]" />
+                      <CornerDownLeft className="size-4 shrink-0 text-[var(--green)]" />
                     ) : (
-                      <ArrowRight className="size-3.5 shrink-0 text-[var(--ink-4)] opacity-0" />
+                      <ArrowRight className="size-4 shrink-0 text-[var(--text-4)] opacity-0" />
                     )}
                   </button>
                 </div>
@@ -220,8 +218,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
 
         <div
           className={cn(
-            "flex items-center gap-4 border-t border-[var(--edge)] bg-[var(--pane-sunken)]",
-            "px-4 py-2 text-[11.5px] text-[var(--ink-4)]",
+            "flex items-center gap-4 border-t border-[var(--line)] bg-[var(--surface-sunk)]",
+            "px-5 py-3 text-[13px] text-[var(--text-4)]",
           )}
         >
           <span className="flex items-center gap-1.5">

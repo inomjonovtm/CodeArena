@@ -1,10 +1,54 @@
 # CodeArena
 
-Algoritmik masalalar platformasi: **foydalanuvchi sayti** + **maxsus qurilgan admin
-panel**. Django + DRF backend, Next.js 15 frontend.
+Algoritmik masalalar platformasi: **foydalanuvchi sayti** + **ikkita panel**.
+Django + DRF backend, Next.js 15 frontend.
 
-Django'ning tayyor `django.contrib.admin` paneli **ishlatilmagan** — barcha
-boshqaruv DRF endpointlari orqali ishlaydigan `/admin/...` sahifalarida.
+
+## Ikkita panel
+
+| | `/admin` | `/studio` |
+| --- | --- | --- |
+| **Nima** | **Django admin** + `django-unfold` temasi | Next.js'da qurilgan muallif ishxonasi |
+| **Vazifasi** | Saytni BOSHQARISH — har bir modelni sozlash | Kontent TAYYORLASH — kod yozish talab qiladigan ish |
+| **Kim kiradi** | admin, moderator (`is_staff`) | admin, moderator, **muallif (setter)** |
+| **Bo'limlari** | barcha modellar: foydalanuvchi, huquq, masala, olimpiada, yuborish, moderatsiya, plagiat, audit, sozlama, e'lon | masala ustaxonasi (shart/test/checker/generator/tekshiruv), olimpiada, savollar bankasi, sinovlar |
+| **Ko'rinishi** | oq-yashil tema, to'q rejim, ishlaydigan filtrlar | **to'q, zich ishxona** (`src/styles/studio.css`) |
+
+Nega ikkitasi: Django admin modeldan AVTOMATIK quriladi — yangi maydon
+qo'shilsa, u o'sha zahoti panelda paydo bo'ladi. Lekin unda kod muharriri,
+generator ishga tushirish va checker sinovi yo'q — shuning uchun masala
+tayyorlash Studio'da qoladi.
+
+Muallif roli `/admin` ga umuman kira olmaydi (`SETTER_PERMISSIONS` da o'sha
+bo'limlar yo'q) va faqat **o'zi yaratgan** masala va olimpiadalarni ko'radi
+(`apps.core.mixins.OwnScopedMixin`).
+
+Moderator huquqlari Django guruhlari orqali beriladi: `python manage.py
+sync_roles` «Moderatorlar» guruhini yaratib, unga ko'rish/qo'shish/tahrirlash
+huquqlarini biriktiradi. O'CHIRISH, sayt sozlamalari va rol o'zgartirish
+ataylab administratorda qoladi. Administrator panel ichida guruhga qo'shimcha
+huquq bersa, keyingi `sync_roles` uni olib tashlamaydi.
+
+## Masala qanday tekshiriladi
+
+Test-case'ning kutilgan chiqishi qo'lda yozilmaydi:
+
+```
+generator ──urug'──▶ test kirishi ──▶ etalon yechim ──▶ kutilgan javob
+                          │
+                          └──▶ foydalanuvchi kodi ──▶ chiqish
+                                                        │
+                            checker (exact/token/float/custom) ──▶ verdikt
+```
+
+Ya'ni muallif ham, foydalanuvchi ham **bir xil testlarni** oladi va
+natijalar solishtiriladi. «Istalgan to'g'ri javobni chiqaring» turidagi
+masalalar uchun `checker_type=custom` — qarorni muallif yozgan dastur
+qabul qiladi (`apps/judge/checker.py`).
+
+Qo'shimcha asboblar: **validator** (test kirishini tekshiradi),
+**stress-test** (etalonni sodda yechimga qarshi qo'yib, farq qiladigan
+testni izlaydi) va **tayyorlik ro'yxati** (masala chop etishga tayyormi).
 
 ---
 
@@ -18,21 +62,23 @@ CodeArenaV2/
 │       ├── core/            permissions, pagination, audit mixin, utils
 │       ├── accounts/        User modeli, JWT auth, admin user CRUD
 │       ├── problems/        Tag, Problem, TestCase, DailyChallenge
-│       ├── judge/           Submission, Judge0 klienti, celery tasklar
-│       ├── contests/        Contest, ishtirokchilar, Elo reyting
-│       ├── courses/         Kurslar: bo'lim, mavzu, misol, test, topshiriq
+│       │                    + Studio: etalon yechim, generator, amal jurnali
+│       ├── judge/           Submission, runner klienti, checker, celery tasklar
+│       ├── contests/        Contest, ishtirokchilar, hakamlar, Elo reyting
+│       ├── assessments/     Test savollari bankasi (papkalar) va sinovlar
 │       ├── content/         Muhokamalar, izohlar, shikoyatlar, murojaatlar
 │       ├── community/       Guruhlar (private leaderboard)
 │       ├── moderation/      Anti-plagiat, audit log, sozlamalar, e'lonlar
 │       └── dashboard/       Statistika, grafiklar, global qidiruv
 ├── frontend/                Next.js 15 + TS + Tailwind v4
 │   └── src/
-│       ├── app/admin/...    admin sahifalari
-│       ├── components/      UI kit, admin layout, formalar
+│       ├── app/studio/...   muallif paneli (Studio)
+│       ├── components/      UI kit, studio layout, formalar
+│       ├── styles/          aurora.css (sayt) + studio.css (ishxona)
 │       ├── lib/             API klienti, tiplar, yordamchilar
 │       ├── hooks/           jadval holati, CRUD mutatsiyalari
 │       └── i18n/            interfeys lug'ati (o'zbekcha)
-├── infra/                   nginx/, certbot/, judge0.conf
+├── infra/                   nginx/, certbot/, runner/ (kod bajarish konteyneri)
 └── docker-compose.yml
 ```
 
@@ -40,7 +86,7 @@ CodeArenaV2/
 
 ## Tez ishga tushirish (lokal)
 
-Loyiha **PostgreSQL** talab qiladi — SQLite qo'llanmaydi. Judge0 shart emas
+Loyiha **PostgreSQL** talab qiladi — SQLite qo'llanmaydi. Runner konteyneri shart emas
 (lokal runner zaxira sifatida ishlaydi), Redis ham majburiy emas
 (`CELERY_TASK_ALWAYS_EAGER=True` bo'lsa tasklar sinxron bajariladi).
 
@@ -67,8 +113,10 @@ python -m venv .venv
 pip install -r requirements.txt
 cp .env.example .env             # POSTGRES_* qiymatlarini bazangizga moslang
 python manage.py migrate
+python manage.py compile_locale  # panel tarjimasi (.po -> .mo)
+python manage.py sync_roles      # rol guruhlari (Moderatorlar, Mualliflar)
 python manage.py seed_demo       # demo ma'lumotlar
-python manage.py seed_courses    # Python / JavaScript / C++ kurslari
+python manage.py createsuperuser # boshqaruv paneliga kirish uchun
 python manage.py runserver 8000
 ```
 
@@ -87,7 +135,8 @@ npm run dev
 > va ulashish metama'lumotlaridagi absolyut havolalar shundan quriladi;
 > produksiyada domenni qo'ying.
 
-Brauzerda: **http://localhost:3000/admin**
+Brauzerda: sayt **http://localhost:3000**, boshqaruv paneli
+**http://localhost:3000/admin** (Django admin — Next proksisi orqali).
 
 ### Demo hisoblar
 
@@ -112,10 +161,10 @@ Ikki backend qo'llab-quvvatlanadi:
 
 | Backend | Qachon ishlatiladi | Izolyatsiya |
 |---|---|---|
-| **Judge0** | sozlangan va javob berayotgan bo'lsa | Docker konteynerlari |
-| **Lokal runner** | Judge0 yo'q va `LOCAL_JUDGE_ENABLED=True` | subprocess, **to'liq sandbox emas** |
+| **Runner** | ishga tushgan va javob berayotgan bo'lsa | alohida konteyner, tarmoqsiz sandbox |
+| **Lokal ijro** | runner yo'q va `LOCAL_JUDGE_ENABLED=True` | subprocess, **to'liq sandbox emas** |
 
-Tanlov avtomatik: `apps/judge/engine.py` avval Judge0 ni tekshiradi (natija 30
+Tanlov avtomatik: `apps/judge/engine.py` avval runnerni tekshiradi (natija 30
 soniyaga keshlanadi), javob bo'lmasa lokal runnerga o'tadi. Ikkalasi ham
 ishlamasa submission `SYSTEM_ERROR` oladi va sabab ko'rsatiladi.
 
@@ -123,7 +172,7 @@ Lokal runner **faqat ishlab chiqish va demo uchun**: har bir bajarilish alohida
 vaqtinchalik katalogda, qattiq timeout va chiqish limiti bilan ketadi, POSIX'da
 `setrlimit` qo'llanadi — lekin tarmoq va fayl tizimi bloklanmagan. Shuning uchun
 `DEBUG=False` da sukut bo'yicha **o'chirilgan**. Produksiyada ishonchsiz
-foydalanuvchilar kodi uchun Judge0 ishlating.
+foydalanuvchilar kodi uchun runner konteynerini ishlating.
 
 `GET /api/judge/status/` qaysi backend faol va qaysi tillar mavjudligini
 qaytaradi — kod muharriri o'rnatilmagan tilni tanlash ro'yxatida o'chirib qo'yadi.
@@ -158,13 +207,12 @@ Serverda kodni qurish uchun:
 
 ```bash
 cp backend/.env.example backend/.env      # sirlarni to'ldiring
-nano infra/judge0.conf                     # AUTHN_TOKEN ni o'zgartiring
 docker compose up -d --build
 docker compose exec backend python manage.py createsuperuser
 ```
 
 Xizmatlar: `nginx` (80/443) → `frontend` (3000) + `backend` (8000),
-`postgres`, `redis`, `celery`, `celery-beat`, `judge0-server`, `judge0-workers`.
+`postgres`, `redis`, `celery`, `celery-beat`, `runner`.
 
 **GitHub orqali avtomatik deploy** (tavsiya etiladi) — [DEPLOY.md](DEPLOY.md).
 U yerda `docker-compose.prod.yml` ishlatiladi: image'lar CI'da qurilib GHCR'ga
@@ -193,14 +241,13 @@ chiqadi, serverda faqat `pull` bo'ladi.
 
 | Bo'lim | Imkoniyatlar |
 |---|---|
-| **Bosh sahifa** | KPI kartalar, faollik grafigi (7/30/90 kun), status va til taqsimoti, top masalalar/userlar, so'nggi submissionlar, tizim ogohlantirishlari, Judge0 holati |
+| **Bosh sahifa** | KPI kartalar, faollik grafigi (7/30/90 kun), status va til taqsimoti, top masalalar/userlar, so'nggi submissionlar, tizim ogohlantirishlari, kod bajarish holati |
 | **Masalalar** | To'liq CRUD, Markdown tavsif, Monaco muharririda 3 til uchun starter kod, test-case menejeri (namuna/yashirin, tartiblash, limitlar), teglar, chop etish/arxivlash/nusxalash, statistika, tekshiruv ro'yxati |
 | **Test-case'lar** | Barcha testlar markazlashgan ro'yxati, masala bo'yicha filtr, inline tahrirlash |
 | **Teglar** | CRUD, rang tanlash, masalalar soni |
 | **Kunlik masala** | Oylik kalendar, kunga masala tayinlash, avtomatik to'ldirish |
-| **Kurslar** | Kurs CRUD, bir sahifali muharrir: bo'lim → mavzu → nazariya (Markdown), kod misollari, test savollari va kod topshiriqlari (testlari bilan birga), mavzuni nusxalash, chop etish |
 | **Foydalanuvchilar** | CRUD, rol o'zgartirish, ban/unban (sabab + muddat), reyting tuzatish, parol tiklash, faollik statistikasi, submissionlar tarixi, bulk amallar |
-| **Submissionlar** | Filtr (status/til/user/masala/rejim), kod ko'rish, test natijalari, rejudge (bitta yoki bulk), Judge0 navbati holati |
+| **Submissionlar** | Filtr (status/til/user/masala/rejim), kod ko'rish, test natijalari, rejudge (bitta yoki bulk), navbat holati |
 | **Musobaqalar** | CRUD, masalalar ro'yxati (belgi/ball/tartib), ishtirokchilar, real leaderboard, diskvalifikatsiya, natijalarni qayta hisoblash, Elo reytingni qo'llash, plagiat skanerlash |
 | **Muhokamalar / Izohlar** | Moderatsiya (yashirish, yopish, qadash), izohlar ko'rinishi, moderator izohi |
 | **Shikoyatlar** | Sabab bo'yicha filtr, hal qilish |
@@ -259,11 +306,6 @@ GET    /api/daily-challenge/ | /api/tags/
 GET    /api/contests/  POST /api/contests/:slug/join/
 GET    /api/contests/:slug/stream/  jonli natijalar (SSE)
 GET    /api/discussions/ | /api/comments/ | /api/site/settings/
-GET    /api/courses/ | /api/courses/:slug/ | /api/courses/mine/
-GET    /api/courses/:slug/lessons/:lessonSlug/
-POST   /api/courses/:slug/lessons/:lessonSlug/read/ | .../quiz/
-POST   /api/courses/run/  (misolni bajarish)
-POST   /api/courses/exercises/:id/run/ | /submit/
 CRUD   /api/bookmarks/ | /api/groups/
 
 GET    /api/auth/sessions/          faol qurilmalar
@@ -363,7 +405,7 @@ cd frontend && python scripts/generate-icons.py
   ochilmasdi. Fayllar `scripts/copy-monaco.mjs` orqali har build oldidan
   `public/monaco/vs` ga ko'chiriladi.
 - **Judge natijalari soni tekshiriladi** — `engine.execute` natijalar soni
-  testlar soniga tengligini kafolatlaydi. Aks holda Judge0 bir natijani
+  testlar soniga tengligini kafolatlaydi. Aks holda ijro xizmati bir natijani
   tushirib qoldirsa, tekshirilmagan testlar jimgina «yo'q» bo'lib qolar va
   yechim to'liq o'tgan deb belgilanardi.
 - **SSE endpointlariga `EventStreamRenderer` kerak** (`core/renderers.py`) —
@@ -427,7 +469,6 @@ bo'lmaydigan yoki jimgina noto'g'ri ishlaydigan joylar:
 | Judge kompilyator yo'li | `apps/judge/tests/test_bin_dirs.py` | PATH'da bo'lmagan toolchain jimgina «yo'q» bo'lib qolmasligi kerak |
 | Auth va cheklovlar | `apps/accounts/tests/test_auth.py` | Parol tiklash oqimi va email bombardimoniga qarshi himoya |
 | Sog'liq tekshiruvi | `apps/core/tests/test_health.py` | Deploy shu javobga qarab «yashil» bo'ladi |
-| Kurslar | `apps/courses/tests/test_courses.py` | To'g'ri javob va namuna yechim vaqtidan oldin ochilib ketmasligi kerak |
 | Formatlash | `frontend/src/lib/utils.test.ts` | Har sahifada ishlatiladi, buzilsa 500 bermaydi — jimgina xunuklashadi |
 
 ### Lint
@@ -474,8 +515,10 @@ python manage.py backup_db --note "reliz oldidan"
 # Backend
 python manage.py seed_demo --reset --users 24 --submissions 110
 python manage.py seed_demo --skip-verify        # judge yo'q bo'lsa
-python manage.py seed_courses --reset           # kurslarni qaytadan yozish
-python manage.py seed_courses --only python-asoslari
+python manage.py compile_locale                 # panel tarjimasini qayta yig'ish
+python manage.py sync_roles                     # rol guruhlarini yangilash
+python manage.py sync_roles --dry-run           # nima o'zgarishini ko'rish
+python manage.py collectstatic --noinput        # admin panel CSS/JS
 python manage.py check --deploy                 # produksiyaga tayyorlikni tekshirish
 python manage.py makemigrations && python manage.py migrate
 python manage.py test                           # testlar

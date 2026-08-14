@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from apps.problems.models import SolvedProblem
 
-from . import engine
+from . import checker, engine
 from .models import Submission, SubmissionStatus, SubmissionTestResult
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ TERMINAL_FIRST = {
 
 @shared_task(name="apps.judge.tasks.judge_submission", bind=True, max_retries=2)
 def judge_submission(self, submission_id: str) -> str:
-    """Submissionni Judge0'ga yuborib, natijani saqlaydi (8-bo'lim statuslari)."""
+    """Yechimni bajarish xizmatiga yuborib, natijani saqlaydi (8-bo'lim statuslari)."""
     submission = (
         Submission.objects.select_related("problem", "user").filter(pk=submission_id).first()
     )
@@ -41,12 +41,21 @@ def judge_submission(self, submission_id: str) -> str:
     submission.total_tests = len(test_cases)
     submission.save(update_fields=["status", "total_tests"])
 
+    problem = submission.problem
+    # `exact` da solishtirishni backendning o'zi bajaradi (eski, tekshirilgan
+    # yo'l). Qolgan usullarda kutilgan chiqish YUBORILMAYDI: bizga dasturning
+    # chiqishi kerak, qarorni esa `checker` chiqaradi.
+    use_checker = checker_needed(problem)
+
     try:
         backend, results = engine.execute(
             language=submission.language,
             code=submission.code,
             cases=[
-                {"input": tc.input, "expected_output": tc.expected_output}
+                {
+                    "input": tc.input,
+                    "expected_output": None if use_checker else tc.expected_output,
+                }
                 for tc in test_cases
             ],
             # Limitlar test-case darajasida ham belgilanishi mumkin; eng
@@ -69,6 +78,17 @@ def judge_submission(self, submission_id: str) -> str:
         submission.save(update_fields=["status", "error_message", "judged_at"])
         return "no-backend"
 
+    if use_checker:
+        try:
+            apply_checker(problem, test_cases, results)
+        except Exception as exc:
+            logger.exception("Checker xatosi: %s", exc)
+            submission.status = SubmissionStatus.SYSTEM_ERROR
+            submission.error_message = "Masalaning checkeri ishlamadi — muallifga xabar berildi."
+            submission.judged_at = timezone.now()
+            submission.save(update_fields=["status", "error_message", "judged_at"])
+            return "checker-error"
+
     try:
         _apply_results(submission, test_cases, results)
     except Exception as exc:
@@ -83,6 +103,47 @@ def judge_submission(self, submission_id: str) -> str:
         return "apply-error"
 
     return submission.status
+
+
+def checker_needed(problem) -> bool:
+    """Baholashni backendga emas, `checker` moduliga topshirish kerakmi."""
+    return (getattr(problem, "checker_type", "exact") or "exact") != "exact"
+
+
+def apply_checker(problem, test_cases, results) -> None:
+    """Bajarilish natijalarini checker qarori bilan yakunlaydi.
+
+    Dastur muvaffaqiyatli tugagan testlarning holati shu paytda `ACCEPTED`
+    bo'ladi — chunki backendga kutilgan chiqish berilmagan. Haqiqiy qarorni
+    shu yerda chiqaramiz. TLE, RE va kompilyatsiya xatosi tegilmaydi: ular
+    javob mazmuniga bog'liq emas.
+    """
+    runnable = [
+        (index, tc, result)
+        for index, (tc, result) in enumerate(zip(test_cases, results, strict=True))
+        if result.status == SubmissionStatus.ACCEPTED
+    ]
+    if not runnable:
+        return
+
+    verdicts = checker.check_many(
+        problem,
+        [
+            {"input": tc.input, "expected": tc.expected_output, "actual": result.stdout}
+            for _index, tc, result in runnable
+        ],
+    )
+
+    for (_index, _tc, result), verdict in zip(runnable, verdicts, strict=True):
+        if verdict.message:
+            result.meta["checker"] = verdict.message
+        if verdict.ok:
+            continue
+        # Checkerning o'zi qulasa — bu masala nuqsoni: foydalanuvchini
+        # noto'g'ri javob bilan ayblash o'rniga tizim xatosi qaytariladi.
+        result.status = (
+            SubmissionStatus.SYSTEM_ERROR if verdict.system_error else SubmissionStatus.WRONG_ANSWER
+        )
 
 
 @transaction.atomic
@@ -125,7 +186,11 @@ def _apply_results(submission: Submission, test_cases, results) -> None:
         if final_status == SubmissionStatus.ACCEPTED:
             final_status = result.status
             failed_index = index
-            error_message = (result.stderr or result.message or "")[:2000]
+            # Checker izohi eng aniq tushuntirish — u bo'lsa oldinda turadi
+            # («3-son xato», «juftlik yig'indisi mos emas»).
+            error_message = (
+                result.meta.get("checker") or result.stderr or result.message or ""
+            )[:2000]
             compile_output = result.compile_output[:4000]
             if result.status in TERMINAL_FIRST:
                 break

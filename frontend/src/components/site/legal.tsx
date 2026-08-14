@@ -10,6 +10,36 @@ export interface LegalSection {
 }
 
 /**
+ * Admin paneldan kelgan Markdown matnini bo'limlarga ajratadi.
+ *
+ * Hujjat tuzilishi ataylab sodda: `## Sarlavha` yangi bo'lim ochadi, bo'sh
+ * qator bilan ajratilgan bloklar esa paragraflar. Shu tufayli mundarija
+ * ham, bo'lim raqamlari ham matnning o'zidan hosil bo'ladi va muharrir
+ * hech qanday qo'shimcha belgi qo'yishi shart emas.
+ */
+export function parseLegalMarkdown(markdown: string): LegalSection[] {
+  const sections: LegalSection[] = [];
+
+  for (const raw of (markdown || "").split(/\r?\n(?=##\s)/)) {
+    const lines = raw.trim().split(/\r?\n/);
+    if (!lines.length) continue;
+
+    const heading = lines[0].startsWith("##") ? lines.shift() ?? "" : "";
+    const title = heading.replace(/^#+\s*/, "").trim();
+
+    const body = lines
+      .join("\n")
+      .split(/\n\s*\n/)
+      .map((block) => block.trim().replace(/\s*\n\s*/g, " "))
+      .filter(Boolean);
+
+    if (title || body.length) sections.push({ title: title || "Umumiy", body });
+  }
+
+  return sections;
+}
+
+/**
  * Ekranda ko'rinib turgan bo'limni kuzatadi — mundarijada faol qatorni
  * belgilash uchun. `rootMargin` tepadan qobiq balandligini, pastdan esa
  * ekranning uchdan ikkisini kesadi: shu tufayli "faol" bo'lim doim
@@ -55,7 +85,7 @@ function useActiveSection(count: number): number {
    Ustun kengligi ~68 belgi bilan cheklangan — bu ko'z bir qatordan
    ikkinchisiga adashmasdan o'tadigan maksimal kenglik.
 
-   O'ngda yopishqoq mundarija: qaysi bo'lim o'qilayotgani ko'k rang va chap
+   O'ngda yopishqoq mundarija: qaysi bo'lim o'qilayotgani yashil rang va chap
    qirradagi chiziq bilan belgilanadi.
    ========================================================================== */
 
@@ -73,9 +103,9 @@ export function LegalDocument({
   return (
     <div className="flex flex-col gap-12 lg:flex-row lg:items-start lg:gap-16">
       {/* --------------------------------------------------------- mundarija */}
-      <aside className="order-1 w-full shrink-0 lg:sticky lg:top-[calc(var(--bar)+32px)] lg:order-2 lg:w-64">
-        <nav aria-label="Mundarija" className="enter border-t border-[var(--edge)] pt-6">
-          <p className="t-eyebrow">Mundarija</p>
+      <aside className="order-1 w-full shrink-0 lg:sticky lg:top-[calc(var(--nav-h)+32px)] lg:order-2 lg:w-64">
+        <nav aria-label="Mundarija" className="border-t border-[var(--line)] pt-6">
+          <p className="ts-label">Mundarija</p>
 
           <ol className="mt-5 flex flex-col">
             {sections.map((section, index) => {
@@ -87,14 +117,14 @@ export function LegalDocument({
                     href={`#section-${number}`}
                     aria-current={current ? "true" : undefined}
                     className={cn(
-                      "focus-ring flex gap-3 border-l-2 py-2 pl-4 text-[14px]",
-                      "transition-colors duration-[var(--t-fast)]",
+                      "ring-focus flex gap-3 border-l-2 py-2 pl-4 text-[15px]",
+                      "transition-colors duration-[var(--dur-1)]",
                       current
-                        ? "border-[var(--brand)] font-semibold text-[var(--brand)]"
-                        : "border-transparent text-[var(--ink-3)] hover:text-[var(--brand)]",
+                        ? "border-[var(--green)] font-semibold text-[var(--green)]"
+                        : "border-transparent text-[var(--text-3)] hover:text-[var(--green)]",
                     )}
                   >
-                    <span className="t-num shrink-0">{number}</span>
+                    <span className="ts-num shrink-0">{number}</span>
                     <span className="min-w-0">{section.title}</span>
                   </a>
                 </li>
@@ -102,9 +132,9 @@ export function LegalDocument({
             })}
           </ol>
 
-          <p className="mt-6 border-t border-[var(--edge)] pt-5 text-[13px] text-[var(--ink-3)]">
+          <p className="mt-6 border-t border-[var(--line)] pt-5 text-[14px] text-[var(--text-3)]">
             Oxirgi yangilanish:{" "}
-            <span className="t-num font-semibold text-[var(--ink)]">
+            <span className="ts-num font-semibold text-[var(--text)]">
               {formatDate(updatedAt, false)}
             </span>
           </p>
@@ -114,25 +144,25 @@ export function LegalDocument({
       {/* --------------------------------------------------------------- matn */}
       <div className="order-2 min-w-0 flex-1 lg:order-1">
         {/* Kirish — qolgan matndan yirikroq, "yetakchi paragraf" */}
-        <p className="enter max-w-[68ch] border-l-2 border-[var(--brand)] pl-6 text-[19px] leading-[1.6] text-[var(--ink-2)]">
+        <p className="ts-lead max-w-[68ch] border-l-2 border-[var(--green)] pl-6">
           {intro}
         </p>
 
-        <div className="enter-stagger mt-16 flex flex-col gap-14">
+        <div className="mt-16 flex flex-col gap-14">
           {sections.map((section, index) => (
             <section
               key={section.title}
               id={`section-${index + 1}`}
-              className="max-w-[68ch] scroll-mt-[calc(var(--bar)+32px)]"
+              className="max-w-[68ch] scroll-mt-[calc(var(--nav-h)+32px)]"
             >
-              <h2 className="flex gap-3 text-[24px] leading-[1.3] font-bold text-[var(--ink)]">
-                <span className="t-num shrink-0 text-[var(--brand)]">{index + 1}.</span>
+              <h2 className="ts-h2 flex gap-3 text-[var(--text)]">
+                <span className="ts-num shrink-0 text-[var(--green)]">{index + 1}.</span>
                 <span className="min-w-0">{section.title}</span>
               </h2>
 
               <div className="mt-4 flex flex-col gap-4">
                 {section.body.map((paragraph, pIndex) => (
-                  <p key={pIndex} className="text-[16px] leading-[1.7] text-[var(--ink-2)]">
+                  <p key={pIndex} className="text-[17px] leading-[1.7] text-[var(--text-2)]">
                     {paragraph}
                   </p>
                 ))}

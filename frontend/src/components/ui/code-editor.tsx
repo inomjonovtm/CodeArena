@@ -19,6 +19,24 @@ import { cn } from "@/lib/utils";
  */
 loader.config({ paths: { vs: "/monaco/vs" } });
 
+/**
+ * Yuklashni MODUL darajasida boshlaymiz — komponent o'rnatilishini kutmasdan.
+ *
+ * Monaco ~2 MB. Yuklash `<Editor>` o'rnatilgandan KEYIN boshlansa, u masala
+ * ma'lumotlari kelib, sahifa chizilib bo'lgandan so'nggina navbatga
+ * turadi — foydalanuvchi tayyor sahifada spinnerga qarab o'tiradi. Modul
+ * import qilinishi bilan boshlansa, yuklash sahifaning o'z so'rovlari bilan
+ * PARALLEL ketadi. Modul faqat muharrir kerak bo'lgan sahifalarga
+ * import qilinadi, ya'ni ortiqcha trafik yuzaga kelmaydi.
+ *
+ * `typeof window` tekshiruvi shart: bu "use client" moduli bo'lsa ham,
+ * Next uni server tomonda ham baholaydi va u yerda `document` yo'q.
+ */
+if (typeof window !== "undefined") {
+  // Xato yutiladi: yuklanmasa `<Editor>` o'z zaxira holatini ko'rsatadi.
+  void loader.init().catch(() => {});
+}
+
 const MONACO_LANGUAGE: Record<string, string> = {
   python: "python",
   javascript: "javascript",
@@ -40,7 +58,8 @@ const LIGHT = "codearena-light";
  * butunlay yo'q qiladi.
  *
  * Ranglar dizayn tokenlaridan ko'chirilgan (qiymatlar qat'iy: Monaco `var()` ni
- * tushunmaydi). Yorug' rejim — sof oq maydon, faol qator iliq kul.
+ * tushunmaydi). Yorug' rejim — sof OQ maydon, faol qator zo'rg'a sezilarli
+ * yashil nafas; to'q rejim esa `--code-bg` sirti, ya'ni chuqur zumrad-qora.
  */
 const defineThemes: BeforeMount = (monaco) => {
   monaco.editor.defineTheme(DARK, {
@@ -48,17 +67,17 @@ const defineThemes: BeforeMount = (monaco) => {
     inherit: true,
     rules: [],
     colors: {
-      "editor.background": "#171717", // --pane (dark)
-      "editor.foreground": "#fafafa", // --ink (dark)
-      "editor.lineHighlightBackground": "#1f1f1f", // --pane-hover (dark)
-      "editor.selectionBackground": "#172c56", // --brand-wash-strong (dark)
-      "editorLineNumber.foreground": "#737373", // --ink-4 (dark)
-      "editorLineNumber.activeForeground": "#a3a3a3", // --ink-3 (dark)
-      "editorGutter.background": "#171717",
-      "editorIndentGuide.background1": "#262626",
-      "editorCursor.foreground": "#4c7fff", // --brand (dark)
-      "editorWidget.background": "#1f1f1f",
-      "editorWidget.border": "#262626",
+      "editor.background": "#04170f", // --code-bg
+      "editor.foreground": "#e8f6ee", // --code-text
+      "editor.lineHighlightBackground": "#0a2419", // --code-bg-2
+      "editor.selectionBackground": "#17513a", // yashil tanlov
+      "editorLineNumber.foreground": "#5f8a74",
+      "editorLineNumber.activeForeground": "#9dc4b1", // --code-text-2
+      "editorGutter.background": "#04170f",
+      "editorIndentGuide.background1": "#17392a", // --code-line
+      "editorCursor.foreground": "#4fe0a2", // --code-key
+      "editorWidget.background": "#0a2419",
+      "editorWidget.border": "#17392a",
     },
   });
   monaco.editor.defineTheme(LIGHT, {
@@ -66,17 +85,17 @@ const defineThemes: BeforeMount = (monaco) => {
     inherit: true,
     rules: [],
     colors: {
-      "editor.background": "#ffffff", // --pane
-      "editor.foreground": "#0a0a0a", // --ink
-      "editor.lineHighlightBackground": "#f5f5f5", // --pane-sunken
-      "editor.selectionBackground": "#dce6ff", // --brand-wash-strong
-      "editorLineNumber.foreground": "#a3a3a3", // --ink-4
-      "editorLineNumber.activeForeground": "#737373", // --ink-3
+      "editor.background": "#ffffff", // --surface
+      "editor.foreground": "#0b221a", // --text
+      "editor.lineHighlightBackground": "#f4faf7", // --surface-sunk
+      "editor.selectionBackground": "#d3f2e3", // --green-wash-2
+      "editorLineNumber.foreground": "#9dbaac",
+      "editorLineNumber.activeForeground": "#5e7c6f", // --text-4
       "editorGutter.background": "#ffffff",
-      "editorIndentGuide.background1": "#efefef",
-      "editorCursor.foreground": "#1e5eff", // --brand
+      "editorIndentGuide.background1": "#eff7f3", // --line-soft
+      "editorCursor.foreground": "#00814e", // --green
       "editorWidget.background": "#ffffff",
-      "editorWidget.border": "#e5e5e5",
+      "editorWidget.border": "#e3efe8", // --line
     },
   });
 };
@@ -138,8 +157,8 @@ export function CodeEditor({
         onChange={(next) => onChange?.(next ?? "")}
         beforeMount={defineThemes}
         loading={
-          <div className="flex h-full items-center justify-center bg-[var(--pane-solid)]">
-            <Loader2 className="size-5 animate-spin text-[var(--brand)]" />
+          <div className="flex h-full items-center justify-center bg-[var(--surface)]">
+            <Loader2 className="size-5 animate-spin text-[var(--green)]" />
           </div>
         }
         options={{
@@ -169,10 +188,10 @@ export function CodeEditor({
       title="Kattalashtirish"
       aria-label="Kattalashtirish"
       className={cn(
-        "focus-ring absolute right-2.5 top-2.5 z-10 inline-flex size-8 items-center justify-center",
-        "rounded-[var(--r-ctl)] border border-[var(--edge)] bg-[var(--pane-solid)] text-[var(--ink-3)]",
-        "shadow-[var(--lift-1)] transition-colors duration-[var(--t-fast)]",
-        "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+        "ring-focus absolute right-2.5 top-2.5 z-10 inline-flex size-8 items-center justify-center",
+        "rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface)] text-[var(--text-3)]",
+        "shadow-[var(--shadow-xs)] transition-colors duration-[var(--dur-1)]",
+        "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
       )}
     >
       <Maximize2 className="size-3.5" />
@@ -183,7 +202,7 @@ export function CodeEditor({
     <>
       <div
         className={cn(
-          "pane-solid relative overflow-hidden rounded-[var(--r-field)]",
+          "card relative overflow-hidden rounded-[var(--radius-sm)]",
           className,
         )}
       >
@@ -198,9 +217,9 @@ export function CodeEditor({
       */}
       {expanded && mounted
         ? createPortal(
-            <div className="fixed inset-0 z-[95] flex flex-col bg-[var(--canvas)] p-3 sm:p-4">
+            <div className="fixed inset-0 z-[95] flex flex-col bg-[var(--bg)] p-3 sm:p-4">
               <div className="mb-2.5 flex shrink-0 items-center justify-between gap-3">
-                <span className="t-eyebrow normal-case tracking-normal">
+                <span className="ts-label normal-case tracking-normal">
                   {MONACO_LANGUAGE[language] ?? language}
                 </span>
                 <button
@@ -209,17 +228,17 @@ export function CodeEditor({
                   title="Kichraytirish (Esc)"
                   aria-label="Kichraytirish"
                   className={cn(
-                    "focus-ring inline-flex h-8 items-center gap-1.5 rounded-[var(--r-ctl)] px-3",
-                    "bg-[var(--pane-sunken)] text-[13px] font-medium text-[var(--ink-2)]",
-                    "transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                    "ring-focus inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-3",
+                    "bg-[var(--surface-sunk)] text-[14px] font-medium text-[var(--text-2)]",
+                    "transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                   )}
                 >
                   <Minimize2 className="size-3.5" />
                   Kichraytirish
-                  <X className="size-3.5 text-[var(--ink-4)]" />
+                  <X className="size-3.5 text-[var(--text-4)]" />
                 </button>
               </div>
-              <div className="pane-solid min-h-0 flex-1 overflow-hidden rounded-[var(--r-pane)]">
+              <div className="card min-h-0 flex-1 overflow-hidden rounded-[var(--radius-lg)]">
                 {renderEditor("100%")}
               </div>
             </div>,

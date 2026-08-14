@@ -6,7 +6,6 @@ import {
   Bell,
   BellRing,
   Check,
-  ChevronDown,
   Copy,
   KeyRound,
   LogOut,
@@ -39,9 +38,9 @@ import {
   Modal,
   PageHead,
   Pane,
+  Select,
   Spinner,
   Toggle,
-  inputClass,
   textareaClass,
 } from "@/components/kit";
 import { useAuth, useTheme, useToast } from "@/components/providers";
@@ -129,6 +128,9 @@ function SelectBox({
   placeholder,
   disabled,
 }: {
+  /* `Field htmlFor` shu qiymatga ishora qiladi. `Select` tugma chizadi,
+     tugmani esa `<label>` bilan bog'lab bo'lmaydi — shuning uchun `id`
+     o'ramga qo'yiladi, nomi esa `ariaLabel` orqali beriladi. */
   id?: string;
   value: string;
   onChange: (next: string) => void;
@@ -137,22 +139,17 @@ function SelectBox({
   disabled?: boolean;
 }) {
   return (
-    <div className="relative">
-      <select
-        id={id}
+    <div id={id}>
+      <Select
         value={value}
-        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className={cn(inputClass, "appearance-none pr-9", !value && "text-[var(--ink-4)]")}
-      >
-        {placeholder !== undefined ? <option value="">{placeholder}</option> : null}
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-[var(--ink-4)]" />
+        options={options}
+        placeholder={placeholder}
+        disabled={disabled}
+        // Uzun ro'yxatlarda (viloyat, tuman) qidiruv qatori ochiladi
+        searchable={options.length > 8}
+        ariaLabel={placeholder}
+      />
     </div>
   );
 }
@@ -209,7 +206,7 @@ export default function SettingsPage() {
           aria-label="Sozlamalar bo'limlari"
           className="hidden lg:block"
         >
-          <div className="sticky top-[calc(var(--bar)+24px)] flex flex-col gap-0.5">
+          <div className="sticky top-[calc(var(--nav-h)+24px)] flex flex-col gap-0.5">
             {NAV.map((item) => {
               const current = active === item.id;
               return (
@@ -219,14 +216,14 @@ export default function SettingsPage() {
                   aria-current={current ? "true" : undefined}
                   onClick={() => jump(item.id)}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-[var(--r-ctl)] px-3 py-2 text-left text-[13.5px] font-medium focus-ring",
-                    "transition-colors duration-[var(--t-fast)]",
+                    "flex items-center gap-2.5 rounded-[var(--radius-sm)] px-3 py-2 text-left text-[14.5px] font-medium ring-focus",
+                    "transition-colors duration-[var(--dur-1)]",
                     current
-                      ? "edge-brand bg-[var(--brand-wash)] text-[var(--brand-ink)]"
-                      : "text-[var(--ink-3)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                      ? "edge-green bg-[var(--green-wash)] text-[var(--green-text)]"
+                      : "text-[var(--text-3)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                   )}
                 >
-                  <span className={current ? "text-[var(--brand)]" : "text-[var(--ink-4)]"}>
+                  <span className={current ? "text-[var(--green)]" : "text-[var(--text-4)]"}>
                     {item.icon}
                   </span>
                   {item.label}
@@ -262,9 +259,9 @@ function SettingsSection({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-[calc(var(--bar)+24px)]">
-      <h2 className="t-section text-[var(--ink)]">{title}</h2>
-      {hint ? <p className="t-meta mt-1 text-[var(--ink-3)]">{hint}</p> : null}
+    <section id={id} className="scroll-mt-[calc(var(--nav-h)+24px)]">
+      <h2 className="ts-h2 text-[var(--text)]">{title}</h2>
+      {hint ? <p className="ts-sm mt-1 text-[var(--text-3)]">{hint}</p> : null}
       <div className="mt-4 flex flex-col gap-4">{children}</div>
     </section>
   );
@@ -336,7 +333,7 @@ function ProfileSection({ onSaved }: { onSaved: () => Promise<void> }) {
       title="Ommaviy profil"
       hint="Bu ma'lumotlar profilingizda va reytinglarda ko'rinadi."
     >
-      <Pane className="enter">
+      <Pane className="">
         <AvatarPicker
           src={form.avatar_url}
           name={form.full_name || user?.username}
@@ -491,7 +488,7 @@ function AppearanceSection() {
       hint="Mavzu shu qurilmada saqlanadi. Sayt o'zbek tilida ishlaydi."
     >
       <Pane>
-        <p className="t-eyebrow mb-3">Mavzu</p>
+        <p className="ts-label mb-3">Mavzu</p>
         <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Mavzu">
           {themes.map((item) => {
             const selected = mode === item.value;
@@ -503,17 +500,17 @@ function AppearanceSection() {
                 aria-checked={selected}
                 onClick={() => setMode(item.value)}
                 className={cn(
-                  "flex items-start gap-3 rounded-[var(--r-field)] border p-3.5 text-left focus-ring",
-                  "transition-[background-color,border-color] duration-[var(--t-fast)]",
+                  "flex items-start gap-3 rounded-[var(--radius-sm)] border p-3.5 text-left ring-focus",
+                  "transition-[background-color,border-color] duration-[var(--dur-1)]",
                   selected
-                    ? "border-[var(--brand-edge)] bg-[var(--brand-wash)]"
-                    : "border-[var(--edge)] bg-[var(--pane)] hover:border-[var(--edge-strong)]",
+                    ? "border-[var(--green-line)] bg-[var(--green-wash)]"
+                    : "border-[var(--line)] bg-[var(--surface)] hover:border-[var(--line-strong)]",
                 )}
               >
                 <span
                   className={cn(
                     "mt-0.5 shrink-0",
-                    selected ? "text-[var(--brand)]" : "text-[var(--ink-4)]",
+                    selected ? "text-[var(--green)]" : "text-[var(--text-4)]",
                   )}
                 >
                   {item.icon}
@@ -521,13 +518,13 @@ function AppearanceSection() {
                 <span className="min-w-0">
                   <span
                     className={cn(
-                      "block text-[13.5px] font-medium",
-                      selected ? "text-[var(--brand-ink)]" : "text-[var(--ink)]",
+                      "block text-[14.5px] font-medium",
+                      selected ? "text-[var(--green-text)]" : "text-[var(--text)]",
                     )}
                   >
                     {item.label}
                   </span>
-                  <span className="mt-0.5 block text-[12.5px] text-[var(--ink-4)]">{item.hint}</span>
+                  <span className="mt-0.5 block text-[13px] text-[var(--text-4)]">{item.hint}</span>
                 </span>
               </button>
             );
@@ -607,11 +604,11 @@ function AccountSection({ onLoggedOut }: { onLoggedOut: () => Promise<void> }) {
       {/* --------------------------------------------------------- email */}
       <Pane>
         <div className="flex flex-wrap items-center gap-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
             <Mail className="size-4.5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[14.5px] font-medium text-[var(--ink)]">{user?.email}</p>
+            <p className="truncate text-[15.5px] font-medium text-[var(--text)]">{user?.email}</p>
             <div className="mt-1.5">
               {user?.is_email_verified ? (
                 <Chip tone="ok" icon={<MailCheck className="size-3.5" />}>
@@ -648,8 +645,8 @@ function AccountSection({ onLoggedOut }: { onLoggedOut: () => Promise<void> }) {
       {/* --------------------------------------------------------- parol */}
       <Pane>
         <div className="flex items-center gap-2.5">
-          <KeyRound className="size-4 text-[var(--ink-4)]" />
-          <h3 className="text-[14.5px] font-semibold text-[var(--ink)]">
+          <KeyRound className="size-4 text-[var(--text-4)]" />
+          <h3 className="text-[15.5px] font-semibold text-[var(--text)]">
             Parolni o&apos;zgartirish
           </h3>
         </div>
@@ -708,18 +705,18 @@ function AccountSection({ onLoggedOut }: { onLoggedOut: () => Promise<void> }) {
 
       {/* ------------------------------------------------------ xavfli zona */}
       <div
-        className="rounded-[var(--r-pane)] border bg-[var(--pane-solid)] p-5"
-        style={{ borderColor: "color-mix(in oklab, var(--bad) 28%, transparent)" }}
+        className="rounded-[var(--radius-lg)] border bg-[var(--surface)] p-5"
+        style={{ borderColor: "color-mix(in oklab, var(--danger) 28%, transparent)" }}
       >
         <div className="flex items-center gap-2.5">
-          <span className="flex size-8 items-center justify-center rounded-[var(--r-ctl)] bg-[var(--bad-wash)] text-[var(--bad)]">
+          <span className="flex size-8 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--danger-wash)] text-[var(--danger)]">
             <Trash2 className="size-4" />
           </span>
-          <h3 className="text-[14.5px] font-semibold text-[var(--bad)]">
+          <h3 className="text-[15.5px] font-semibold text-[var(--danger)]">
             Hisobni faolsizlantirish
           </h3>
         </div>
-        <p className="t-meta mt-2.5 max-w-2xl text-[var(--ink-3)]">
+        <p className="ts-sm mt-2.5 max-w-2xl text-[var(--text-3)]">
           Profilingiz ommadan yopiladi va tizimga kira olmaysiz. Yechimlaringiz musobaqa
           natijalari uchun arxivda qoladi. To&apos;liq o&apos;chirishni so&apos;rash uchun{" "}
           {siteEmail} manziliga yozing.
@@ -728,7 +725,7 @@ function AccountSection({ onLoggedOut }: { onLoggedOut: () => Promise<void> }) {
           <Button
             variant="ghost"
             icon={<LogOut className="size-4" />}
-            className="text-[var(--bad)] hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]"
+            className="text-[var(--danger)] hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]"
             onClick={() => setDeleteOpen(true)}
           >
             Hisobni faolsizlantirish
@@ -869,19 +866,19 @@ function SecuritySection() {
             <div className="flex items-center gap-2.5">
               <span
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-[var(--r-ctl)]",
+                  "flex size-8 items-center justify-center rounded-[var(--radius-sm)]",
                   user?.is_2fa_enabled
                     ? "bg-[var(--ok-wash)] text-[var(--ok)]"
-                    : "bg-[var(--pane-sunken)] text-[var(--ink-4)]",
+                    : "bg-[var(--surface-sunk)] text-[var(--text-4)]",
                 )}
               >
                 <ShieldCheck className="size-4" />
               </span>
-              <h3 className="text-[14.5px] font-semibold text-[var(--ink)]">
+              <h3 className="text-[15.5px] font-semibold text-[var(--text)]">
                 Ikki bosqichli tasdiqlash (2FA)
               </h3>
             </div>
-            <p className="t-meta mt-2.5 max-w-2xl text-[var(--ink-3)]">
+            <p className="ts-sm mt-2.5 max-w-2xl text-[var(--text-3)]">
               Parolingiz o&apos;g&apos;irlansa ham hisobingiz himoyalangan bo&apos;ladi: kirishda
               Authenticator ilovasidagi 6 xonali kod so&apos;raladi.
             </p>
@@ -895,7 +892,7 @@ function SecuritySection() {
               <button
                 type="button"
                 onClick={() => setDisableOpen(true)}
-                className="rounded-[6px] text-[12.5px] text-[var(--ink-4)] transition-colors hover:text-[var(--bad)] focus-ring"
+                className="rounded-[6px] text-[13px] text-[var(--text-4)] transition-colors hover:text-[var(--danger)] ring-focus"
               >
                 O&apos;chirish
               </button>
@@ -912,8 +909,8 @@ function SecuritySection() {
       <Pane tone="solid" inset="none">
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-4">
           <div>
-            <h3 className="text-[14.5px] font-semibold text-[var(--ink)]">Faol sessiyalar</h3>
-            <p className="t-meta mt-0.5 text-[var(--ink-3)]">
+            <h3 className="text-[15.5px] font-semibold text-[var(--text)]">Faol sessiyalar</h3>
+            <p className="ts-sm mt-0.5 text-[var(--text-3)]">
               Hisobingizga qaysi qurilmalardan kirilgan.
             </p>
           </div>
@@ -935,18 +932,18 @@ function SecuritySection() {
             <ListSkeleton rows={3} />
           </div>
         ) : activeSessions.length === 0 ? (
-          <p className="t-meta px-5 pb-5 text-[var(--ink-4)]">Faol sessiya topilmadi.</p>
+          <p className="ts-sm px-5 pb-5 text-[var(--text-4)]">Faol sessiya topilmadi.</p>
         ) : (
-          <ul className="divide-y divide-[var(--edge-soft)] border-t border-[var(--edge)]">
+          <ul className="divide-y divide-[var(--line-soft)] border-t border-[var(--line)]">
             {activeSessions.map((row) => (
               <li
                 key={row.id}
                 className={cn(
                   "flex flex-wrap items-center gap-3.5 px-5 py-3.5",
-                  row.is_current && "bg-[var(--brand-wash)]",
+                  row.is_current && "bg-[var(--green-wash)]",
                 )}
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--r-ctl)] bg-[var(--pane-sunken)] text-[var(--ink-3)]">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface-sunk)] text-[var(--text-3)]">
                   {row.device === "Android" || row.device === "iOS" || row.device === "Mobil" ? (
                     <Smartphone className="size-4" />
                   ) : (
@@ -955,15 +952,15 @@ function SecuritySection() {
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-2 text-[13.5px] font-medium text-[var(--ink)]">
+                  <p className="flex flex-wrap items-center gap-2 text-[14.5px] font-medium text-[var(--text)]">
                     {row.browser} · {row.device}
                     {row.is_current ? (
-                      <Chip tone="brand" className="px-2 py-0.5 text-[11px]">
+                      <Chip tone="brand" className="px-2 py-0.5 text-[12px]">
                         joriy
                       </Chip>
                     ) : null}
                   </p>
-                  <p className="t-meta mt-0.5 text-[var(--ink-4)]">
+                  <p className="ts-sm mt-0.5 text-[var(--text-4)]">
                     {row.ip_address ?? "IP noma'lum"} · {formatRelative(row.last_seen_at)} faol ·{" "}
                     {formatDate(row.created_at, false)} dan
                   </p>
@@ -973,7 +970,7 @@ function SecuritySection() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-[var(--ink-3)] hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]"
+                    className="text-[var(--text-3)] hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]"
                     onClick={() => revokeMutation.mutate(row.id)}
                   >
                     Yopish
@@ -1034,7 +1031,7 @@ function SecuritySection() {
               {recoveryCodes.map((item) => (
                 <span
                   key={item}
-                  className="rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-sunken)] px-3 py-2 text-center font-mono text-[13.5px] tracking-wider text-[var(--ink)]"
+                  className="rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] px-3 py-2 text-center font-mono text-[14.5px] tracking-wider text-[var(--text)]"
                 >
                   {item}
                 </span>
@@ -1043,17 +1040,17 @@ function SecuritySection() {
             <CopyBtn value={recoveryCodes.join("\n")} label="Hammasini nusxalash" />
           </div>
         ) : setupMutation.isPending ? (
-          <Block className="h-48 rounded-[var(--r-pane)]" />
+          <Block className="h-48 rounded-[var(--radius-lg)]" />
         ) : setupMutation.data ? (
           <div className="flex flex-col items-center gap-4">
             <OtpAuthLink value={setupMutation.data.otpauth_url} />
 
             <div className="w-full">
-              <p className="t-meta mb-1.5 text-center text-[var(--ink-4)]">
+              <p className="ts-sm mb-1.5 text-center text-[var(--text-4)]">
                 Yoki sirni qo&apos;lda kiriting
               </p>
               <div className="flex items-center justify-center gap-2">
-                <code className="rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-sunken)] px-3 py-2 font-mono text-[13px] tracking-wider text-[var(--ink)]">
+                <code className="rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] px-3 py-2 font-mono text-[14px] tracking-wider text-[var(--text)]">
                   {setupMutation.data.secret}
                 </code>
                 <CopyBtn value={setupMutation.data.secret} />
@@ -1070,7 +1067,7 @@ function SecuritySection() {
                 id="totp-code"
                 inputMode="numeric"
                 maxLength={6}
-                className="text-center font-mono text-[18px] tracking-[0.4em]"
+                className="text-center font-mono text-[19px] tracking-[0.4em]"
                 placeholder="000000"
                 value={code}
                 onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
@@ -1131,12 +1128,12 @@ function SecuritySection() {
  */
 function OtpAuthLink({ value }: { value: string }) {
   return (
-    <div className="flex w-full flex-col items-center gap-2 rounded-[var(--r-pane)] border border-[var(--edge)] bg-[var(--pane-sunken)] p-4">
-      <p className="t-meta text-center text-[var(--ink-3)]">
+    <div className="flex w-full flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface-sunk)] p-4">
+      <p className="ts-sm text-center text-[var(--text-3)]">
         Authenticator ilovangizda «havola orqali qo&apos;shish» ni tanlang yoki quyidagi sirni
         qo&apos;lda kiriting.
       </p>
-      <code className="w-full overflow-x-auto rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-solid)] px-3 py-2 font-mono text-[11.5px] whitespace-nowrap text-[var(--ink-2)]">
+      <code className="w-full overflow-x-auto rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface)] px-3 py-2 font-mono text-[12px] whitespace-nowrap text-[var(--text-2)]">
         {value}
       </code>
       <CopyBtn value={value} label="Havolani nusxalash" />
@@ -1180,7 +1177,7 @@ function NotificationsSection({ onSaved }: { onSaved: () => Promise<void> }) {
       hint="Sayt ichidagi qo'ng'iroq har doim ishlaydi — bu yerda email xabarlarini boshqarasiz."
     >
       <Pane>
-        <div className="flex flex-col divide-y divide-[var(--edge-soft)]">
+        <div className="flex flex-col divide-y divide-[var(--line-soft)]">
           <Toggle
             className="py-3.5 first:pt-0"
             label="Email xabarlar"
@@ -1215,11 +1212,11 @@ function NotificationsSection({ onSaved }: { onSaved: () => Promise<void> }) {
 
         <BrowserPushCard />
 
-        <p className="t-meta mt-4 text-[var(--ink-4)]">
+        <p className="ts-sm mt-4 text-[var(--text-4)]">
           Bildirishnomalar tarixini{" "}
           <a
             href="/notifications"
-            className="rounded-[4px] font-medium text-[var(--brand)] hover:underline focus-ring"
+            className="rounded-[4px] font-medium text-[var(--green)] hover:underline ring-focus"
           >
             alohida sahifada
           </a>{" "}
@@ -1245,7 +1242,7 @@ function BrowserPushCard() {
   const blocked = push.permission === "denied";
 
   return (
-    <div className="mt-5 rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-sunken)] p-4">
+    <div className="mt-5 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -1254,28 +1251,28 @@ function BrowserPushCard() {
                 "flex size-7 items-center justify-center rounded-[8px]",
                 push.subscribed
                   ? "bg-[var(--ok-wash)] text-[var(--ok)]"
-                  : "bg-[var(--pane-solid)] text-[var(--ink-4)]",
+                  : "bg-[var(--surface)] text-[var(--text-4)]",
               )}
             >
               <BellRing className="size-3.5" />
             </span>
-            <h4 className="text-[13.5px] font-semibold text-[var(--ink)]">
+            <h4 className="text-[14.5px] font-semibold text-[var(--text)]">
               Brauzer bildirishnomalari
             </h4>
             {push.subscribed ? (
-              <Chip tone="ok" className="px-2 py-0.5 text-[11px]">
+              <Chip tone="ok" className="px-2 py-0.5 text-[12px]">
                 yoqilgan
               </Chip>
             ) : null}
           </div>
-          <p className="t-meta mt-1.5 max-w-xl text-[var(--ink-3)]">
+          <p className="ts-sm mt-1.5 max-w-xl text-[var(--text-3)]">
             {push.supported
               ? "Musobaqa boshlanishi va yechim natijasi haqida sayt yopiq bo'lganda ham xabar keladi."
               : "Bu brauzer push xabarlarini qo'llab-quvvatlamaydi. Chrome, Edge yoki Firefox'ning yangi versiyasida ishlaydi."}
           </p>
           {push.devices > 1 && push.subscribed ? (
-            <p className="t-meta mt-1 text-[var(--ink-4)]">
-              Hisobingizda <span className="t-num">{push.devices}</span> ta qurilma obuna
+            <p className="ts-sm mt-1 text-[var(--text-4)]">
+              Hisobingizda <span className="ts-num">{push.devices}</span> ta qurilma obuna
               bo&apos;lgan.
             </p>
           ) : null}
@@ -1326,9 +1323,9 @@ function BrowserPushCard() {
       </div>
 
       {push.error ? (
-        <p className="mt-3 text-[12.5px] text-[var(--bad)]">{push.error}</p>
+        <p className="mt-3 text-[13px] text-[var(--danger)]">{push.error}</p>
       ) : blocked && !push.error ? (
-        <p className="t-meta mt-3 text-[var(--ink-4)]">
+        <p className="ts-sm mt-3 text-[var(--text-4)]">
           Bildirishnomalar shu sayt uchun bloklangan. Manzil qatoridagi qulf belgisini bosib
           ruxsat bering, so&apos;ng sahifani yangilang.
         </p>

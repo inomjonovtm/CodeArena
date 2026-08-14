@@ -34,7 +34,7 @@ function AvatarFace({
       style={{ width: rank ? "100%" : size, height: rank ? "100%" : size, fontSize: Math.max(11, size * 0.32) }}
       className={cn(
         "flex shrink-0 items-center justify-center overflow-hidden rounded-full",
-        "bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]",
+        "bg-[var(--green-wash)] font-semibold text-[var(--green-text)]",
         !rank && className,
       )}
     >
@@ -137,13 +137,13 @@ export function AvatarPicker({
         disabled={busy}
         onClick={() => setOpen(true)}
         aria-label={t.site.avatar.change}
-        className="group relative shrink-0 rounded-full focus-ring disabled:opacity-60"
+        className="group relative shrink-0 rounded-full ring-focus disabled:opacity-60"
       >
         <AvatarFace src={shown} name={name} size={76} rank={user?.rank} />
         <span
           className={cn(
-            "absolute inset-0 flex items-center justify-center rounded-full bg-[rgb(10_10_10/0.55)] text-white",
-            "opacity-0 transition-opacity duration-[var(--t-fast)]",
+            "absolute inset-0 flex items-center justify-center rounded-full bg-[rgb(16_24_20/0.55)] text-white",
+            "opacity-0 transition-opacity duration-[var(--dur-1)]",
             "group-hover:opacity-100 group-focus-visible:opacity-100",
             busy && "opacity-100",
           )}
@@ -153,8 +153,8 @@ export function AvatarPicker({
       </button>
 
       <div className="min-w-0">
-        <p className="text-[13.5px] font-medium text-[var(--ink)]">{t.site.avatar.title}</p>
-        <p className="t-meta mt-0.5 text-[var(--ink-4)]">{t.site.avatar.hint}</p>
+        <p className="text-[14.5px] font-medium text-[var(--text)]">{t.site.avatar.title}</p>
+        <p className="ts-sm mt-0.5 text-[var(--text-4)]">{t.site.avatar.hint}</p>
 
         <div className="mt-2.5">
           <Button
@@ -198,7 +198,7 @@ export function AvatarPicker({
                 icon={<Trash2 className="size-4" />}
                 loading={remove.isPending}
                 disabled={upload.isPending}
-                className="mr-auto text-[var(--bad)] hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]"
+                className="mr-auto text-[var(--danger)] hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]"
                 onClick={() => remove.mutate()}
               >
                 {t.site.avatar.remove}
@@ -225,16 +225,16 @@ export function AvatarPicker({
             onClick={() => inputRef.current?.click()}
             aria-label={t.site.avatar.upload}
             className={cn(
-              "group relative rounded-full p-1.5 focus-ring",
-              "ring-2 ring-[var(--brand-edge)] ring-offset-2 ring-offset-[var(--pane-solid)]",
+              "group relative rounded-full p-1.5 ring-focus",
+              "ring-2 ring-[var(--green-line)] ring-offset-2 ring-offset-[var(--surface)]",
               "transition-shadow disabled:opacity-70",
             )}
           >
             <AvatarFace src={shown} name={name} size={120} rank={user?.rank} />
             <span
               className={cn(
-                "absolute inset-1.5 flex items-center justify-center rounded-full bg-[rgb(10_10_10/0.55)] text-white",
-                "opacity-0 transition-opacity duration-[var(--t-fast)] group-hover:opacity-100",
+                "absolute inset-1.5 flex items-center justify-center rounded-full bg-[rgb(16_24_20/0.55)] text-white",
+                "opacity-0 transition-opacity duration-[var(--dur-1)] group-hover:opacity-100",
                 busy && "opacity-100",
               )}
             >
@@ -242,7 +242,7 @@ export function AvatarPicker({
             </span>
           </button>
 
-          <p className="t-meta text-center text-[var(--ink-4)]">{t.site.avatar.hint}</p>
+          <p className="ts-sm text-center text-[var(--text-4)]">{t.site.avatar.hint}</p>
         </div>
       </Modal>
     </div>

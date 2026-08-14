@@ -8,6 +8,24 @@ Har rankning ikkita rangi bor: `color` — matn/nishon uchun, `color_soft` —
 avatar ramkasidagi gradientning ikkinchi to'xtash nuqtasi. Ramka saytda ham,
 admin panelda ham shu ikki rangdan yasaladi, shuning uchun bir xil chiqadi.
 
+RANGLAR — BITTA YASHIL OILADAN. Sayt dizayn tizimida faqat ikki rang bor:
+oq va yashil. Ilgari bu jadvalda oltita turli tus (bronza jigarrangi, oltin
+sarig'i, olmos ko'ki, afsona qizili) yozilgan edi va ular sahifada
+palitradan tashqarida turgan yagona joy edi.
+
+Endi zina bitta yashilning pog'onalari bo'ylab ko'tariladi: pastki ranklar
+BO'G'IQ sabzavot-yashil, o'rtadagilar TO'YINGAN zumrad, yuqoridagilar esa
+CHUQUR o'rmon-yashil. Ya'ni farq tusda emas, TO'YINGANLIK va QUYUQLIKDA.
+
+`color` qiymatlarining HAMMASI oq fonda WCAG AA (4.9:1 dan yuqori) beradi —
+frontend uni to'g'ridan-to'g'ri matn rangi sifatida ishlatadi
+(`components/site/rank.tsx`), shuning uchun bu shart buzilmasligi kerak.
+`color_soft` faqat gradient/ramka uchun, matn ostiga tushmaydi, shuning
+uchun u ancha yorug' bo'lishi mumkin.
+
+Rank nomi ("Oltin I") baribir yozuv bilan ko'rsatiladi, ya'ni ma'no rangga
+bog'liq emas — dalton foydalanuvchi ham darajani o'qiy oladi.
+
 Chegaralar admin paneldan (`rank_thresholds` sozlamasi) o'zgartiriladi.
 """
 from __future__ import annotations
@@ -16,24 +34,24 @@ from apps.core import site_settings
 
 # code, name_uz, name_en, division, color, color_soft
 LADDER: list[tuple[str, str, str, str, str, str]] = [
-    ("bronze_3",  "Bronza",   "Bronze",      "III", "#c1783f", "#8a4f22"),
-    ("bronze_2",  "Bronza",   "Bronze",      "II",  "#c1783f", "#8a4f22"),
-    ("bronze_1",  "Bronza",   "Bronze",      "I",   "#c1783f", "#8a4f22"),
-    ("silver_3",  "Kumush",   "Silver",      "III", "#b6c2cf", "#7d8b99"),
-    ("silver_2",  "Kumush",   "Silver",      "II",  "#b6c2cf", "#7d8b99"),
-    ("silver_1",  "Kumush",   "Silver",      "I",   "#b6c2cf", "#7d8b99"),
-    ("gold_3",    "Oltin",    "Gold",        "III", "#f0c04a", "#c2901a"),
-    ("gold_2",    "Oltin",    "Gold",        "II",  "#f0c04a", "#c2901a"),
-    ("gold_1",    "Oltin",    "Gold",        "I",   "#f0c04a", "#c2901a"),
-    ("platinum_3", "Platina", "Platinum",    "III", "#57cfc6", "#218f87"),
-    ("platinum_2", "Platina", "Platinum",    "II",  "#57cfc6", "#218f87"),
-    ("platinum_1", "Platina", "Platinum",    "I",   "#57cfc6", "#218f87"),
-    ("diamond_3", "Olmos",    "Diamond",     "III", "#7db4ff", "#3a72cf"),
-    ("diamond_2", "Olmos",    "Diamond",     "II",  "#7db4ff", "#3a72cf"),
-    ("diamond_1", "Olmos",    "Diamond",     "I",   "#7db4ff", "#3a72cf"),
-    ("master",    "Usta",     "Master",      "",    "#b07cff", "#6f34cf"),
-    ("grandmaster", "Buyuk usta", "Grandmaster", "", "#ff7f5c", "#d1421c"),
-    ("legend",    "Afsona",   "Legend",      "",    "#ff4d6d", "#ffd166"),
+    ("bronze_3",  "Bronza",   "Bronze",      "III", "#4c7565", "#8fb3a2"),
+    ("bronze_2",  "Bronza",   "Bronze",      "II",  "#4c7565", "#8fb3a2"),
+    ("bronze_1",  "Bronza",   "Bronze",      "I",   "#4c7565", "#8fb3a2"),
+    ("silver_3",  "Kumush",   "Silver",      "III", "#37795c", "#7fb69c"),
+    ("silver_2",  "Kumush",   "Silver",      "II",  "#37795c", "#7fb69c"),
+    ("silver_1",  "Kumush",   "Silver",      "I",   "#37795c", "#7fb69c"),
+    ("gold_3",    "Oltin",    "Gold",        "III", "#1a7d54", "#57c391"),
+    ("gold_2",    "Oltin",    "Gold",        "II",  "#1a7d54", "#57c391"),
+    ("gold_1",    "Oltin",    "Gold",        "I",   "#1a7d54", "#57c391"),
+    ("platinum_3", "Platina", "Platinum",    "III", "#00814e", "#3fc98a"),
+    ("platinum_2", "Platina", "Platinum",    "II",  "#00814e", "#3fc98a"),
+    ("platinum_1", "Platina", "Platinum",    "I",   "#00814e", "#3fc98a"),
+    ("diamond_3", "Olmos",    "Diamond",     "III", "#007546", "#16b673"),
+    ("diamond_2", "Olmos",    "Diamond",     "II",  "#007546", "#16b673"),
+    ("diamond_1", "Olmos",    "Diamond",     "I",   "#007546", "#16b673"),
+    ("master",    "Usta",     "Master",      "",    "#00693f", "#00a862"),
+    ("grandmaster", "Buyuk usta", "Grandmaster", "", "#005b36", "#009455"),
+    ("legend",    "Afsona",   "Legend",      "",    "#004d2e", "#35d693"),
 ]
 
 MAX_TIER = len(LADDER)  # 18

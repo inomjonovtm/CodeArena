@@ -1,13 +1,17 @@
-"""Judge backend'ini tanlaydigan qatlam.
+"""Kod bajarish qatlami — barcha ijro shu moduldan o'tadi.
 
-`tasks.py` va `views.py` faqat shu modul bilan ishlaydi. Tanlov tartibi:
+`tasks.py`, `views.py`, checker va muallif asboblari faqat shu bilan
+ishlaydi. Tanlov tartibi:
 
-1. **Judge0** — agar sozlangan va javob berayotgan bo'lsa (produksiya yo'li);
-2. **Lokal runner** — `LOCAL_JUDGE_ENABLED` yoqilgan bo'lsa (dev / demo);
-3. aks holda — `SYSTEM_ERROR` va tushunarli xabar.
+1. **Runner xizmati** — alohida, izolyatsiyalangan konteyner
+   (`infra/runner`). Produksiyada yagona to'g'ri yo'l.
+2. **Lokal runner** — `LOCAL_JUDGE_ENABLED` yoqilganda, faqat ishlab
+   chiqish uchun: kod Django jarayonining yonida bajariladi va bu
+   sandbox EMAS.
+3. Aks holda — `SYSTEM_ERROR` va tushunarli xabar.
 
-Judge0 mavjudligi qisqa muddatga keshlanadi, aks holda har bir submission
-uchun qo'shimcha HTTP so'rov ketardi.
+Runner sog'ligi qisqa muddatga keshlanadi: aks holda har bir yechim uchun
+qo'shimcha HTTP so'rov ketardi.
 """
 from __future__ import annotations
 
@@ -17,64 +21,69 @@ from django.core.cache import cache
 
 from apps.core import site_settings
 
-from . import runner
-from .judge0 import Judge0Client
+from . import languages, remote, runner
 from .results import ExecutionResult
 
 logger = logging.getLogger(__name__)
 
-_HEALTH_CACHE_KEY = "judge0:available"
+_HEALTH_CACHE_KEY = "runner:health"
 
-BACKEND_JUDGE0 = "judge0"
+BACKEND_RUNNER = "runner"
 BACKEND_LOCAL = "local"
 BACKEND_NONE = "none"
 
 NO_BACKEND_MESSAGE = (
-    "Kod bajarish xizmati sozlanmagan. Administrator Judge0 ni ishga tushirishi "
-    "yoki LOCAL_JUDGE_ENABLED ni yoqishi kerak."
+    "Kod bajarish xizmati ishlamayapti. Administrator runner konteynerini "
+    "ishga tushirishi kerak."
 )
 
 
 def _health_ttl() -> int:
-    return max(5, site_settings.get_int("judge0_health_cache_sec", 30))
+    return max(5, site_settings.get_int("runner_health_cache_sec", 30))
 
 
 def local_allowed() -> bool:
     """Lokal runner ishlatilishi mumkinmi (sozlama + muhit)."""
-    return site_settings.get_bool("judge0_local_fallback", True) and runner.is_enabled()
+    return site_settings.get_bool("runner_local_fallback", True) and runner.is_enabled()
 
 
-def judge0_available(*, refresh: bool = False) -> bool:
-    if not site_settings.get_bool("judge0_enabled", True):
-        return False
-    if not site_settings.get_str("judge0_url"):
-        return False
+def runner_health(*, refresh: bool = False) -> dict:
+    """Runner holati: `{"ok": bool, "languages": {...}}` (keshlanadi)."""
+    if not site_settings.get_bool("runner_enabled", True):
+        return {"ok": False, "languages": {}, "error": "Runner sozlamada o'chirilgan."}
+
     if not refresh:
         cached = cache.get(_HEALTH_CACHE_KEY)
         if cached is not None:
-            return bool(cached)
-    available = Judge0Client().is_available()
-    cache.set(_HEALTH_CACHE_KEY, available, _health_ttl())
-    return available
+            return cached
+
+    status = remote.health()
+    cache.set(_HEALTH_CACHE_KEY, status, _health_ttl())
+    return status
 
 
 def active_backend(*, refresh: bool = False) -> str:
-    if judge0_available(refresh=refresh):
-        return BACKEND_JUDGE0
+    if runner_health(refresh=refresh)["ok"]:
+        return BACKEND_RUNNER
     if local_allowed():
         return BACKEND_LOCAL
     return BACKEND_NONE
 
 
-def supported_languages() -> dict[str, bool]:
-    """Joriy backend qaysi tillarni bajara oladi."""
-    if active_backend() == BACKEND_JUDGE0:
-        from .judge0 import language_ids
+def supported_languages(*, refresh: bool = False) -> dict[str, bool]:
+    """Har bir til hozir ishlaydimi — frontend shunga qarab tanlovni bloklaydi."""
+    backend = active_backend(refresh=refresh)
 
-        return dict.fromkeys(language_ids(), True)
-    if local_allowed():
-        return runner.available_languages()
-    return {}
+    if backend == BACKEND_RUNNER:
+        reported = runner_health()["languages"]
+    elif backend == BACKEND_LOCAL:
+        reported = runner.available_languages()
+    else:
+        reported = {}
+
+    # Ro'yxat HAR DOIM to'liq qaytadi: mavjud bo'lmagan til `False` bilan
+    # ko'rinadi, ya'ni interfeys uni o'chirib qo'yadi-yu, yashirmaydi.
+    return {item.key: bool(reported.get(item.key)) for item in languages.LANGUAGES}
 
 
 def execute(
@@ -85,25 +94,25 @@ def execute(
     time_limit_ms: int,
     memory_limit_kb: int,
 ) -> tuple[str, list[ExecutionResult]]:
-    """Test-case'larni bajaradi.
+    """Kodni testlar ustida bajaradi.
 
-    `cases` — `{"input": str, "expected_output": str | None}` ro'yxati.
-    `expected_output` `None` bo'lsa solishtirish qilinmaydi (maxsus kirish).
-
-    Qaytadi: `(backend_nomi, natijalar)`. Natijalar ro'yxati har doim
-    `cases` bilan bir xil uzunlikda bo'ladi.
+    Qaytadi: `(backend nomi, natijalar)`. Natijalar soni HAR DOIM testlar
+    soniga teng — chaqiruvchi tomon ularni juftlab ishlatadi.
     """
     backend = active_backend()
 
-    if backend == BACKEND_JUDGE0:
+    if backend == BACKEND_RUNNER:
         try:
-            return BACKEND_JUDGE0, _execute_judge0(
+            return BACKEND_RUNNER, remote.execute(
                 language=language, code=code, cases=cases,
                 time_limit_ms=time_limit_ms, memory_limit_kb=memory_limit_kb,
             )
-        except Exception as exc:  # noqa: BLE001 — Judge0 uzilib qolishi mumkin
-            logger.warning("Judge0 xatosi, zaxira variantga o'tilmoqda: %s", exc)
-            cache.set(_HEALTH_CACHE_KEY, False, _health_ttl())
+        except remote.RunnerError as exc:
+            logger.warning("Runner xatosi: %s", exc)
+            # Keshni darhol "yiqilgan" holatga o'tkazamiz: keyingi so'rovlar
+            # bekorga kutib turmasin.
+            cache.set(_HEALTH_CACHE_KEY, {"ok": False, "languages": {}, "error": str(exc)},
+                      _health_ttl())
             backend = BACKEND_LOCAL if local_allowed() else BACKEND_NONE
 
     if backend == BACKEND_LOCAL:
@@ -117,75 +126,18 @@ def execute(
     ]
 
 
-def _execute_judge0(
-    *, language: str, code: str, cases: list[dict], time_limit_ms: int, memory_limit_kb: int
-) -> list[ExecutionResult]:
-    client = Judge0Client()
-    payloads = [
-        client.build_payload(
-            language=language,
-            code=code,
-            stdin=case.get("input") or "",
-            expected_output=case.get("expected_output") or "",
-            time_limit_ms=time_limit_ms,
-            memory_limit_kb=memory_limit_kb,
-        )
-        for case in cases
-    ]
-    tokens = client.submit_batch(payloads)
-    rows = _poll(client, tokens)
-    results = [client.parse(row) for row in rows]
-
-    # `execute` ning shartnomasi: natijalar soni testlar soniga TENG.
-    # Judge0 biror natijani tushirib qoldirsa (tarmoq uzilishi, navbatdagi
-    # xato), tekshirilmagan testlar jimgina «yo'q» bo'lib qolardi va
-    # yechim to'liq o'tgan deb belgilanardi. Bu yerdagi xato yuqorida
-    # ushlanadi va submission SYSTEM_ERROR oladi — noto'g'ri «qabul
-    # qilindi» dan ko'ra ochiq xato yaxshiroq.
-    if len(results) != len(cases):
-        raise RuntimeError(
-            f"Judge0 {len(cases)} testdan {len(results)} tasiga javob qaytardi."
-        )
-
-    # Maxsus kirishda Judge0 ham "Wrong Answer" qaytaradi (kutilgan chiqish bo'sh) —
-    # solishtirish talab qilinmagan testlarni qabul qilingan deb belgilaymiz.
-    for case, result in zip(cases, results, strict=True):
-        if case.get("expected_output") is None and result.status == "WRONG_ANSWER":
-            result.status = "ACCEPTED"
-    return results
-
-
-def _poll(client: Judge0Client, tokens: list[str]) -> list[dict]:
-    """Natija tayyor bo'lguncha so'raydi; oraliq va urinishlar soni sozlamadan."""
-    import time
-
-    attempts, delay = client.poll_attempts, client.poll_delay
-    for _ in range(attempts):
-        rows = client.get_batch(tokens)
-        pending = [
-            row for row in rows
-            if int((row.get("status") or {}).get("id", row.get("status_id", 1))) in (1, 2)
-        ]
-        if not pending:
-            return rows
-        time.sleep(delay)
-    return client.get_batch(tokens)
-
-
 def health(*, refresh: bool = True) -> dict:
-    """Admin panel uchun judge holati."""
-    judge0_ok = judge0_available(refresh=refresh)
-    local_ok = local_allowed()
-    backend = BACKEND_JUDGE0 if judge0_ok else (BACKEND_LOCAL if local_ok else BACKEND_NONE)
+    """Admin paneli va `/api/judge/status/` uchun umumiy holat."""
+    status = runner_health(refresh=refresh)
+    backend = active_backend()
+    supported = supported_languages()
+
     return {
         "backend": backend,
         "available": backend != BACKEND_NONE,
-        "judge0_url": site_settings.get_str("judge0_url"),
-        "judge0_enabled": site_settings.get_bool("judge0_enabled", True),
-        "judge0_available": judge0_ok,
-        "local_enabled": local_ok,
-        "local_runner_available": runner.is_enabled(),
-        "local_fallback_allowed": site_settings.get_bool("judge0_local_fallback", True),
-        "local_languages": runner.available_languages() if local_ok else {},
-        "languages": supported_languages(),
+        "runner_ok": status["ok"],
+        "runner_error": status.get("error", ""),
+        "local_fallback": local_allowed(),
+        "languages": supported,
+        "language_count": sum(1 for ok in supported.values() if ok),
     }

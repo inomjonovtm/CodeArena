@@ -58,6 +58,7 @@ class AdminSubmissionViewSet(
     ordering = ["-created_at"]
     audit_label = "submission"
     bulk_allowed_actions = ("delete", "rejudge")
+    bulk_perm_actions = {"rejudge": "rejudge"}
     export_filename = "codearena-submissionlar"
     export_columns = [
         ("created_at", "Vaqt"),
@@ -138,7 +139,7 @@ class AdminSubmissionViewSet(
 
     @action(detail=False, methods=["get"])
     def summary(self, request):
-        qs = Submission.objects.all()
+        qs = self.filter_queryset(self.get_queryset())
         today = timezone.localdate()
         return Response(
             {

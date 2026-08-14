@@ -10,12 +10,14 @@ from rest_framework.response import Response
 
 from apps.core.mixins import write_audit
 from apps.core.permissions import require
+from apps.core.utils import to_int
 
 # Savatchaga tushadigan modellar: kalit → (app_label.ModelName, ko'rsatiladigan nom)
 TRASHABLE = {
     "problem": ("problems.Problem", "Masala"),
     "contest": ("contests.Contest", "Contest"),
-    "course": ("courses.Course", "Kurs"),
+    "question": ("assessments.Question", "Test savoli"),
+    "quiz": ("assessments.Quiz", "Test sinovi"),
     "discussion": ("content.Discussion", "Muhokama"),
     "comment": ("content.Comment", "Izoh"),
     "group": ("community.Group", "Guruh"),
@@ -55,7 +57,16 @@ class SoftDeleteViewSetMixin:
     @action(detail=True, methods=["post"])
     def restore(self, request, pk=None):
         model = self.queryset.model
-        instance = model.all_objects.filter(pk=pk).first()
+        queryset = model.all_objects.filter(pk=pk)
+
+        # Egalik chegarasi bu yerda ham amal qiladi: `OwnScopedMixin` odatdagi
+        # so'rovlarni cheklaydi, lekin `all_objects` uni chetlab o'tardi —
+        # muallif boshqa muallifning o'chirilgan yozuvini tiklay olardi.
+        owner_field = getattr(self, "owner_field", None)
+        if owner_field and getattr(request.user, "role", "") == "setter":
+            queryset = queryset.filter(**{owner_field: request.user})
+
+        instance = queryset.first()
         if instance is None:
             return Response({"detail": "Topilmadi."}, status=404)
         instance.restore()
@@ -69,7 +80,7 @@ def trash_list(request):
     """`GET /api/admin/trash/` — barcha modellardan o'chirilganlar."""
     kind = request.query_params.get("kind") or ""
     search = (request.query_params.get("search") or "").strip().lower()
-    limit = min(int(request.query_params.get("limit", 200)), 500)
+    limit = to_int(request.query_params.get("limit"), 200, low=1, high=500)
 
     rows = []
     kinds = [kind] if kind in TRASHABLE else list(TRASHABLE)

@@ -22,17 +22,12 @@ import {
 } from "@/components/kit";
 import { useAuth, useI18n } from "@/components/providers";
 import { CodeEditor } from "@/components/ui/code-editor";
+import { LANGUAGE_LABEL } from "@/lib/languages";
 import { publicApi } from "@/lib/public-api";
 import type { Language, SubmissionStatus } from "@/lib/types";
 import { cn, formatBytes, formatDate, formatDuration, formatRelative } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
-
-const LANGUAGE_LABEL: Record<Language, string> = {
-  python: "Python",
-  javascript: "JavaScript",
-  cpp: "C++",
-};
 
 type StatusTab = "" | "ACCEPTED" | "WRONG_ANSWER" | "other";
 
@@ -164,15 +159,15 @@ export default function SubmissionsPage() {
         lead="Yuborgan barcha kodlaringiz, natijalari va tezligi."
         meta={
           data ? (
-            <p className="t-meta text-[var(--ink-4)]">
-              Jami <span className="t-num text-[var(--ink-2)]">{data.count}</span> ta yuborish
+            <p className="ts-sm text-[var(--text-4)]">
+              Jami <span className="ts-num text-[var(--text-2)]">{data.count}</span> ta yuborish
             </p>
           ) : null
         }
       />
 
       {/* ------------------------------------------------- 2. asboblar paneli */}
-      <Pane className="enter" inset="md">
+      <Pane className="" inset="md">
         <div className="flex flex-wrap items-center gap-3">
           <Segmented value={statusTab} items={STATUS_TABS} onChange={setStatusTab} size="sm" />
 
@@ -196,12 +191,12 @@ export default function SubmissionsPage() {
                   aria-checked={active}
                   onClick={() => setLanguage(item.value)}
                   className={cn(
-                    "focus-ring inline-flex shrink-0 items-center rounded-[var(--r-chip)] border px-3 py-1.5",
-                    "text-[12.5px] font-medium whitespace-nowrap",
-                    "transition-[background-color,border-color,color] duration-[var(--t-fast)]",
+                    "ring-focus inline-flex shrink-0 items-center rounded-[var(--radius-xs)] border px-3 py-1.5",
+                    "text-[13px] font-medium whitespace-nowrap",
+                    "transition-[background-color,border-color,color] duration-[var(--dur-1)]",
                     active
-                      ? "border-[var(--brand-edge)] bg-[var(--brand-wash)] text-[var(--brand-ink)]"
-                      : "border-[var(--edge)] bg-[var(--pane-sunken)] text-[var(--ink-3)] hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+                      ? "border-[var(--green-line)] bg-[var(--green-wash)] text-[var(--green-text)]"
+                      : "border-[var(--line)] bg-[var(--surface-sunk)] text-[var(--text-3)] hover:border-[var(--line-strong)] hover:text-[var(--text)]",
                   )}
                 >
                   {item.label}
@@ -223,14 +218,14 @@ export default function SubmissionsPage() {
       {isLoading ? (
         /* Skelet — jadval qatorlari shaklida */
         <Pane tone="solid" inset="none">
-          <div className="divide-y divide-[var(--edge-soft)]">
+          <div className="divide-y divide-[var(--line-soft)]">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className={cn(ROW_GRID, "px-4 py-3.5 sm:px-5")}>
                 <div className="flex items-center gap-2.5">
                   <Block className="h-3 w-6" />
                   <Block className="h-3.5 w-44" />
                 </div>
-                <Block className="mt-2 h-6 w-24 rounded-[var(--r-chip)] md:mt-0" />
+                <Block className="mt-2 h-6 w-24 rounded-[var(--radius-xs)] md:mt-0" />
                 <Block className="hidden h-3 w-8 md:block" />
                 <Block className="hidden h-3 w-10 md:block" />
                 <Block className="hidden h-3 w-10 md:block" />
@@ -271,7 +266,7 @@ export default function SubmissionsPage() {
           <div
             className={cn(
               ROW_GRID,
-              "t-eyebrow hidden border-b border-[var(--edge)] px-5 py-2.5 md:grid",
+              "ts-label hidden border-b border-[var(--line)] px-5 py-2.5 md:grid",
             )}
           >
             <span>Masala</span>
@@ -282,7 +277,7 @@ export default function SubmissionsPage() {
             <span className="text-right">Sana</span>
           </div>
 
-          <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+          <ul className="divide-y divide-[var(--line-soft)]">
             {rows.map((row) => (
               <li key={row.id}>
                 <button
@@ -290,13 +285,13 @@ export default function SubmissionsPage() {
                   onClick={() => setOpenId(row.id)}
                   className={cn(
                     ROW_GRID,
-                    "focus-ring flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 text-left",
-                    "transition-colors hover:bg-[var(--pane-hover)] sm:px-5",
+                    "ring-focus flex w-full flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3.5 text-left",
+                    "transition-colors hover:bg-[var(--surface-hover)] sm:px-5",
                   )}
                 >
                   <span className="flex w-full min-w-0 items-center gap-2.5 md:w-auto">
                     <DifficultyMark value={row.problem_difficulty} showLabel={false} />
-                    <span className="truncate text-[14px] font-medium text-[var(--ink)]">
+                    <span className="truncate text-[15px] font-medium text-[var(--text)]">
                       {row.problem_title_uz}
                     </span>
                     {row.contest_slug ? (
@@ -304,7 +299,7 @@ export default function SubmissionsPage() {
                         contest
                       </Chip>
                     ) : null}
-                    <span className="t-meta shrink-0 text-[var(--ink-4)]">
+                    <span className="ts-sm shrink-0 text-[var(--text-4)]">
                       {LANGUAGE_LABEL[row.language] ?? row.language}
                     </span>
                   </span>
@@ -313,17 +308,17 @@ export default function SubmissionsPage() {
                     <StatusChip value={row.status} />
                   </span>
 
-                  <span className="t-num t-meta text-[var(--ink-3)] md:text-right">
+                  <span className="ts-num ts-sm text-[var(--text-3)] md:text-right">
                     {row.total_tests ? `${row.passed_tests}/${row.total_tests}` : "—"}
                   </span>
-                  <span className="t-num t-meta text-[var(--ink-3)] md:text-right">
+                  <span className="ts-num ts-sm text-[var(--text-3)] md:text-right">
                     {formatDuration(row.runtime_ms)}
                   </span>
-                  <span className="t-num t-meta text-[var(--ink-3)] md:text-right">
+                  <span className="ts-num ts-sm text-[var(--text-3)] md:text-right">
                     {formatBytes(row.memory_kb)}
                   </span>
                   <span
-                    className="t-meta text-[var(--ink-4)] md:text-right"
+                    className="ts-sm text-[var(--text-4)] md:text-right"
                     title={formatDate(row.created_at)}
                   >
                     {formatRelative(row.created_at)}
@@ -363,27 +358,27 @@ export default function SubmissionsPage() {
         }
       >
         {detailLoading || !detail ? (
-          <Block className="h-64 rounded-[var(--r-pane)]" />
+          <Block className="h-64 rounded-[var(--radius-lg)]" />
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <StatusChip value={detail.status} />
-              <span className="t-meta text-[var(--ink-3)]">
+              <span className="ts-sm text-[var(--text-3)]">
                 {LANGUAGE_LABEL[detail.language] ?? detail.language}
               </span>
-              <span className="t-num t-meta text-[var(--ink-3)]">
+              <span className="ts-num ts-sm text-[var(--text-3)]">
                 {detail.passed_tests}/{detail.total_tests} test
               </span>
-              <span className="t-num t-meta text-[var(--ink-3)]">
+              <span className="ts-num ts-sm text-[var(--text-3)]">
                 {formatDuration(detail.runtime_ms)}
               </span>
-              <span className="t-num t-meta text-[var(--ink-3)]">
+              <span className="ts-num ts-sm text-[var(--text-3)]">
                 {formatBytes(detail.memory_kb)}
               </span>
             </div>
 
             {/* Kod oq sirtda — sahifa bo'ylab bitta muharrir ko'rinishi */}
-            <div className="overflow-hidden rounded-[var(--r-field)] border border-[var(--edge)]">
+            <div className="overflow-hidden rounded-[var(--radius-sm)] border border-[var(--line)]">
               <CodeEditor
                 value={detail.code}
                 language={detail.language}
@@ -394,12 +389,12 @@ export default function SubmissionsPage() {
             </div>
 
             {detail.compile_output ? (
-              <pre className="max-h-40 overflow-auto rounded-[var(--r-field)] bg-[var(--bad-wash)] p-3 font-mono text-[12px] whitespace-pre-wrap text-[var(--bad)]">
+              <pre className="max-h-40 overflow-auto rounded-[var(--radius-sm)] bg-[var(--danger-wash)] p-3 font-mono text-[12.5px] whitespace-pre-wrap text-[var(--danger)]">
                 {detail.compile_output}
               </pre>
             ) : null}
             {detail.error_message ? (
-              <pre className="pane-sunken max-h-40 overflow-auto rounded-[var(--r-field)] p-3 font-mono text-[12px] whitespace-pre-wrap text-[var(--ink-2)]">
+              <pre className="well max-h-40 overflow-auto rounded-[var(--radius-sm)] p-3 font-mono text-[12.5px] whitespace-pre-wrap text-[var(--text-2)]">
                 {detail.error_message}
               </pre>
             ) : null}

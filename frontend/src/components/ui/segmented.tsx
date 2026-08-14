@@ -14,12 +14,16 @@ export interface SegmentOption {
 }
 
 /* Tanlangan segment rang yuvindisini oladi — to'yingan fon emas. */
+/* Tanlangan segment — TO'YINGAN kapsula. Ilgari u och yuvindi edi va
+   botiq trek ustida zo'rg'a ajralib turardi; kapsula esa "bosilgan tugma"
+   kabi aniq o'qiladi. `neutral` — yagona istisno: u siyoh bilan
+   belgilanadi, chunki u "filtr yo'q" holatini bildiradi. */
 const TONE_ACTIVE: Record<NonNullable<SegmentOption["tone"]>, string> = {
-  accent: "bg-[var(--brand-wash)] text-[var(--brand-ink)]",
-  success: "bg-[var(--ok-wash)] text-[var(--ok)]",
-  warning: "bg-[var(--warn-wash)] text-[var(--warn)]",
-  danger: "bg-[var(--bad-wash)] text-[var(--bad)]",
-  neutral: "bg-[var(--pane-solid)] text-[var(--ink)] shadow-[var(--lift-1),0_0_0_1px_var(--edge-soft)]",
+  accent: "bg-[var(--green)] text-[var(--text-on-green)] shadow-[var(--shadow-sm)]",
+  success: "bg-[var(--ok)] text-[var(--text-on-green)]",
+  warning: "bg-[var(--warn)] text-[var(--bg)]",
+  danger: "bg-[var(--danger)] text-[var(--bg)]",
+  neutral: "bg-[var(--text)] text-[var(--bg)]",
 };
 
 /**
@@ -94,7 +98,7 @@ export function SegmentedControl({
         <span
           className={cn(
             "whitespace-nowrap",
-            stacked ? "t-eyebrow" : "text-[12px] font-medium text-[var(--ink-4)]",
+            stacked ? "ts-label" : "text-[12.5px] font-medium text-[var(--text-4)]",
           )}
         >
           {label}
@@ -106,9 +110,9 @@ export function SegmentedControl({
         aria-label={ariaLabel ?? label}
         onKeyDown={onKeyDown}
         className={cn(
-          "items-center rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-sunken)] p-1",
+          "items-center rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] p-1",
           stacked ? "flex w-full" : "inline-flex",
-          size === "sm" ? "h-8" : "h-9",
+          size === "sm" ? "h-11" : "h-12",
         )}
       >
         {items.map((item) => {
@@ -123,14 +127,14 @@ export function SegmentedControl({
               title={item.title}
               onClick={() => onChange(item.value)}
               className={cn(
-                "inline-flex h-full items-center justify-center gap-1.5 whitespace-nowrap rounded-[6px] px-3 font-medium focus-ring",
-                "transition-colors duration-[var(--t-fast)]",
-                size === "sm" ? "text-[12px]" : "text-[13px]",
+                "inline-flex h-full items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] px-4 font-medium ring-focus",
+                "transition-colors duration-[var(--dur-1)]",
+                size === "sm" ? "text-[14px]" : "text-[15px]",
                 // Ustunli rejimda tugmalar kenglikni teng bo'lishadi
                 stacked && "min-w-0 flex-1 truncate",
                 isActive
                   ? TONE_ACTIVE[item.tone ?? "accent"]
-                  : "text-[var(--ink-3)] hover:text-[var(--ink)]",
+                  : "text-[var(--text-3)] hover:text-[var(--text)]",
               )}
             >
               {item.icon}
@@ -170,18 +174,18 @@ export function ToggleChip({
       aria-pressed={active}
       onClick={() => onChange(!active)}
       className={cn(
-        "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-[var(--r-ctl)] border px-3.5 text-[13px] font-medium focus-ring",
-        "transition-[background-color,border-color,color] duration-[var(--t-fast)]",
+        "inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] border px-4 text-[14px] font-medium ring-focus",
+        "transition-[background-color,border-color,color] duration-[var(--dur-1)]",
         active
-          ? cn("border-[var(--brand-edge)]", TONE_ACTIVE[tone])
-          : "border-[var(--edge)] bg-[var(--pane-sunken)] text-[var(--ink-3)] hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+          ? cn("border-[var(--green-line)]", TONE_ACTIVE[tone])
+          : "border-[var(--line)] bg-[var(--surface-sunk)] text-[var(--text-3)] hover:border-[var(--line-strong)] hover:text-[var(--text)]",
         className,
       )}
     >
       {icon}
       {children}
       {count !== undefined && count > 0 ? (
-        <span className="t-num text-[11px] font-semibold opacity-70">{count}</span>
+        <span className="ts-num text-[12px] font-semibold opacity-70">{count}</span>
       ) : null}
     </button>
   );

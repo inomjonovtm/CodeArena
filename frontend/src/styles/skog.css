@@ -1,0 +1,721 @@
+/* ==========================================================================
+   CODEARENA — dizayn tizimi "SKOG"
+   --------------------------------------------------------------------------
+   Skandinaviya minimalizmi + zamonaviy clean-tech. Butun sayt shu bitta
+   fayldagi tokenlar va sinflar ustida quriladi.
+
+   OLTITA QARORDAN IBORAT:
+
+   1. OQ SAHIFA, OQ KARTA. Fon sof oq (#FFFFFF), karta ham OQ. Ular
+      bir-biridan RANG bilan emas — bir piksel chiziq va deyarli
+      sezilmaydigan soya bilan ajraladi. Bo'lim ajratish kerak bo'lsa,
+      juda och yashil-oq lenta (`--bg-tint`) ishlatiladi.
+   2. YASHIL — HARAKAT RANGI. #2E7D32 faqat tugma, havola, faol holat va
+      ijobiy natijada ko'rinadi. Bezak uchun yashil ishlatilmaydi.
+   3. SIYOH NEYTRAL. Matn deyarli qora (#16191B) va uning uch pog'onasi.
+      Ular sovuq ham, iliq ham emas — yashil yonida toza ko'rinadi.
+   4. O'LCHAM ANIQ. Asosiy matn 15px, sarlavhalar 20-48px oralig'ida.
+      Ulkan tipografika yo'q: o'lcham emas, BO'SHLIQ ierarxiya yaratadi.
+   5. BURCHAK YUMSHOQ, KAPSULA YO'Q. Tugma 10px, karta 14px, maydon 8px.
+      To'liq yumaloq shakl faqat avatar va nuqtada.
+   6. HARAKAT DEYARLI YO'Q. Faqat rang/soya o'tishi (120-180ms) va tugma
+      bosilganda 1px cho'kish. Parallax, siljish, masshtab, porlash,
+      scroll animatsiyasi — tizimda YO'Q.
+
+   Bu fayl FAQAT tokenlar va umumiy sinflarni beradi. Komponentlarning
+   o'zi React qatlamida (`components/kit`) turadi.
+   ========================================================================== */
+
+@theme {
+  /* Shriftlar `app/layout.tsx` da next/font orqali ulanadi. Bitta shrift —
+     Inter: sarlavha ham, interfeys ham, raqam ham. Monoshrift faqat kod,
+     terminal chiqishi va test ma'lumotlari uchun. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jet), ui-monospace, "SF Mono", Consolas, monospace;
+}
+
+/* ==========================================================================
+   1. TOKENLAR — yorug' rejim
+   ========================================================================== */
+:root {
+  /* --- sirtlar -----------------------------------------------------------
+     Sahifa OQ, karta ham OQ. Farq faqat chiziq va soyada — shuning uchun
+     interfeys "qutilarga bo'lingan" emas, "qog'ozga bosilgan" ko'rinadi.
+     `bg-tint` — sahifani bo'limlarga ajratadigan yagona fon: juda och
+     yashil-oq, ya'ni palitradan chiqmaydi. */
+  --bg: #ffffff;
+  --bg-tint: #f6faf7;
+  --surface: #ffffff;
+  --surface-hover: #f4f8f5;
+  --surface-sunk: #f3f7f4;
+
+  /* --- chiziqlar ---------------------------------------------------------
+     Uch pog'ona: `line` — odatiy chegara, `line-soft` — ro'yxat ichidagi
+     ajratgich (undan ham tinchroq), `line-strong` — kirish maydoni va
+     ikkinchi darajali tugma konturi. */
+  --line: #e4eae6;
+  --line-soft: #eff3f0;
+  --line-strong: #d2dcd6;
+
+  /* --- siyoh -------------------------------------------------------------
+     Neytral, deyarli qora. To'rt pog'onaning HAMMASI oq fonda WCAG AA dan
+     o'tadi, ya'ni istalganini matnga qo'yish xavfsiz:
+       #16191b 16.9:1 · #3a443f 9.6:1 · #5a655f 6.2:1 · #6f7a74 4.7:1 */
+  --text: #16191b;
+  --text-2: #3a443f;
+  --text-3: #5a655f;
+  --text-4: #6f7a74;
+  --text-on-green: #ffffff;
+
+  /* --- yashil ------------------------------------------------------------
+     Tabiiy, tozalangan yashil. `green` — amal rangi (oq ustida 4.9:1, ustida
+     oq matn ham 4.9:1 — ikkala tomonga AA). `green-text` bir pog'ona
+     quyuqroq: oq fonda YOZUV uchun (5.6:1). `mid` va `pale` — FAQAT bezak
+     (diagramma, ko'rsatkich, daraja belgisi); ular matnga qo'yilmaydi. */
+  --green: #2e7d32;
+  --green-hover: #276e2b;
+  --green-active: #1f5c23;
+  --green-text: #2a6e2e;
+  --green-mid: #4caf50;
+  --green-pale: #81c784;
+  --green-wash: #eef6ef;
+  --green-wash-2: #dceddd;
+  --green-line: #c3dfc5;
+
+  /* --- semantik ----------------------------------------------------------
+     Palitrada qizil, sariq va ko'k YO'Q — talab shunday. Shuning uchun
+     holat farqi RANG bilan emas, YORLIQ, IKONKA va OG'IRLIK bilan
+     beriladi: ijobiy natija yashil, salbiy — quyuq siyoh, kutish —
+     tinch kulrang. Har bir holat yonida doim matnli yorliq turadi. */
+  --ok: #2e7d32;
+  --ok-wash: #eef6ef;
+  --ok-line: #c3dfc5;
+  --warn: #5a655f;
+  --warn-wash: #f2f5f3;
+  --warn-line: #dfe5e2;
+  --danger: #1f2422;
+  --danger-wash: #f0f2f1;
+  --danger-line: #d5dbd8;
+  --info: #2e7d32;
+  --info-wash: #eef6ef;
+  --info-line: #c3dfc5;
+
+  /* --- qiyinlik ----------------------------------------------------------
+     Bitta yashil oilaning uch toni. Yoniga uch ustunli belgi qo'yiladi —
+     daraja shakl orqali ham o'qiladi. */
+  --easy: #81c784;
+  --medium: #4caf50;
+  --hard: #2e7d32;
+
+  /* --- burchaklar --------------------------------------------------------
+     Bitta shkala, orasida tasodifiy qiymat yo'q. Kapsula (999px) faqat
+     avatar, nuqta va yuklanish chizig'ida. */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* --- soyalar -----------------------------------------------------------
+     JUDA yengil va neytral. Karta "suzmaydi" — u qog'ozga bir qadam yaqin
+     turadi, xolos. Har bir pog'ona ikki qavat: yaqin tegish soyasi va
+     uzoq yumshoq yoyilma. */
+  --shadow-xs: 0 1px 2px rgb(20 30 25 / 0.05);
+  --shadow-sm:
+    0 1px 2px rgb(20 30 25 / 0.04),
+    0 2px 8px -4px rgb(20 30 25 / 0.06);
+  --shadow-md:
+    0 2px 4px -2px rgb(20 30 25 / 0.05),
+    0 8px 24px -8px rgb(20 30 25 / 0.1);
+  --shadow-lg:
+    0 4px 12px -4px rgb(20 30 25 / 0.07),
+    0 20px 48px -16px rgb(20 30 25 / 0.14);
+
+  /* --- fokus -------------------------------------------------------------
+     Yashil halqa, 2px chekinish bilan — u hech qachon element ichidagi
+     matnga tegmaydi. */
+  --focus-ring: rgb(46 125 50 / 0.35);
+  --focus-w: 3px;
+
+  /* --- o'lchamlar --------------------------------------------------------
+     Konteyner 1120px — eski 1320px dan tor. Sabab: 15px matnda 1320px
+     ustun juda uzun qatorlar berardi. Panel 60px: navigatsiya interfeys
+     elementi, sahifa emas. */
+  --container: 1120px;
+  --container-narrow: 704px;
+  --pad-x: clamp(20px, 4vw, 40px);
+  --nav-h: 60px;
+  --tabbar-h: 60px;
+  --rail: 68px;
+  --rail-open: 244px;
+
+  /* Bo'limlar orasidagi nafas — sahifa ritmi shu uch qiymatda */
+  --gap-lg: clamp(56px, 7vw, 96px);
+  --gap-md: clamp(40px, 5vw, 64px);
+  --gap-sm: clamp(28px, 3.5vw, 40px);
+
+  /* --- harakat -----------------------------------------------------------
+     Ikkita davomiylik va bitta egri chiziq. Undan ortig'i kerak emas. */
+  --dur-1: 120ms;
+  --dur-2: 180ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- kod sirti ---------------------------------------------------------
+     Muharrir va kod bloki oq bo'la olmaydi: sintaksis ranglari yo'qoladi.
+     Bitta chuqur neytral-qora sirt ajratilgan. */
+  --code-bg: #101413;
+  --code-bg-2: #171d1a;
+  --code-line: #262e2a;
+  --code-text: #e8eeea;
+  --code-text-2: #9aa8a1;
+  --code-key: #7ed184;
+
+  /* --- yashil blok -------------------------------------------------------
+     Sahifadagi YAGONA to'yingan yuza (futer). Temaga bo'ysunmaydi. */
+  --green-block: #1f5c23;
+  --green-block-2: #194b1d;
+  --green-block-line: rgb(255 255 255 / 0.16);
+  --green-block-text: #ffffff;
+  --green-block-text-2: #cfe6d1;
+}
+
+/* ==========================================================================
+   2. TOKENLAR — qorong'i rejim
+   --------------------------------------------------------------------------
+   Xuddi shu tizim teskari yo'nalishda: chuqur neytral-qora sahifa, bir
+   pog'ona ochroq karta, yorug'roq yashil (to'q fonda AA uchun). Yorug'
+   rejim asosiy va sukut bo'yicha; bu — tizim sozlamasini hurmat qiladigan
+   zaxira.
+   ========================================================================== */
+.dark {
+  --bg: #0f1311;
+  --bg-tint: #0b0f0d;
+  --surface: #161b18;
+  --surface-hover: #1e2521;
+  --surface-sunk: #111614;
+
+  --line: #262e29;
+  --line-soft: #1e2521;
+  --line-strong: #36413b;
+
+  --text: #eaf0ec;
+  --text-2: #b9c4be;
+  --text-3: #94a19a;
+  --text-4: #7e8b84;
+  /* Qorong'i rejimda yashil yorug'roq, shuning uchun ustidagi matn QORA */
+  --text-on-green: #0b1a0d;
+
+  --green: #6fcf74;
+  --green-hover: #86d98a;
+  --green-active: #5bbf60;
+  --green-text: #86d98a;
+  --green-mid: #5bbf60;
+  --green-pale: #3f8a44;
+  --green-wash: #16281a;
+  --green-wash-2: #1d3521;
+  --green-line: #2c4a31;
+
+  --ok: #6fcf74;
+  --ok-wash: #16281a;
+  --ok-line: #2c4a31;
+  --warn: #94a19a;
+  --warn-wash: #1a201d;
+  --warn-line: #2b332f;
+  --danger: #eaf0ec;
+  --danger-wash: #1c2220;
+  --danger-line: #333b37;
+  --info: #6fcf74;
+  --info-wash: #16281a;
+  --info-line: #2c4a31;
+
+  --easy: #3f8a44;
+  --medium: #5bbf60;
+  --hard: #9fe0a3;
+
+  /* To'q fonda soya yolg'iz ko'rinmaydi — har bir pog'onaga ichkaridan
+     bir piksel yorug' qirra qo'shiladi. */
+  --shadow-xs: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --shadow-sm:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 2px 8px -4px rgb(0 0 0 / 0.6);
+  --shadow-md:
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 8px 24px -8px rgb(0 0 0 / 0.7);
+  --shadow-lg:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 20px 48px -16px rgb(0 0 0 / 0.8);
+
+  --focus-ring: rgb(111 207 116 / 0.4);
+
+  --code-bg: #0c100e;
+  --code-bg-2: #141a17;
+
+  --green-block: #16281a;
+  --green-block-2: #101f14;
+  --green-block-line: rgb(255 255 255 / 0.12);
+}
+
+/* ==========================================================================
+   3. TAILWIND UCHUN RANG NOMLARI
+   --------------------------------------------------------------------------
+   `bg-surface`, `text-text-3`, `border-line` kabi sinflar shu yerdan
+   keladi. Tokenning o'zi yuqorida — bu faqat ko'prik.
+   ========================================================================== */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-tint: var(--bg-tint);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-sunk: var(--surface-sunk);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-strong: var(--line-strong);
+
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-text-4: var(--text-4);
+  --color-text-on-green: var(--text-on-green);
+
+  --color-green: var(--green);
+  --color-green-hover: var(--green-hover);
+  --color-green-active: var(--green-active);
+  --color-green-text: var(--green-text);
+  --color-green-mid: var(--green-mid);
+  --color-green-pale: var(--green-pale);
+  --color-green-wash: var(--green-wash);
+  --color-green-wash-2: var(--green-wash-2);
+  --color-green-line: var(--green-line);
+
+  --color-ok: var(--ok);
+  --color-ok-wash: var(--ok-wash);
+  --color-warn: var(--warn);
+  --color-warn-wash: var(--warn-wash);
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+  --color-info: var(--info);
+  --color-info-wash: var(--info-wash);
+
+  --color-easy: var(--easy);
+  --color-medium: var(--medium);
+  --color-hard: var(--hard);
+
+  --color-code-bg: var(--code-bg);
+  --color-code-bg-2: var(--code-bg-2);
+  --color-code-line: var(--code-line);
+  --color-code-text: var(--code-text);
+  --color-code-text-2: var(--code-text-2);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+}
+
+/* ==========================================================================
+   4. TIPOGRAFIKA
+   --------------------------------------------------------------------------
+   Asosiy matn 15px. Shkala tor va aniq: qo'shni pog'onalar orasidagi farq
+   ko'rinadi, lekin sakrash yo'q. Sarlavhalar zich terilgan (600, manfiy
+   harf oralig'i), matn tinch (400).
+
+   Harf oralig'i o'lchamga TESKARI: 48px sarlavhada bo'shliqlar ko'zga
+   kattalashadi — zichlashtiriladi; 12px yorliqda esa ochiladi.
+   ========================================================================== */
+@layer components {
+  /* Bosh sahifa sarlavhasi — 34px → 48px. Tizimning eng katta yozuvi. */
+  .ts-display {
+    font-size: clamp(2.125rem, 1.55rem + 2.4vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.026em;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  /* Sahifa sarlavhasi — 26px → 34px */
+  .ts-h1 {
+    font-size: clamp(1.625rem, 1.35rem + 1.15vw, 2.125rem);
+    line-height: 1.18;
+    letter-spacing: -0.022em;
+    font-weight: 650;
+    text-wrap: balance;
+  }
+  /* Bo'lim sarlavhasi — 20px → 24px */
+  .ts-h2 {
+    font-size: clamp(1.25rem, 1.15rem + 0.45vw, 1.5rem);
+    line-height: 1.3;
+    letter-spacing: -0.016em;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+  /* Karta/panel sarlavhasi — 17px */
+  .ts-h3 {
+    font-size: 1.0625rem;
+    line-height: 1.4;
+    letter-spacing: -0.011em;
+    font-weight: 600;
+  }
+  /* Sarlavha ostidagi yetakchi xatboshi — 16px → 18px */
+  .ts-lead {
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    line-height: 1.6;
+    letter-spacing: -0.008em;
+    color: var(--text-3);
+    text-wrap: pretty;
+  }
+  /* Asosiy matn — 15px */
+  .ts-body {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    letter-spacing: -0.005em;
+    text-wrap: pretty;
+  }
+  /* Ikkinchi darajali qator — 14px */
+  .ts-sm {
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+  /* Uchinchi daraja: meta, izoh, hisoblagich — 13px */
+  .ts-xs {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+  /* Ustun va bo'lim yorlig'i — 12px, KATTA harflarda.
+     Oraliq atigi +0.06em: keng terilgan yorliq 2010-yillar uslubi bo'lib,
+     toza tizimda "shovqin" bo'lib ko'rinadi. */
+  .ts-label {
+    font-size: 0.75rem;
+    line-height: 1.45;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-4);
+  }
+  /* Raqam — ustunlar tik tursin */
+  .ts-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.012em;
+  }
+  /* Interfeys ichidagi ko'rsatkich — 28px → 36px */
+  .ts-metric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-size: clamp(1.75rem, 1.45rem + 1.2vw, 2.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.028em;
+    font-weight: 650;
+  }
+}
+
+/* ==========================================================================
+   5. SIRTLAR
+   ========================================================================== */
+
+/**
+ * KARTA — oq yuza, bir piksel chiziq, deyarli sezilmaydigan soya.
+ * Chiziq VA soya birga kerak: yolg'iz chiziq kartani "chizma" qiladi,
+ * yolg'iz soya esa oq fonda yo'qoladi.
+ */
+@utility card {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+/** Bosiladigan karta — hoverda faqat chiziq quyuqlashadi va soya bir
+    pog'ona ochiladi. Siljish, masshtab, rang o'zgarishi YO'Q. */
+@utility card-link {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--dur-1) var(--ease),
+    box-shadow var(--dur-1) var(--ease);
+}
+.card-link:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/** BOTIQ maydon — karta ICHIDA: kirish maydoni, bo'sh holat, kod o'rami. */
+@utility well {
+  background-color: var(--surface-sunk);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+
+/** SUZUVCHI qatlam — menyu, popover, modal. Yagona joy: sezilarli soya. */
+@utility float {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+/** Yashil yuvindi — tanlangan holat, ijobiy natija foni. */
+@utility wash {
+  background-color: var(--green-wash);
+  border: 1px solid var(--green-line);
+  border-radius: var(--radius-md);
+}
+
+/* --------------------------------------------------------------- chiziqlar */
+
+@utility divider {
+  border-top: 1px solid var(--line);
+}
+@utility divider-soft {
+  border-top: 1px solid var(--line-soft);
+}
+
+/** Chap qirradagi yashil chiziq — tanlangan yoki ochiq element. */
+@utility edge-green {
+  position: relative;
+}
+.edge-green::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--green);
+}
+
+/* ==========================================================================
+   6. TARTIB
+   ========================================================================== */
+
+/** Sahifa konteyneri — 1120px, chetlari clamp bilan. */
+@utility wrap {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--pad-x);
+}
+
+/** Matn ustuni — huquqiy sahifa, maqola, forma. */
+@utility wrap-narrow {
+  width: 100%;
+  max-width: var(--container-narrow);
+  margin-inline: auto;
+  padding-inline: var(--pad-x);
+}
+
+/** Bo'limlar orasidagi vertikal nafas. */
+@utility section {
+  padding-block: var(--gap-lg);
+}
+@utility section-sm {
+  padding-block: var(--gap-md);
+}
+
+/* ==========================================================================
+   7. FOKUS
+   --------------------------------------------------------------------------
+   Butun sayt bo'ylab BITTA fokus ko'rinishi. `:focus-visible` — sichqoncha
+   bilan bosilganda halqa chiqmaydi, klaviatura bilan esa doim chiqadi.
+   ========================================================================== */
+@utility ring-focus {
+  outline: none;
+}
+.ring-focus:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ==========================================================================
+   8. MA'LUMOT JADVALI
+   --------------------------------------------------------------------------
+   Katalog sahifalarining asosiy tartibi. Quti yo'q — jadval qog'ozda
+   turadi va uni faqat ingichka chiziqlar ajratadi. Raqamli ustunlar
+   O'NGDAN tekislanadi: faqat shunda birlik birlik ostiga tushadi.
+   ========================================================================== */
+@layer components {
+  .grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .grid-table thead th {
+    /* Ustki bo'shliq shart: usiz sarlavha yuqoridagi panelning pastki
+       chizig'iga yopishib, ikki chiziq orasiga siqilib qolardi. */
+    padding: 12px 14px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.45;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-4);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .grid-table tbody td {
+    padding: 13px 14px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--line-soft);
+  }
+
+  .grid-table tbody tr:last-child td {
+    border-bottom-color: var(--line);
+  }
+
+  .grid-table tbody tr {
+    transition: background-color var(--dur-1) var(--ease);
+  }
+  .grid-table tbody tr:hover {
+    background-color: var(--surface-hover);
+  }
+
+  .grid-table .col-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    white-space: nowrap;
+  }
+
+  /* Tor ekranda jadval O'Z maydonida suriladi — sahifa emas. */
+  .table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+}
+
+/* ==========================================================================
+   9. QATLAM ALMASHTIRGICHLARI
+   --------------------------------------------------------------------------
+   Blok ichida tokenlar qayta belgilanadi — natijada umumiy komponentlar
+   (tugma, karta, chip) o'z kodiga tegmasdan yangi sirtga moslashadi.
+   ========================================================================== */
+
+/** To'yingan YASHIL blok — sahifada bittadan ortiq bo'lmaydi (odatda futer).
+    Bu yerda aksent OQ bo'ladi: yashil ustida yana yashil ishlamaydi. */
+.on-green {
+  --bg: var(--green-block);
+  --bg-tint: var(--green-block-2);
+  --surface: var(--green-block-2);
+  --surface-hover: color-mix(in oklab, #ffffff 8%, var(--green-block-2));
+  --surface-sunk: color-mix(in oklab, #000000 14%, var(--green-block-2));
+
+  --line: var(--green-block-line);
+  --line-soft: rgb(255 255 255 / 0.1);
+  --line-strong: rgb(255 255 255 / 0.32);
+
+  --text: var(--green-block-text);
+  --text-2: var(--green-block-text-2);
+  --text-3: var(--green-block-text-2);
+  --text-4: #a8ccab;
+
+  --green: #ffffff;
+  --green-hover: #ffffff;
+  --green-active: var(--green-block-text-2);
+  --green-text: #ffffff;
+  --green-wash: rgb(255 255 255 / 0.12);
+  --green-wash-2: rgb(255 255 255 / 0.2);
+  --green-line: rgb(255 255 255 / 0.34);
+  --text-on-green: var(--green-block);
+
+  --ok: #ffffff;
+  --ok-wash: rgb(255 255 255 / 0.12);
+  --danger: #ffffff;
+  --danger-wash: rgb(255 255 255 / 0.12);
+  --info: #ffffff;
+  --info-wash: rgb(255 255 255 / 0.12);
+
+  --focus-ring: rgb(255 255 255 / 0.5);
+  --shadow-xs: none;
+  --shadow-sm: none;
+
+  background-color: var(--green-block);
+  color: var(--green-block-text);
+}
+.on-green .ring-focus:focus-visible {
+  outline-color: #ffffff;
+}
+
+/** KOD sirti — muharrir, terminal, test ma'lumotlari. */
+.on-code {
+  --bg: var(--code-bg);
+  --bg-tint: var(--code-bg);
+  --surface: var(--code-bg-2);
+  --surface-hover: #1d2420;
+  --surface-sunk: #0a0d0c;
+
+  --line: var(--code-line);
+  --line-soft: #1c2320;
+  --line-strong: #35403a;
+
+  --text: var(--code-text);
+  --text-2: #c4d1ca;
+  --text-3: var(--code-text-2);
+  --text-4: #7c8b83;
+
+  --green: var(--code-key);
+  --green-hover: #9adb9f;
+  --green-text: var(--code-key);
+  --green-wash: rgb(126 209 132 / 0.14);
+  --green-wash-2: rgb(126 209 132 / 0.22);
+  --green-line: rgb(126 209 132 / 0.36);
+  --text-on-green: #0b1a0d;
+
+  --ok: var(--code-key);
+  --ok-wash: rgb(126 209 132 / 0.14);
+  --danger: var(--code-text);
+  --danger-wash: rgb(255 255 255 / 0.08);
+
+  --focus-ring: rgb(126 209 132 / 0.42);
+  --shadow-xs: none;
+
+  background-color: var(--code-bg);
+  color: var(--code-text);
+}
+
+/* ==========================================================================
+   10. FOYDALI MAYDA UTILITY'LAR
+   ========================================================================== */
+
+/** Ingichka aylantirish paneli — yon ro'yxat va uzun menyu uchun. */
+@utility scroll-thin {
+  scrollbar-width: thin;
+}
+
+/** Aylantirish paneli umuman ko'rinmasin (tab lentasi, chip qatori). */
+@utility scroll-hidden {
+  scrollbar-width: none;
+}
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/** Gorizontal lentaning chetlari yumshoq so'nadi — kesilgan element
+    "davomi bor" degan ishorani beradi. */
+@utility fade-x {
+  mask-image: linear-gradient(90deg, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+}
+
+/** Faqat ekran o'quvchi uchun. */
+@utility sr-only-ca {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}

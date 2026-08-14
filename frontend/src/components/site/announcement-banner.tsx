@@ -15,16 +15,16 @@ const DISMISSED_KEY = "codearena-dismissed-announcements";
 /* Fon — rang yuvindisi, chegara o'sha rangdan. Neytral chegara yuvindi
    ustida "boshqa komponentdan" ko'rinardi (global `*` qoidasi tufayli). */
 const LEVELS = {
-  info: { icon: Info, wash: "var(--note-wash)", ink: "var(--note)" },
+  info: { icon: Info, wash: "var(--info-wash)", ink: "var(--info)" },
   success: { icon: CheckCircle2, wash: "var(--ok-wash)", ink: "var(--ok)" },
   warning: { icon: TriangleAlert, wash: "var(--warn-wash)", ink: "var(--warn)" },
-  danger: { icon: AlertCircle, wash: "var(--bad-wash)", ink: "var(--bad)" },
+  danger: { icon: AlertCircle, wash: "var(--danger-wash)", ink: "var(--danger)" },
 } as const;
 
 /**
  * Bannerdagi amal tugmasi.
  *
- * Rang bannerning ohangidan olinadi — alohida brend ko'ki qo'shilsa, ogohlantirish
+ * Rang bannerning ohangidan olinadi — alohida brend yashili qo'shilsa, ogohlantirish
  * bannerida ikki xil signal urishib ketardi.
  */
 function AnnouncementAction({
@@ -38,9 +38,9 @@ function AnnouncementAction({
 }) {
   const external = /^https?:\/\//.test(href);
   const className = cn(
-    "focus-ring mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-[var(--r-ctl)]",
-    "border px-2.5 text-[12.5px] font-semibold",
-    "transition-[background-color,border-color] duration-[var(--t-fast)]",
+    "ring-focus mt-2.5 inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-sm)]",
+    "border px-2.5 text-[13px] font-semibold",
+    "transition-[background-color,border-color] duration-[var(--dur-1)]",
   );
   const style = {
     borderColor: `color-mix(in oklab, ${ink} 38%, transparent)`,
@@ -114,9 +114,9 @@ export function AnnouncementBanner() {
 
   /* Banner sahifa konteyneri ICHIDA turadi: `SiteShell` allaqachon kenglik
      cheklovi va chekinish beradi, shuning uchun bu yerda o'z konteynerini
-     ochish bannerni kontentdan siljitib qo'yardi (max-w-6xl ≠ --page). */
+     ochish bannerni kontentdan siljitib qo'yardi (max-w-6xl ≠ --container). */
   return (
-    <div className="enter mb-7 flex flex-col gap-2">
+    <div className="mb-12 flex flex-col gap-3">
       {rows.map((row) => {
         const meta = LEVELS[row.level] ?? LEVELS.info;
         const Icon = meta.icon;
@@ -124,18 +124,18 @@ export function AnnouncementBanner() {
           <div
             key={row.id}
             role="status"
-            className="flex items-start gap-3 rounded-[var(--r-pane)] border px-4 py-3"
+            className="flex items-start gap-4 rounded-[var(--radius-lg)] border px-6 py-5"
             style={{
               backgroundColor: meta.wash,
               borderColor: `color-mix(in oklab, ${meta.ink} 24%, transparent)`,
               color: meta.ink,
             }}
           >
-            <Icon className="mt-0.5 size-4 shrink-0" />
+            <Icon className="mt-0.5 size-5 shrink-0" />
             <div className="min-w-0 flex-1">
-              <p className="text-[13.5px] font-semibold">{title(row)}</p>
+              <p className="text-[16px] font-semibold">{title(row)}</p>
               {body(row) ? (
-                <p className="mt-0.5 text-[13px] leading-relaxed opacity-90">{body(row)}</p>
+                <p className="mt-1.5 text-[15px] leading-relaxed opacity-90">{body(row)}</p>
               ) : null}
 
               {/* Amal tugmasi — e'lon endi faqat xabar bermaydi, ish ham
@@ -155,11 +155,11 @@ export function AnnouncementBanner() {
                 onClick={() => dismiss(row.id)}
                 aria-label={t.common.close}
                 className={cn(
-                  "focus-ring -mt-0.5 -mr-1.5 inline-flex size-7 shrink-0 items-center justify-center",
-                  "rounded-[var(--r-ctl)] opacity-60 transition-opacity hover:opacity-100",
+                  "ring-focus -mt-1 -mr-2 inline-flex size-9 shrink-0 items-center justify-center",
+                  "rounded-full opacity-60 transition-opacity hover:opacity-100",
                 )}
               >
-                <X className="size-3.5" />
+                <X className="size-4" />
               </button>
             ) : null}
           </div>

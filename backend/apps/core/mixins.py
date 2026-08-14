@@ -33,6 +33,27 @@ def write_audit(request, *, action_name: str, obj=None, target_type: str = "",
     )
 
 
+class OwnScopedMixin:
+    """Muallif (setter) faqat O'ZI yaratgan yozuvlarni ko'radi va tahrirlaydi.
+
+    Admin va moderator uchun hech narsa o'zgarmaydi — ular hammasini ko'radi.
+    Egalik maydoni `owner_field` bilan e'lon qilinadi (`author`, `created_by`).
+
+    Nega huquq kodlari yetarli emas: `problems.edit` huquqi «masala tahrirlash»
+    degani, «HAR QANDAY masalani tahrirlash» degani emas. Bir necha muallif
+    ishlaydigan saytda bu farq muhim.
+    """
+
+    owner_field = "author"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        if getattr(user, "role", "") == "setter":
+            return queryset.filter(**{self.owner_field: user})
+        return queryset
+
+
 def serialize_instance(instance) -> dict:
     """Modelni audit uchun sodda dict ko'rinishiga o'tkazadi."""
     data = {}
@@ -60,8 +81,11 @@ class AuditLogMixin:
     def _label(self) -> str:
         return self.audit_label or self.queryset.model.__name__.lower()
 
-    def perform_create(self, serializer):
-        instance = serializer.save()
+    # `save_kwargs` — `updated_by=...` kabi qo'shimchalar shu yerdan o'tadi.
+    # Ilova view'da `serializer.save(...)` ni O'ZI chaqirib, keyin super()ga
+    # murojaat qilsa, yozuv ikki marta saqlanardi (INSERT + ortiqcha UPDATE).
+    def perform_create(self, serializer, **save_kwargs):
+        instance = serializer.save(**save_kwargs)
         write_audit(
             self.request,
             action_name=f"{self._label()}.create",
@@ -70,9 +94,9 @@ class AuditLogMixin:
         )
         return instance
 
-    def perform_update(self, serializer):
+    def perform_update(self, serializer, **save_kwargs):
         before = serialize_instance(serializer.instance)
-        instance = serializer.save()
+        instance = serializer.save(**save_kwargs)
         after = serialize_instance(instance)
         write_audit(
             self.request,

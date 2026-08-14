@@ -86,10 +86,10 @@ export function FollowButton({
       aria-pressed={isFollowing}
       className={cn(
         // Obunani bekor qilish niyati hoverda qizil tus bilan ogohlantiriladi
-        // (to'ldirma qat'iy — shaffof chegara oq va ko'kni qorishtiradi)
+        // (to'ldirma qat'iy — shaffof chegara oq va yashilni qorishtiradi)
         isFollowing &&
           hovering &&
-          "border-[var(--bad)] bg-[var(--bad-wash)] text-[var(--bad)] hover:bg-[var(--bad-wash)]",
+          "border-[var(--danger)] bg-[var(--danger-wash)] text-[var(--danger)] hover:bg-[var(--danger-wash)]",
         className,
       )}
     >
@@ -141,7 +141,7 @@ export function FollowListModal({
         />
       ) : (
         <>
-          <ul className="enter-stagger flex max-h-[26rem] flex-col gap-0.5 overflow-y-auto">
+          <ul className="flex max-h-[26rem] flex-col gap-0.5 overflow-y-auto">
             {rows.map((row) => (
               <li key={row.username}>
                 <UserRow row={row} onNavigate={onClose} />
@@ -169,20 +169,20 @@ export function UserRow({ row, onNavigate }: { row: UserCard; onNavigate?: () =>
   const [following, setFollowing] = useState(row.is_following);
 
   return (
-    <div className="flex items-center gap-3 rounded-[var(--r-field)] px-2 py-2 transition-colors hover:bg-[var(--pane-hover)]">
+    <div className="flex items-center gap-3 rounded-[var(--radius-sm)] px-2 py-2 transition-colors hover:bg-[var(--surface-hover)]">
       <Link
         href={`/u/${row.username}`}
         onClick={onNavigate}
-        className="focus-ring flex min-w-0 flex-1 items-center gap-3 rounded-[var(--r-ctl)]"
+        className="ring-focus flex min-w-0 flex-1 items-center gap-3 rounded-[var(--radius-sm)]"
       >
         <RankAvatar src={row.avatar_url} name={row.full_name || row.username} size={40} rank={row.rank} />
         <span className="min-w-0">
-          <span className="block truncate text-[14px] font-medium text-[var(--ink)]">
+          <span className="block truncate text-[15px] font-medium text-[var(--text)]">
             {row.username}
           </span>
-          <span className="t-meta block truncate text-[var(--ink-3)]">
-            <span className="t-num">{formatNumber(row.total_points)}</span> {t.site.nav.points} ·{" "}
-            {t.site.nav.rating} <span className="t-num">{row.rating}</span>
+          <span className="ts-sm block truncate text-[var(--text-3)]">
+            <span className="ts-num">{formatNumber(row.total_points)}</span> {t.site.nav.points} ·{" "}
+            {t.site.nav.rating} <span className="ts-num">{row.rating}</span>
           </span>
         </span>
       </Link>

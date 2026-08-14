@@ -1,568 +1,431 @@
 @import "tailwindcss";
 
 /* Dizayn tili — barcha ekranlar shundan quriladi. */
-@import "../styles/aurora.css";
+@import "../styles/skog.css";
+
+/* Studio (muallif paneli) qatlami — faqat `.studio` ichida ishlaydi. */
+@import "../styles/studio.css";
 
 /* ==========================================================================
-   ESKI TOKEN NOMLARI — moslik qatlami
+   HUJJAT ASOSI
    --------------------------------------------------------------------------
-   Admin panelning bir qismi hali `bg-surface`, `text-fg-muted`, `--danger`
-   kabi eski nomlardan foydalanadi. Bu blok ularni YANGI palitraga ulaydi:
-   nomlar eski, ranglar esa qora + oq + ko'k tizimidan. Shu tufayli admin
-   ekranlariga tegmasdan ular ham yangi rangda chiqadi.
-
-   Semantik nomlar (`--success`, `--danger`) ataylab rangsiz: butun sayt
-   bo'ylab yashil/qizil yo'q, ma'no yorliq va ikonka bilan beriladi.
+   Bu yerda FAQAT hujjat darajasidagi qoidalar turadi: rejim, matn terish
+   sifati, tanlov, aylantirish paneli, markdown va chop etish. Rang
+   tokenlari va utility'lar — `styles/skog.css` da, bitta manbada.
    ========================================================================== */
 
 :root {
   color-scheme: light;
-
-  /* Sirtlar — oq sahifa, oq kartalar, och kulrang lenta */
-  --bg: #ffffff;
-  --bg-subtle: #fafafa;
-  --bg-muted: #f5f5f5;
-  --surface: #ffffff;
-  --surface-hover: #fafafa;
-  --surface-active: #f5f5f5;
-
-  /* Matn — sof qora shkala */
-  --fg: #0a0a0a;
-  --fg-muted: #737373;
-  --fg-subtle: #a3a3a3;
-  --fg-inverse: #ffffff;
-
-  /* Chegara */
-  --border: #e5e5e5;
-  --border-strong: #d4d4d4;
-  --ring: #1e5eff;
-
-  /* Aksent — amal ko'ki */
-  --accent: #1e5eff;
-  --accent-hover: #4c7fff;
-  --accent-active: #0b3fc4;
-  --accent-fg: #ffffff;
-  --accent-soft: #eef3ff;
-  --accent-soft-fg: #1e5eff;
-
-  /* Holat — rangsiz semantika */
-  --success: #1e5eff;
-  --success-soft: #eef3ff;
-  --warning: #4a4a4a;
-  --warning-soft: #f5f5f5;
-  --danger: #0a0a0a;
-  --danger-soft: #f0f0f0;
-  --info: #1e5eff;
-  --info-soft: #eef3ff;
-  --neutral: #737373;
-  --neutral-soft: #f5f5f5;
-
-  --shadow-sm: 0 1px 2px rgb(10 10 10 / 0.04);
-  --shadow: 0 1px 3px rgb(10 10 10 / 0.06);
-  --shadow-md: 0 8px 24px -6px rgb(10 10 10 / 0.1);
-  --shadow-lg: 0 16px 48px -12px rgb(10 10 10 / 0.18);
-
-  --radius: 0.625rem;
-  --header-h: 4.5rem;
-  --shimmer: rgb(10 10 10 / 0.07);
 }
 
 .dark {
   color-scheme: dark;
-
-  --bg: #0a0a0a;
-  --bg-subtle: #0a0a0a;
-  --bg-muted: #111111;
-  --surface: #171717;
-  --surface-hover: #1f1f1f;
-  --surface-active: #1f1f1f;
-
-  --fg: #fafafa;
-  --fg-muted: #a3a3a3;
-  --fg-subtle: #737373;
-  --fg-inverse: #0a0a0a;
-
-  --border: #262626;
-  --border-strong: #3d3d3d;
-  --ring: #4c7fff;
-
-  --accent: #4c7fff;
-  --accent-hover: #7fa5ff;
-  --accent-active: #1e5eff;
-  --accent-fg: #ffffff;
-  --accent-soft: #11203f;
-  --accent-soft-fg: #8fb1ff;
-
-  --success: #7fa5ff;
-  --success-soft: #11203f;
-  --warning: #d4d4d4;
-  --warning-soft: #1f1f1f;
-  --danger: #fafafa;
-  --danger-soft: #262626;
-  --info: #7fa5ff;
-  --info-soft: #11203f;
-  --neutral: #a3a3a3;
-  --neutral-soft: #111111;
-
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow: 0 1px 3px rgb(0 0 0 / 0.5);
-  --shadow-md: 0 8px 24px -6px rgb(0 0 0 / 0.6);
-  --shadow-lg: 0 16px 48px -12px rgb(0 0 0 / 0.8);
-  --shimmer: rgb(255 255 255 / 0.06);
-}
-
-@theme inline {
-  --color-bg: var(--bg);
-  --color-bg-subtle: var(--bg-subtle);
-  --color-bg-muted: var(--bg-muted);
-  --color-surface: var(--surface);
-  --color-surface-hover: var(--surface-hover);
-  --color-surface-active: var(--surface-active);
-  --color-fg: var(--fg);
-  --color-fg-muted: var(--fg-muted);
-  --color-fg-subtle: var(--fg-subtle);
-  --color-fg-inverse: var(--fg-inverse);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-ring: var(--ring);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-active: var(--accent-active);
-  --color-accent-fg: var(--accent-fg);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-soft-fg: var(--accent-soft-fg);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-info: var(--info);
-  --color-info-soft: var(--info-soft);
-  --color-neutral: var(--neutral);
-  --color-neutral-soft: var(--neutral-soft);
-  --radius-DEFAULT: var(--radius);
 }
 
 /*
- * MUHIM: bu qoidalar `@layer base` ichida turishi shart.
- * Qatlamsiz CSS Tailwind utility'laridan ustun turadi — ya'ni qatlamsiz
- * `* { border-color }` sayt bo'ylab chegara ranglarini bosib ketardi.
+ * MUHIM: bu qoidalar `@layer base` ichida turishi shart. Qatlamsiz CSS
+ * Tailwind utility'laridan ustun turadi — ya'ni qatlamsiz `* { border-color }`
+ * sayt bo'ylab chegara ranglarini bosib ketardi.
  */
 @layer base {
   * {
-    border-color: var(--border);
+    border-color: var(--line);
   }
 
   html {
     -webkit-text-size-adjust: 100%;
-    /* Sahifa ichidagi havolalar bosilganda silliq siljish. Yopishqoq panel
-       maqsad sarlavhani yopib qo'ymasligi uchun tepadan chekinish. */
-    scroll-behavior: smooth;
-    scroll-padding-top: calc(var(--bar) + 24px);
+    /* Yopishqoq panel maqsad sarlavhani yopib qo'ymasligi uchun chekinish */
+    scroll-padding-top: calc(var(--nav-h) + 24px);
   }
 
   body {
-    background-color: var(--canvas);
-    color: var(--ink);
+    background-color: var(--bg);
+    color: var(--text);
     font-family: var(--font-sans);
-    /* Inter'ning muqobil shakllari: bir qavatli `a`, to'g'ri `l`, ochiq `1`. */
+    /* ASOSIY O'LCHAM 15px — clean-tech interfeyslarning odatiy o'lchami.
+       Komponent darajasida o'lchami yozilmagan har bir matn shu asosda
+       teriladi. */
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    /* Inter'ning muqobil shakllari: bir qavatli `a`, to'g'ri `l`, ochiq `1` */
     font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss03";
+    font-optical-sizing: auto;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3 {
-    font-family: var(--font-display);
-    letter-spacing: -0.026em;
+  /* Xatboshi oxirida yolg'iz qolgan so'z ("etim") bo'lmasin */
+  p, li, dd, figcaption, blockquote {
+    text-wrap: pretty;
   }
 
+  /* Sarlavha qatorlari teng uzunlikda bo'linadi. O'zbekcha so'zlar uzun —
+     muvozanatsiz sarlavhada oxirgi qatorda bitta so'z yolg'iz qolardi. */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* Uzun uzluksiz satr (URL, `two_sum_with_hashmap`) tor ustunda
+     gorizontal aylantirish chiqarmasin */
+  p, li, h1, h2, h3, h4, td, th, dd, dt {
+    overflow-wrap: break-word;
+  }
+
+  /* Tanlov — yashil yuvindi, siyoh o'z rangida qoladi. To'yingan yashil
+     fon ustida tanlangan matn o'qilmay qolardi. */
   ::selection {
-    background-color: var(--brand);
-    color: #ffffff;
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
+    background-color: var(--green-wash-2);
+    color: var(--text);
   }
 }
 
-/* Scrollbar */
+/* ==========================================================================
+   AYLANTIRISH PANELI — ingichka, sirt bilan qo'shilib ketadi
+   ========================================================================== */
 ::-webkit-scrollbar {
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--edge-strong);
-  border-radius: 999px;
-  border: 3.5px solid transparent;
+  background: var(--line-strong);
+  border-radius: var(--radius-full);
+  border: 3px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-4);
+  background: var(--text-4);
   background-clip: content-box;
 }
 
-@utility scrollbar-thin {
-  scrollbar-width: thin;
+/* ==========================================================================
+   HARAKAT — tizimda faqat SHU ikkisi bor
+   --------------------------------------------------------------------------
+   Kirish animatsiyasi, scroll bo'yicha paydo bo'lish, parallax va siljish
+   olib tashlangan: ular sahifani "jonli" emas, betoqat qiladi. Qolgani —
+   ikkita foydali mikro-interaksiya:
+
+     `pop-in`  — suzuvchi qatlam (menyu, modal) 120ms ichida ochiladi.
+                 Bunisiz qatlam ekranda "sakrab" paydo bo'ladi.
+     `pulse-soft` — davom etayotgan jarayon (tekshiruv) belgisi.
+   ========================================================================== */
+@keyframes ca-pop-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to { opacity: 1; transform: none; }
+}
+.pop-in {
+  animation: ca-pop-in var(--dur-1) var(--ease) both;
 }
 
-/* --------------------------------------------------------- animatsiyalar */
-@keyframes ca-fade-in {
+@keyframes ca-pulse-soft {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.pulse-soft {
+  animation: ca-pulse-soft 1.4s var(--ease) infinite;
+}
+
+/* Yuklanish skeleti. Ilgari u bo'ylab yorug' chiziq yugurardi (shimmer);
+   ro'yxatda 20 ta skelet bo'lganda ekran "miltillardi". Endi — sokin
+   nafas: fon bir tekis och, shaffofligi esa yumshoq o'zgaradi. */
+.loading-block {
+  background-color: var(--surface-sunk);
+  border-radius: var(--radius-xs);
+  animation: ca-pulse-soft 1.6s var(--ease) infinite;
+}
+
+/* Modal va pastdan chiqadigan varaq. Bularsiz oyna ekranda "urib"
+   paydo bo'ladi va foydalanuvchi qayerdan kelganini tushunmaydi.
+   Masofa atigi 8px — bu harakat emas, yo'nalish ishorasi. */
+@keyframes ca-veil-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes ca-slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes ca-scale-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes ca-countdown {
-  from { width: 100%; }
-  to { width: 0%; }
-}
-
-.animate-fade-in { animation: ca-fade-in var(--t-fast) ease-out; }
-.animate-slide-up { animation: ca-slide-up var(--t-slow) var(--ease-soft); }
-.animate-scale-in { animation: ca-scale-in var(--t-fast) var(--ease-snap); }
-
-/* ==========================================================================
-   Sahifa almashuvi — yengil fade
-   --------------------------------------------------------------------------
-   Sahifa o'zgarganda kontent 220ms ichida paydo bo'ladi. Siljish YO'Q:
-   navigatsiyada gorizontal/vertikal siljish tarkibni "sakragan" ko'rsatadi
-   va yopishqoq panel bilan to'qnashadi. Faqat shaffoflik — tinch va tez.
-   ========================================================================== */
-@keyframes ca-page-in {
+@keyframes ca-sheet-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
-.page-in {
-  animation: ca-page-in 220ms var(--ease-soft) both;
+.enter-veil {
+  animation: ca-veil-in var(--dur-1) var(--ease) both;
 }
-
-/* --------------------------------------------------------------- ranklar */
-@keyframes ca-rank-spin {
-  to { transform: rotate(360deg); }
+.enter-sheet {
+  animation: ca-sheet-in var(--dur-2) var(--ease) both;
 }
-@keyframes ca-rank-glow {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.28); }
-}
-.animate-rank-spin {
-  animation: ca-rank-spin 7s linear infinite;
-}
-/* Halqa aylansa ham ichidagi rasm tik turishi kerak */
-.animate-rank-spin > * {
-  animation: ca-rank-spin 7s linear infinite reverse;
-}
-.animate-rank-glow {
-  animation: ca-rank-glow 2.6s ease-in-out infinite;
-}
-
-/* Muqova maydonlari uchun nozik katak fon */
-.bg-grid {
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* ---------------------------------------------- scroll bo'yicha paydo bo'lish
-   20px pastdan + shaffoflikdan, 500ms. Masshtab yo'q: masshtablangan blok
-   kirish paytida matnni bir zumda xiralashtiradi. */
-.reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity var(--t-reveal) var(--ease-soft),
-    transform var(--t-reveal) var(--ease-soft);
-  will-change: opacity, transform;
-}
-.reveal[data-visible="true"] {
-  opacity: 1;
-  transform: none;
-}
-
-/* ==========================================================================
-   Slayder (range) — interaktiv bo'lim uchun
-   --------------------------------------------------------------------------
-   Yo'l kulrang, bosib o'tilgan qismi KO'K, tugmasi (thumb) oq va ko'k
-   halqali. Bosib o'tilgan qism `--progress` o'zgaruvchisi orqali gradient
-   bilan chiziladi: `::-moz-range-progress` faqat Firefox'da bor, gradient
-   esa hamma joyda bir xil ishlaydi.
-   ========================================================================== */
-.slider-blue {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    var(--brand) 0%,
-    var(--brand) var(--progress, 0%),
-    color-mix(in oklab, var(--stage-ink-3) 45%, transparent) var(--progress, 0%),
-    color-mix(in oklab, var(--stage-ink-3) 45%, transparent) 100%
-  );
-  outline: none;
-  cursor: pointer;
-}
-
-.slider-blue::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 3px solid var(--brand);
-  cursor: grab;
-  transition:
-    transform var(--t-fast) var(--ease-snap),
-    box-shadow var(--t-fast) ease;
-}
-.slider-blue::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 3px solid var(--brand);
-  cursor: grab;
-  transition:
-    transform var(--t-fast) var(--ease-snap),
-    box-shadow var(--t-fast) ease;
-}
-
-.slider-blue:hover::-webkit-slider-thumb {
-  transform: scale(1.1);
-}
-.slider-blue:hover::-moz-range-thumb {
-  transform: scale(1.1);
-}
-
-.slider-blue:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 var(--focus-w) var(--focus);
-}
-.slider-blue:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 var(--focus-w) var(--focus);
-}
-
-.slider-blue:active::-webkit-slider-thumb {
-  cursor: grabbing;
-}
-.slider-blue:active::-moz-range-thumb {
-  cursor: grabbing;
-}
-
-/* ==========================================================================
-   Mijoz logotiplari lentasi
-   --------------------------------------------------------------------------
-   Monoxrom holatda logotiplar sahifadan ajralib turmaydi va e'tiborni
-   sarlavhadan tortmaydi; sichqoncha kelganda esa "jonlanadi".
-   ========================================================================== */
-.logo-strip-item {
-  filter: grayscale(1);
-  opacity: 0.55;
-  transition:
-    filter var(--t-slow) ease,
-    opacity var(--t-slow) ease;
-}
-.logo-strip-item:hover {
-  filter: grayscale(0);
-  opacity: 1;
+.enter-pop {
+  animation: ca-pop-in var(--dur-1) var(--ease) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal {
-    opacity: 1;
-    transform: none;
-  }
-  .page-in {
-    animation: none;
-  }
-  html {
-    scroll-behavior: auto;
-  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* ------------------------------------------------------------ markdown
-   Havola/iqtibos — ko'k, kod — botiq sirt. */
+/* ==========================================================================
+   "ASOSIY KONTENTGA O'TISH" HAVOLASI
+   Odatda ko'rinmaydi; Tab bosilganda panelning tepasidan chiqadi.
+   ========================================================================== */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.skip-link:focus-visible {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 200;
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  height: 38px;
+  margin: 0;
+  padding: 0 16px;
+  overflow: visible;
+  clip-path: none;
+  border-radius: var(--radius-md);
+  background: var(--green);
+  color: var(--text-on-green);
+  font-size: 0.875rem;
+  font-weight: 600;
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   SLAYDER (range)
+   --------------------------------------------------------------------------
+   Yo'l och kulrang, bosib o'tilgan qismi yashil, tugmasi oq va yashil
+   konturli. Hoverda masshtab yo'q — faqat kontur quyuqlashadi.
+   ========================================================================== */
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--green) 0%,
+    var(--green) var(--progress, 0%),
+    var(--line) var(--progress, 0%),
+    var(--line) 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 2px solid var(--green);
+  box-shadow: var(--shadow-xs);
+  cursor: grab;
+  transition: border-color var(--dur-1) var(--ease);
+}
+.range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  border: 2px solid var(--green);
+  box-shadow: var(--shadow-xs);
+  cursor: grab;
+  transition: border-color var(--dur-1) var(--ease);
+}
+.range:hover::-webkit-slider-thumb { border-color: var(--green-hover); }
+.range:hover::-moz-range-thumb { border-color: var(--green-hover); }
+.range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 var(--focus-w) var(--focus-ring); }
+.range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 var(--focus-w) var(--focus-ring); }
+.range:active::-webkit-slider-thumb { cursor: grabbing; }
+.range:active::-moz-range-thumb { cursor: grabbing; }
+
+/* ==========================================================================
+   MARKDOWN — masala sharti, editorial, yordam sahifasi
+   --------------------------------------------------------------------------
+   Eng ko'p o'qiladigan matn. Shuning uchun u interfeysdan bir pog'ona
+   YIRIKROQ (16px) va qatorlari ochroq (1.75) teriladi.
+   ========================================================================== */
 .prose-ca {
-  color: var(--ink-2);
+  color: var(--text-2);
   font-size: 1rem;
-  line-height: 1.72;
+  line-height: 1.75;
 }
 .prose-ca h1, .prose-ca h2, .prose-ca h3 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  margin: 1.7em 0 0.5em;
-  line-height: 1.2;
-  letter-spacing: -0.026em;
-  color: var(--ink);
+  font-weight: 600;
+  margin: 1.8em 0 0.6em;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
-.prose-ca h1 { font-size: 1.75rem; }
-.prose-ca h2 { font-size: 1.375rem; }
-.prose-ca h3 { font-size: 1.125rem; }
+.prose-ca h1 { font-size: 1.5rem; }
+.prose-ca h2 { font-size: 1.25rem; }
+.prose-ca h3 { font-size: 1.0625rem; }
 .prose-ca > :first-child { margin-top: 0; }
-.prose-ca p { margin: 0.9em 0; }
-.prose-ca strong { color: var(--ink); font-weight: 600; }
-.prose-ca ul, .prose-ca ol { margin: 0.9em 0; padding-left: 1.3em; }
+.prose-ca p { margin: 1em 0; }
+.prose-ca strong { color: var(--text); font-weight: 600; }
+.prose-ca ul, .prose-ca ol { margin: 1em 0; padding-left: 1.35em; }
 .prose-ca ul { list-style: disc; }
 .prose-ca ol { list-style: decimal; }
-.prose-ca li { margin: 0.35em 0; }
-.prose-ca li::marker { color: var(--ink-4); }
+.prose-ca li { margin: 0.4em 0; }
+.prose-ca li::marker { color: var(--text-4); }
 .prose-ca code {
   font-family: var(--font-mono);
-  font-size: 0.85em;
-  color: var(--ink);
-  background: var(--pane-sunken);
-  border: 1px solid var(--edge-soft);
-  padding: 0.1em 0.36em;
-  border-radius: 6px;
+  font-size: 0.875em;
+  color: var(--text);
+  background: var(--surface-sunk);
+  border: 1px solid var(--line);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-xs);
 }
 .prose-ca pre {
-  background: var(--pane-sunken);
-  border: 1px solid var(--edge-soft);
-  padding: 1.1rem 1.2rem;
-  border-radius: var(--r-field);
+  background: var(--code-bg);
+  border: 1px solid var(--code-line);
+  color: var(--code-text);
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius-md);
   overflow-x: auto;
-  margin: 1.2em 0;
+  margin: 1.4em 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
 }
-.prose-ca pre code { background: transparent; border: 0; padding: 0; font-size: 0.8125rem; }
+.prose-ca pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font-size: inherit;
+}
 .prose-ca a {
-  color: var(--brand);
+  color: var(--green-text);
+  font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: var(--brand-edge);
-  transition: text-decoration-color var(--t-fast) ease;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--green-line);
+  transition: text-decoration-color var(--dur-1) var(--ease);
 }
-.prose-ca a:hover { text-decoration-color: var(--brand); }
+.prose-ca a:hover { text-decoration-color: var(--green); }
 .prose-ca blockquote {
-  border-left: 2px solid var(--brand);
-  padding-left: 1.2rem;
-  color: var(--ink-3);
-  margin: 1.3em 0;
+  border-left: 2px solid var(--green-line);
+  padding-left: 1.15rem;
+  color: var(--text-3);
+  margin: 1.4em 0;
 }
-.prose-ca hr { border: 0; border-top: 1px solid var(--edge); margin: 2.2em 0; }
+.prose-ca hr { border: 0; border-top: 1px solid var(--line); margin: 2.2em 0; }
 /* Jadval o'rami — tor ekranda jadval o'z maydonida suriladi, sahifa emas */
-.prose-ca .table-scroll { overflow-x: auto; margin: 1.3em 0; }
+.prose-ca .table-scroll { overflow-x: auto; margin: 1.4em 0; }
 .prose-ca .table-scroll table { margin: 0; }
-.prose-ca table { width: 100%; border-collapse: collapse; margin: 1.3em 0; font-size: 0.9375rem; }
-.prose-ca th, .prose-ca td { border-bottom: 1px solid var(--edge-soft); padding: 0.7rem 0.9rem; text-align: left; }
+.prose-ca table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.4em 0;
+  font-size: 0.9375rem;
+}
+.prose-ca th, .prose-ca td {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+}
 .prose-ca td { font-variant-numeric: tabular-nums; }
 .prose-ca th {
   font-weight: 600;
   font-size: 0.75rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  border-bottom-color: var(--edge);
+  color: var(--text-4);
+  border-bottom-color: var(--line);
 }
 
 /* ==========================================================================
-   To'q sahna — kalkulyator/interaktiv bo'lim va kod paneli
+   MAJBURIY RANGLAR REJIMI (Windows High Contrast)
    --------------------------------------------------------------------------
-   Sahifa oq, ammo BITTA bo'lim to'q bo'ladi: kontrast sahifa ritmini
-   ochadi va o'sha bo'limni "boshqacha" qilib ko'rsatadi. Sahifada bunday
-   bo'lim ikkitadan ortiq bo'lmasligi kerak.
+   Bu rejimda tizim barcha fon va matn ranglarini o'zinikiga almashtiradi,
+   `box-shadow` ni esa umuman chizmaydi. Bizda soya ikkinchi darajali
+   (chiziq asosiy), shuning uchun faqat faol holatni ta'kidlash yetarli.
    ========================================================================== */
-
-.stage-surface {
-  background: var(--stage-2);
-  color: var(--stage-ink);
+@media (forced-colors: active) {
+  [aria-selected="true"],
+  [aria-current="page"],
+  [data-active="true"] {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+  :focus-visible {
+    outline-color: Highlight;
+  }
 }
 
-/* Sahna ustidagi yumshoq yorug'lik — aniq markazli radial manba. */
-.stage-glow::before {
-  content: "";
-  position: absolute;
-  inset: -20% -10% auto -10%;
-  height: 70%;
-  background: radial-gradient(
-    60% 60% at 50% 0%,
-    color-mix(in oklab, var(--stage-brand) 16%, transparent),
-    transparent 70%
-  );
-  pointer-events: none;
-}
+/* ==========================================================================
+   CHOP ETISH
+   --------------------------------------------------------------------------
+   Masala sharti va huquqiy sahifalar qog'ozga chiqadi. Standart holatda
+   qog'ozga yopishqoq panel va yashil bloklar tushardi.
+   ========================================================================== */
+@media print {
+  :root,
+  .dark,
+  .studio,
+  .on-green,
+  .on-code {
+    color-scheme: light;
+    --bg: #ffffff;
+    --bg-tint: #ffffff;
+    --surface: #ffffff;
+    --surface-sunk: #ffffff;
+    --text: #000000;
+    --text-2: #1a1a1a;
+    --text-3: #333333;
+    --text-4: #4d4d4d;
+    --line: #cccccc;
+    --line-soft: #dddddd;
+    --green: #000000;
+    --green-text: #000000;
+    --code-bg: #ffffff;
+    --code-text: #000000;
+  }
 
-/* --------------------------------------------------- sahnadagi kartalar */
-.stage-card {
-  border: 1px solid var(--stage-edge);
-  border-radius: var(--r-pane);
-  background: var(--stage);
-  transition:
-    transform var(--t-slow) var(--ease-snap),
-    border-color var(--t-slow) var(--ease-snap),
-    box-shadow var(--t-slow) var(--ease-snap);
-}
+  body {
+    background: #ffffff;
+  }
 
-.stage-card:hover {
-  transform: translateY(-4px);
-  border-color: color-mix(in oklab, var(--stage-brand) 55%, transparent);
-  box-shadow: 0 18px 46px -22px rgb(0 0 0 / 0.9);
-}
+  header,
+  nav,
+  footer,
+  aside,
+  [role="dialog"],
+  [data-print="hide"],
+  .skip-link {
+    display: none !important;
+  }
 
-/* Qadamlar chizig'i — scrollda pastga "o'sadi" */
-.step-line {
-  transform-origin: top;
-  transform: scaleY(0);
-  transition: transform 600ms var(--ease-soft);
-}
-.reveal[data-visible="true"] .step-line { transform: scaleY(1); }
+  * {
+    box-shadow: none !important;
+  }
 
-/* Test qatori — tekshirilayotgan qator sekin pulsatsiya qiladi */
-@keyframes ca-test-run {
-  0%, 100% { opacity: 0.45; }
-  50%      { opacity: 1; }
-}
-.test-running { animation: ca-test-run 900ms ease-in-out infinite; }
+  /* Havola manzili matn ichida ko'rinsin — qog'ozda bosib bo'lmaydi */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #4d4d4d;
+  }
 
-/* To'q bo'lim ichida sirt/siyoh tokenlari qayta belgilanadi — natijada
-   umumiy komponentlar (tugma, karta, forma) o'z kodiga tegmasdan to'q
-   sirtga moslashadi. */
-.on-dark {
-  --canvas: var(--stage-2);
-  --canvas-deep: #000000;
-  --pane: var(--stage);
-  --pane-solid: var(--stage);
-  --pane-hover: #1f1f1f;
-  --pane-sunken: #111111;
-
-  --edge: var(--stage-edge);
-  --edge-soft: #1f1f1f;
-  --edge-strong: #3d3d3d;
-
-  --ink: var(--stage-ink);
-  --ink-2: #d4d4d4;
-  --ink-3: var(--stage-ink-2);
-  --ink-4: var(--stage-ink-3);
-
-  --brand: var(--stage-brand);
-  --brand-hover: #7fa5ff;
-  --brand-ink: var(--stage-brand);
-  /* To'q bo'limda ko'k ochroq — ustidagi matn qora bo'lgandagina AA */
-  --ink-on-brand: #0a0a0a;
-  --brand-wash: color-mix(in oklab, var(--stage-brand) 16%, transparent);
-  --brand-wash-strong: color-mix(in oklab, var(--stage-brand) 26%, transparent);
-  --brand-edge: color-mix(in oklab, var(--stage-brand) 40%, transparent);
-
-  color: var(--stage-ink);
-}
-
-/* Eski nom — bosh sahifaning to'q variantidan qolgan. Yangi kod `on-dark`
-   ishlatadi; bu qator hali yangilanmagan joylarni ushlab turadi. */
-.landing-dark {
-  background: var(--stage-2);
+  h1, h2, h3 {
+    break-after: avoid-page;
+  }
+  pre, blockquote, table, figure {
+    break-inside: avoid-page;
+  }
 }

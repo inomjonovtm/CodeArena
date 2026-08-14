@@ -4,9 +4,9 @@ import {
   Bookmark,
   CalendarDays,
   CircleHelp,
-  GraduationCap,
   History,
   LayoutDashboard,
+  PenTool,
   ListChecks,
   MessageSquare,
   Phone,
@@ -53,13 +53,6 @@ export function useNavModel() {
 
   const groups: NavGroup[] = [
     {
-      key: "learn",
-      label: t.site.sections.learn,
-      links: [
-        { href: "/courses", label: t.site.nav.courses, icon: <GraduationCap className="size-[18px]" /> },
-      ],
-    },
-    {
       key: "practice",
       label: t.site.sections.practice,
       links: [
@@ -101,15 +94,34 @@ export function useNavModel() {
   return { groups, support, legal };
 }
 
-export function useAccountLinks(username?: string, canAccessAdmin?: boolean) {
+/**
+ * Profil menyusidagi havolalar.
+ *
+ * `external: true` — havola Next router bilan emas, to'liq sahifa
+ * yuklash bilan ochiladi. Admin panel Django ilovasi (`/admin`), uni
+ * klient marshrutizatori orqali ochib bo'lmaydi.
+ */
+export function useAccountLinks(
+  username?: string,
+  canAccessStudio?: boolean,
+  canAccessAdmin?: boolean,
+) {
   const { t } = useI18n();
   return [
     ...(username
       ? [{ href: `/u/${username}`, label: t.site.nav.myProfile, icon: <Users className="size-4" /> }]
       : []),
     { href: "/settings", label: t.site.nav.settings, icon: <Settings className="size-4" /> },
+    ...(canAccessStudio
+      ? [{ href: "/studio", label: "Studio", icon: <PenTool className="size-4" /> }]
+      : []),
     ...(canAccessAdmin
-      ? [{ href: "/admin", label: t.site.nav.adminPanel, icon: <LayoutDashboard className="size-4" /> }]
+      ? [{
+          href: "/admin/",
+          label: t.site.nav.adminPanel,
+          icon: <LayoutDashboard className="size-4" />,
+          external: true,
+        }]
       : []),
   ];
 }

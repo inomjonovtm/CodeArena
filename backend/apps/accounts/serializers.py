@@ -42,7 +42,17 @@ class MeSerializer(serializers.ModelSerializer):
         return {
             "is_admin": obj.role == Role.ADMIN,
             "is_moderator": obj.role == Role.MODERATOR,
-            "can_access_admin": obj.role in {Role.ADMIN, Role.MODERATOR} and bool(codes),
+            "is_setter": obj.role == Role.SETTER,
+            # Boshqaruv paneli (`/admin/`) — FAQAT administrator.
+            # Moderator u yerga kirmaydi: panel bazaning to'g'ridan-to'g'ri
+            # ko'rinishi va undagi xato qaytarilmas. Moderator kontentni
+            # saytning o'z interfeysidan boshqaradi — u yerda har bir amal
+            # cheklangan va jurnalga yoziladi. Server tomonida bu `is_staff`
+            # bilan ta'minlangan (`apps.accounts.roles.apply_role`); bu
+            # bayroq faqat menyuni shunga moslaydi.
+            "can_access_admin": obj.role == Role.ADMIN and bool(codes),
+            # Studio — muallif paneli: admin, moderator va muallif kiradi.
+            "can_access_studio": obj.is_studio_member and "authoring.view" in codes,
             "can_manage_users": "users.edit" in codes,
             "can_manage_problems": "problems.edit" in codes,
             "can_manage_settings": "settings.edit" in codes,
@@ -267,9 +277,29 @@ class AdminUserCreateSerializer(serializers.ModelSerializer):
         password_validation.validate_password(value)
         return value
 
+    def validate_role(self, value):
+        """Rol tayinlash alohida `users.role` huquqi bilan qo'riqlanadi.
+
+        Aks holda `users.edit` huquqi bor xodim yangi hisob yaratish orqali
+        o'ziga admin «mintib» olishi mumkin edi — `change_role` dagi tekshiruv
+        chetlab o'tilardi.
+        """
+        request = self.context.get("request")
+        if value != Role.USER and request and not request.user.has_perm_code("users.role"):
+            raise serializers.ValidationError(
+                "Rol tayinlash uchun «Rolni o'zgartirish» huquqi kerak."
+            )
+        return value
+
     def create(self, validated_data):
+        from .roles import apply_role
+
         password = validated_data.pop("password")
-        return User.objects.create_user(password=password, **validated_data)
+        user = User.objects.create_user(password=password, **validated_data)
+        # Django guruhi va `is_staff` rolga ergashsin — `change_role` bilan
+        # bir xil yo'l.
+        apply_role(user)
+        return user
 
 
 class BanSerializer(serializers.Serializer):

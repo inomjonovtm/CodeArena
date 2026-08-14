@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import django_filters as filters
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.db.models import Avg, Count
 from django.utils import timezone
 from rest_framework import mixins, status, viewsets
@@ -11,10 +13,18 @@ from apps.core import site_settings
 from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
 from apps.core.permissions import HasResourcePerm, IsStaff
 
-from .models import Announcement, AuditLog, PlagiarismPair, PlagiarismStatus, SiteSetting
+from .models import (
+    Announcement,
+    AuditLog,
+    LegalDocument,
+    PlagiarismPair,
+    PlagiarismStatus,
+    SiteSetting,
+)
 from .serializers import (
     AnnouncementSerializer,
     AuditLogSerializer,
+    LegalDocumentSerializer,
     PlagiarismPairDetailSerializer,
     PlagiarismPairListSerializer,
     PlagiarismReviewSerializer,
@@ -51,6 +61,9 @@ class AdminPlagiarismViewSet(
     ordering = ["-similarity"]
     audit_label = "plagiarism"
     bulk_allowed_actions = ("delete", "clear", "confirm")
+    # `moderation` resursida `edit` kodi yo'q — qaror amallari `review` bilan
+    # ochiladi (yakka `review` action bilan bir xil huquq).
+    bulk_perm_actions = {"clear": "review", "confirm": "review"}
 
     def get_queryset(self):
         return super().get_queryset().select_related(
@@ -120,7 +133,7 @@ class AdminPlagiarismViewSet(
 
     @action(detail=False, methods=["get"])
     def summary(self, request):
-        qs = PlagiarismPair.objects.all()
+        qs = self.filter_queryset(self.get_queryset())
         return Response(
             {
                 "total": qs.count(),
@@ -193,16 +206,26 @@ class AdminAuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vie
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        model = None
+        # Nomi mos keladigan model bir nechta ilovada bo'lishi mumkin
+        # (masalan `Group` — ham `auth`, ham `community`). Taxmin qilib
+        # NOTO'G'RI jadvalga yozgandan ko'ra aniq xato qaytargan ma'qul.
+        matches = []
         for config in django_apps.get_app_configs():
             try:
-                model = config.get_model(entry.target_type)
-                break
+                matches.append(config.get_model(entry.target_type))
             except LookupError:
                 continue
-        if model is None:
+        if not matches:
             return Response({"detail": f"`{entry.target_type}` modeli topilmadi."},
                             status=status.HTTP_400_BAD_REQUEST)
+        if len(matches) > 1:
+            labels = ", ".join(m._meta.label for m in matches)
+            return Response(
+                {"detail": f"`{entry.target_type}` nomi bir nechta modelga mos "
+                           f"keladi ({labels}) — avtomatik qaytarib bo'lmaydi."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        model = matches[0]
 
         manager = getattr(model, "all_objects", model.objects)
         instance = manager.filter(pk=entry.target_id).first()
@@ -210,27 +233,55 @@ class AdminAuditLogViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vie
             return Response({"detail": "Obyekt topilmadi (o'chirilgan bo'lishi mumkin)."},
                             status=status.HTTP_404_NOT_FOUND)
 
-        editable = {f.name for f in model._meta.fields} - {"id", "created_at", "updated_at"}
+        fields_by_name = {
+            f.name: f for f in model._meta.fields
+            if f.name not in {"id", "created_at", "updated_at"}
+        }
         restored = {}
-        for field, diff in field_diffs.items():
-            if field not in editable:
+        skipped = {}
+        for field_name, diff in field_diffs.items():
+            field = fields_by_name.get(field_name)
+            if field is None:
                 continue
             value = diff.get("before")
             if value in ("None", ""):
                 value = None
-            setattr(instance, field, value)
-            restored[field] = value
+            try:
+                if field.is_relation:
+                    # Auditda FK qiymati `str(pk)` bo'lib saqlangan — obyekt
+                    # emas, `<name>_id` ustuniga yoziladi.
+                    setattr(instance, field.attname,
+                            None if value is None else field.target_field.to_python(value))
+                else:
+                    setattr(instance, field.name, field.to_python(value))
+                restored[field_name] = value
+            except (ValidationError, ValueError, TypeError) as exc:
+                skipped[field_name] = str(exc)
 
         if not restored:
-            return Response({"detail": "Qaytariladigan maydon topilmadi."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Qaytariladigan maydon topilmadi.", "skipped": skipped},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        instance.save()
+        try:
+            with transaction.atomic():
+                instance.save(update_fields=list(restored))
+        except (IntegrityError, ValidationError, ValueError) as exc:
+            return Response(
+                {"detail": f"Qaytarib bo'lmadi: {exc}", "skipped": skipped},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         write_audit(
             request, action_name="audit.revert", obj=instance,
-            changes={"reverted_entry": entry.id, "restored": restored},
+            changes={"reverted_entry": entry.id, "restored": restored, "skipped": skipped},
         )
-        return Response({"detail": f"{len(restored)} ta maydon qaytarildi.", "restored": restored})
+        return Response({
+            "detail": f"{len(restored)} ta maydon qaytarildi.",
+            "restored": restored,
+            "skipped": skipped,
+        })
 
 
 class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
@@ -243,10 +294,10 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
     perm_actions = {
         "bulk_update": "edit",
         "sync_defaults": "edit",
-        # Judge0 sahifasi alohida huquqlar bilan ishlaydi
+        # Kod bajarish sahifasi alohida huquqlar bilan ishlaydi
         "judge_config": "judge.view",
         "judge_config_save": "judge.edit",
-        "judge0_test": "judge.view",
+        "runner_test": "judge.view",
     }
     filterset_fields = ["group", "is_public"]
     search_fields = ["key", "label_uz", "label_en", "description"]
@@ -257,12 +308,10 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
     audit_label = "setting"
 
     def perform_create(self, serializer):
-        serializer.save(updated_by=self.request.user)
-        return super().perform_create(serializer)
+        return super().perform_create(serializer, updated_by=self.request.user)
 
     def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
-        return super().perform_update(serializer)
+        return super().perform_update(serializer, updated_by=self.request.user)
 
     @action(detail=False, methods=["post"], url_path="bulk-update")
     def bulk_update(self, request):
@@ -272,10 +321,14 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
             return Response({"detail": "`values` obyekt bo'lishi kerak."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        updated = []
+        by_key = {s.key: s for s in SiteSetting.objects.filter(key__in=values.keys())}
+        updated, unknown = [], []
         for key, value in values.items():
-            setting = SiteSetting.objects.filter(key=key).first()
+            setting = by_key.get(key)
             if not setting:
+                # Jim tashlab ketmaymiz — mijoz «hammasi saqlandi» deb
+                # o'ylab yurmasin.
+                unknown.append(key)
                 continue
             setting.value = value
             setting.updated_by = request.user
@@ -285,14 +338,18 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
         # Kesh tozalanmasa yangi qiymat 30 soniyagacha ishlamay turardi
         site_settings.invalidate()
         write_audit(request, action_name="setting.bulk_update", target_type="SiteSetting",
-                    target_repr=f"{len(updated)} ta", changes={"keys": updated})
-        return Response({"detail": f"{len(updated)} ta sozlama yangilandi.", "updated": updated})
+                    target_repr=f"{len(updated)} ta", changes={"keys": updated, "unknown": unknown})
+        return Response({
+            "detail": f"{len(updated)} ta sozlama yangilandi.",
+            "updated": updated,
+            "unknown": unknown,
+        })
 
     @action(detail=False, methods=["post"], url_path="sync-defaults")
     def sync_defaults(self, request):
         """Kodda e'lon qilingan, bazada yo'q sozlamalarni yaratadi.
 
-        Yangi imkoniyat qo'shilganda (masalan Judge0 parametrlari) eski bazada
+        Yangi imkoniyat qo'shilganda (masalan runner parametrlari) eski bazada
         u yo'q bo'lardi — panelda tugma bosilishi bilan hammasi paydo bo'ladi.
         """
         created = site_settings.sync_defaults()
@@ -302,7 +359,7 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="judge-config")
     def judge_config(self, request):
-        """Judge0 sahifasi uchun faqat «judge» guruhidagi sozlamalar.
+        """Kod bajarish sahifasi uchun faqat «judge» guruhidagi sozlamalar.
 
         Alohida endpoint kerak, chunki u `judge.view` huquqi bilan ochiladi —
         `settings.view` esa butun sozlamalar bo'limini ochib yuborardi.
@@ -312,16 +369,18 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"], url_path="judge-config-save")
     def judge_config_save(self, request):
-        """`judge.edit` huquqi bilan faqat Judge0 parametrlarini saqlaydi."""
+        """`judge.edit` huquqi bilan faqat kod bajarish parametrlarini saqlaydi."""
         values = request.data.get("values") or {}
         if not isinstance(values, dict):
             return Response({"detail": "`values` obyekt bo'lishi kerak."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        updated = []
+        by_key = {s.key: s for s in SiteSetting.objects.filter(key__in=values.keys(), group="judge")}
+        updated, unknown = [], []
         for key, value in values.items():
-            setting = SiteSetting.objects.filter(key=key, group="judge").first()
+            setting = by_key.get(key)
             if not setting:
+                unknown.append(key)
                 continue
             setting.value = value
             setting.updated_by = request.user
@@ -330,36 +389,21 @@ class AdminSiteSettingViewSet(AuditLogMixin, viewsets.ModelViewSet):
 
         site_settings.invalidate()
         write_audit(request, action_name="judge.config_update", target_type="SiteSetting",
-                    target_repr=f"{len(updated)} ta", changes={"keys": updated})
-        return Response({"detail": f"{len(updated)} ta sozlama yangilandi.", "updated": updated})
+                    target_repr=f"{len(updated)} ta", changes={"keys": updated, "unknown": unknown})
+        return Response({
+            "detail": f"{len(updated)} ta sozlama yangilandi.",
+            "updated": updated,
+            "unknown": unknown,
+        })
 
-    @action(detail=False, methods=["get", "post"], url_path="judge0-test")
-    def judge0_test(self, request):
-        """Joriy sozlamalar bilan Judge0 ga ulanishni sinaydi."""
-        from apps.judge.engine import health
-        from apps.judge.judge0 import Judge0Client
+    # Faqat POST: GET so'rovi tashqi xizmatga chiquvchi chaqiriq qilardi —
+    # brauzer prefetch'i yoki sahifa yangilash bilan ham ishga tushib ketardi.
+    @action(detail=False, methods=["post"], url_path="runner-test")
+    def runner_test(self, request):
+        """Kod bajarish xizmati bilan aloqani sinaydi va holatini qaytaradi."""
+        from apps.judge import engine
 
-        client = Judge0Client()
-        payload = {"url": client.base_url, "token_set": bool(client.token)}
-        try:
-            about = client.about()
-            languages = client.languages()
-            payload.update(
-                {
-                    "ok": True,
-                    "version": about.get("version", ""),
-                    "homepage": about.get("homepage", ""),
-                    "language_count": len(languages),
-                    "languages": [
-                        {"id": row.get("id"), "name": row.get("name", "")} for row in languages
-                    ],
-                }
-            )
-        except Exception as exc:  # noqa: BLE001 — tashqi xizmat
-            payload.update({"ok": False, "error": str(exc)})
-
-        payload["health"] = health(refresh=True)
-        return Response(payload)
+        return Response(engine.health(refresh=True))
 
 
 class AdminAnnouncementViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelViewSet):
@@ -380,8 +424,7 @@ class AdminAnnouncementViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelVie
     bulk_allowed_actions = ("delete", "activate", "deactivate", "pin", "unpin")
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-        return super().perform_create(serializer)
+        return super().perform_create(serializer, created_by=self.request.user)
 
     def handle_bulk_action(self, request, action_name, queryset, payload):
         if action_name == "activate":
@@ -396,26 +439,25 @@ class AdminAnnouncementViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelVie
 
     @action(detail=True, methods=["post"], url_path="send-email")
     def send_email(self, request, pk=None):
-        """E'lonni tanlangan auditoriyaga email qilib yuboradi."""
-        from apps.accounts.emails import send_announcement_email
+        """E'lonni tanlangan auditoriyaga email qilib yuborishni boshlaydi.
+
+        Yuborish FONDA (Celery) ketadi: minglab xat so'rov oqimida
+        yuborilsa, gunicorn timeout'i jarayonni o'rtada uzardi. Nechtaga
+        yetgani e'lonning `email_recipients` maydonida ko'rinadi.
+        """
+        from .tasks import send_announcement_emails
 
         announcement = self.get_object()
-        # Qabul qiluvchilar modeldagi yagona manbadan; bu yerda faqat
-        # email ruxsatini qo'shimcha filtrlaymiz
-        recipients = announcement.recipients().filter(notify_email=True)
+        planned = announcement.recipients().filter(notify_email=True).count()
 
-        sent = 0
-        for user in recipients[:2000]:
-            if send_announcement_email(user, announcement.title_uz, announcement.body_uz):
-                sent += 1
-
-        announcement.email_sent_at = timezone.now()
-        announcement.email_recipients = sent
-        announcement.save(update_fields=["email_sent_at", "email_recipients"])
+        send_announcement_emails.delay(str(announcement.pk))
 
         write_audit(request, action_name="announcement.send_email", obj=announcement,
-                    changes={"recipients": sent, "audience": announcement.audience})
-        return Response({"detail": f"{sent} ta foydalanuvchiga yuborildi.", "sent": sent})
+                    changes={"planned_recipients": planned, "audience": announcement.audience})
+        return Response({
+            "detail": f"Yuborish boshlandi — mo'ljal {min(planned, 2000)} ta qabul qiluvchi.",
+            "planned": min(planned, 2000),
+        }, status=status.HTTP_202_ACCEPTED)
 
     @action(detail=True, methods=["post"], url_path="send-notification")
     def send_notification(self, request, pk=None):
@@ -464,3 +506,29 @@ class AdminAnnouncementViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelVie
                 "sample": sample,
             }
         )
+
+
+class AdminLegalDocumentViewSet(AuditLogMixin, viewsets.ModelViewSet):
+    """`/api/admin/legal-documents/` — maxfiylik, shartlar va shu kabi sahifalar.
+
+    Huquqiy matnlar `settings` resursi huquqi bilan boshqariladi: ular sayt
+    darajasidagi hujjat, kontent moderatsiyasi emas.
+    """
+
+    queryset = LegalDocument.objects.select_related("updated_by")
+    serializer_class = LegalDocumentSerializer
+    permission_classes = [IsStaff, HasResourcePerm]
+    perm_resource = "settings"
+    filterset_fields = ["slug", "is_published"]
+    search_fields = ["title_uz", "body_md"]
+    ordering_fields = ["slug", "updated_at"]
+    ordering = ["slug"]
+    pagination_class = None
+    lookup_field = "slug"
+    audit_label = "legal_document"
+
+    def perform_create(self, serializer):
+        return super().perform_create(serializer, updated_by=self.request.user)
+
+    def perform_update(self, serializer):
+        return super().perform_update(serializer, updated_by=self.request.user)

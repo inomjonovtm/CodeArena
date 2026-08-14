@@ -1,0 +1,446 @@
+/* ==========================================================================
+   STUDIO — muallif paneli (ishxona)
+   --------------------------------------------------------------------------
+   Sayt va `/admin` — OQ, havodor, o'quvchi uchun. Studio esa ISH JOYI: bu
+   yerda odam soatlab kod yozadi, testlarni ko'radi, natijalarni solishtiradi.
+   Shuning uchun u boshqacha:
+
+     · DOIM TO'Q. Kod va terminal chiqishi uzoq qaraladigan matn — oq fonda
+       ko'z tezroq charchaydi. Studio `.dark` tokenlarini majburiy oladi,
+       foydalanuvchining sayt temasidan qat'i nazar.
+     · ZICH. Sayt ritmi 120px bo'shliqqa qurilgan; bu yerda o'lchov 8px.
+       Bir ekranda ko'proq ma'lumot ko'rinishi kerak.
+     · CHEGARA — ASOSIY VOSITA. Soya emas, chiziq: panellar bir-biriga
+       tegib turadi, xuddi muharrir oynalari kabi.
+
+   Palitra O'ZGARMAYDI: oq va yashil. Studio ularning eng to'q pog'onasini
+   oladi — chuqur zumrad-qora sirt va yorug' yashil aksent. Faqat chrome
+   (rail va yuqori panel) bir chimdim quyuqroq zumrad, shu tufayli ishxona
+   sayt sahifasi bilan adashmaydi, lekin uchinchi rang paydo bo'lmaydi.
+
+   Barcha token nomlari `--st-` bilan boshlanadi va FAQAT `.studio` ichida
+   ishlaydi — sayt tokenlariga tegmaydi.
+   ========================================================================== */
+
+.studio {
+  /* --- o'lchov
+     Rail ochiq/yopiq ikki holatda; yuqori panel ikki qavat: sahifa
+     sarlavhasi (bar) va tab lentasi (tabs). */
+  --st-rail: 248px;
+  --st-rail-mini: 64px;
+  --st-bar: 56px;
+  --st-tabs: 46px;
+
+  /* --- sirtlar
+     `chrome` — rail va yuqori panel (eng to'q zumrad).
+     `canvas` — ish maydoni. `panel` — kartalar. `sunken` — kod va chiqish. */
+  --st-chrome: #04140d;
+  --st-chrome-hover: #0d2a1d;
+  --st-canvas: #071410;
+  --st-panel: #0e1f19;
+  --st-panel-hover: #14291f;
+  --st-sunken: #051c13;
+
+  --st-edge: #1d332a;
+  --st-edge-soft: #16281f;
+  --st-edge-chrome: #133026;
+
+  /* Chiziqli fon — bo'sh ish maydoni «qora devor» bo'lib qolmasin. */
+  --st-grid:
+    linear-gradient(var(--st-edge-soft) 1px, transparent 1px) 0 0 / 100% 32px,
+    linear-gradient(90deg, var(--st-edge-soft) 1px, transparent 1px) 0 0 / 32px 100%;
+}
+
+/* To'q rejim tokenlarini majburlash: Studio har doim qorong'i.
+   `.dark` klassi bilan bir xil qiymatlar — shuning uchun ichkarida
+   ishlatiladigan barcha `kit`/`ui` komponentlari to'g'ri rangda chiqadi. */
+.studio {
+  color-scheme: dark;
+
+  --bg: var(--st-canvas);
+  --bg-tint: #04100c;
+  --surface: var(--st-panel);
+  --surface: var(--st-panel);
+  --surface-hover: var(--st-panel-hover);
+  --surface-sunk: var(--st-sunken);
+
+  --line: var(--st-edge);
+  --line-soft: var(--st-edge-soft);
+  --line-strong: #2c4a3c;
+  --line: 1px solid var(--line);
+  --line-soft: 1px solid var(--line-soft);
+
+  --text: #f2fbf6;
+  --text-2: #bfd6ca;
+  --text-3: #9dbaac;
+  --text-4: #8aa79a;
+  --text-on-green: #04140d;
+
+  --green: #34d399;
+  --green-hover: #5fe0b0;
+  --green-active: #16b673;
+  --green-mid: #5fe0b0;
+  --green-pale: #35d693;
+  --green-text: #6fe4b6;
+  --green-wash: #0b2a1e;
+  --green-wash-2: #123c2b;
+  --green-line: #1f5540;
+
+  --text: #f2fbf6;
+  --green-wash: #14291f;
+  --green-line: #2c4a3c;
+
+  --ok: #34d399;
+  --ok-wash: #0b2a1e;
+  --warn: #bfd6ca;
+  --warn-wash: #14291f;
+  --danger: #f2fbf6;
+  --danger-wash: #1d332a;
+  --info: #34d399;
+  --info-wash: #0b2a1e;
+
+  --easy: #1f7d5a;
+  --medium: #34d399;
+  --hard: #b9f5db;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.5);
+  --shadow-sm: 0 8px 24px -6px rgb(0 0 0 / 0.6), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --shadow-lg: 0 16px 48px -12px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.06);
+  --focus-ring: rgb(52 211 153 / 0.42);
+
+  background: var(--st-canvas);
+  color: var(--text);
+}
+
+/* --------------------------------------------------------------------------
+   Chrome — rail va yuqori panel
+   -------------------------------------------------------------------------- */
+.st-chrome {
+  background: var(--st-chrome);
+  border-color: var(--st-edge-chrome);
+}
+
+/* Yon menyu tugmasi. Aktiv holat RANG bilan emas, chap chetdagi yashil
+   ustun + fon bilan beriladi: rang o'zi yolg'iz qolganda dalton
+   foydalanuvchiga hech narsa demaydi. */
+.st-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 10px 0 12px;
+  border-radius: 9px;
+  color: var(--text-3);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease);
+}
+
+.st-nav:hover {
+  background: var(--st-chrome-hover);
+  color: var(--text);
+}
+
+.st-nav[data-active="true"] {
+  background: var(--green-wash);
+  color: var(--text);
+}
+
+.st-nav[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--green);
+}
+
+/* --------------------------------------------------------------------------
+   Tab lentasi — ishxonaning asosiy navigatsiyasi
+   Aktiv tab ostidagi yashil chiziq: muharrir oynalarining odatiy tili.
+   -------------------------------------------------------------------------- */
+.st-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: var(--st-tabs);
+  padding: 0 2px;
+  color: var(--text-3);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color var(--dur-1) var(--ease);
+}
+
+.st-tab:hover {
+  color: var(--text);
+}
+
+.st-tab[data-active="true"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.st-tab[data-active="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--green);
+}
+
+/* --------------------------------------------------------------------------
+   Panellar
+   -------------------------------------------------------------------------- */
+.st-panel {
+  background: var(--st-panel);
+  border: 1px solid var(--st-edge);
+  border-radius: 12px;
+}
+
+.st-sunken {
+  background: var(--st-sunken);
+  border: 1px solid var(--st-edge-soft);
+  border-radius: 10px;
+}
+
+/* Bo'sh ish maydoni — nozik panjara. Fon «tirik» ko'rinadi, lekin
+   ustidagi matnga xalaqit bermaydi (chiziqlar fon bilan deyarli bir xil). */
+.st-grid-bg {
+  background-image: var(--st-grid);
+}
+
+/* Bo'lim sarlavhasi — kichik, katta harfli, kulrang. Panel ichida
+   «bu nima» degan savolga bir qatorda javob beradi. */
+.st-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+
+/* Kod va dastur chiqishi — HAR DOIM monoshrift (DESIGN.md 1-bo'lim). */
+.st-code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+
+.st-code-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* --------------------------------------------------------------------------
+   Verdikt nishoni — rangsiz semantika
+   --------------------------------------------------------------------------
+   Palitrada yashil/qizil yo'q, shuning uchun «o'tdi / o'tmadi» farqi
+   OG'IRLIK va SHAKL bilan beriladi: o'tgan — to'ldirilgan oq nishon,
+   o'tmagan — chegarali shaffof, kutilayotgan — nuqtali.
+   -------------------------------------------------------------------------- */
+.st-verdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.st-verdict[data-tone="pass"] {
+  background: var(--text);
+  color: var(--st-canvas);
+}
+
+.st-verdict[data-tone="fail"] {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--text-3);
+}
+
+.st-verdict[data-tone="warn"] {
+  background: var(--green-wash);
+  color: var(--green-text);
+  border-color: var(--green-line);
+}
+
+.st-verdict[data-tone="idle"] {
+  background: transparent;
+  color: var(--text-4);
+  border-style: dashed;
+  border-color: var(--st-edge);
+}
+
+/* Test kataklari — generatsiya natijasini bir qarashda ko'rish uchun.
+   Har biri bitta testga to'g'ri keladi; 200 ta test ham bitta ekranga sig'adi. */
+.st-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.st-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--st-edge);
+  background: transparent;
+}
+
+.st-cell[data-tone="pass"] {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.st-cell[data-tone="fail"] {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--text-3) 0 2px,
+    transparent 2px 4px
+  );
+  border-color: var(--text-3);
+}
+
+.st-cell[data-tone="warn"] {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+/* --------------------------------------------------------------------------
+   Zich jadval — ro'yxatlar uchun
+   -------------------------------------------------------------------------- */
+.st-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13.5px;
+}
+
+.st-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--st-panel);
+  border-bottom: 1px solid var(--st-edge);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  white-space: nowrap;
+}
+
+.st-table tbody td {
+  border-bottom: 1px solid var(--st-edge-soft);
+  padding: 11px 14px;
+  vertical-align: middle;
+}
+
+.st-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.st-table tbody tr {
+  transition: background-color var(--dur-1) var(--ease);
+}
+
+.st-table tbody tr:hover {
+  background: var(--st-panel-hover);
+}
+
+.st-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   Papka daraxti (savollar bankasi)
+   -------------------------------------------------------------------------- */
+.st-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  color: var(--text-2);
+  text-align: left;
+  transition:
+    background-color var(--dur-1) var(--ease),
+    color var(--dur-1) var(--ease);
+}
+
+.st-tree-row:hover {
+  background: var(--st-panel-hover);
+  color: var(--text);
+}
+
+.st-tree-row[data-active="true"] {
+  background: var(--green-wash);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Ishxona tartibi
+   -------------------------------------------------------------------------- */
+.st-split {
+  display: grid;
+  gap: 1px;
+  background: var(--st-edge);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1280px) {
+  .st-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* Yopishqoq pastki amal paneli — uzun formada «Saqlash» hech qachon
+   ekrandan chiqib ketmaydi. */
+.st-actionbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--st-chrome) 92%, transparent);
+  border-top: 1px solid var(--st-edge-chrome);
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-nav,
+  .st-tab,
+  .st-tree-row,
+  .st-table tbody tr {
+    transition: none;
+  }
+}

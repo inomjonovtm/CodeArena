@@ -83,7 +83,7 @@ export function LessonTabs({
       aria-label="Mavzu bo'limlari"
       className={cn(
         "relative -mx-1 flex items-stretch gap-1 overflow-x-auto px-1",
-        "border-b border-[var(--edge)]",
+        "border-b border-[var(--line)]",
         className,
       )}
     >
@@ -101,10 +101,10 @@ export function LessonTabs({
             aria-selected={active}
             onClick={() => onChange(tab.key)}
             className={cn(
-              "focus-ring group relative flex shrink-0 items-center gap-2.5 rounded-t-[var(--r-ctl)]",
+              "ring-focus group relative flex shrink-0 items-center gap-2.5 rounded-t-[var(--radius-sm)]",
               "px-3.5 py-3 text-left whitespace-nowrap",
-              "transition-colors duration-[var(--t-fast)]",
-              active ? "text-[var(--ink)]" : "text-[var(--ink-3)] hover:text-[var(--ink-2)]",
+              "transition-colors duration-[var(--dur-1)]",
+              active ? "text-[var(--text)]" : "text-[var(--text-3)] hover:text-[var(--text-2)]",
             )}
           >
             {/* Tartib raqami yoki bajarilgan belgisi — bo'lim holati shu
@@ -112,24 +112,24 @@ export function LessonTabs({
             <span
               aria-hidden
               className={cn(
-                "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold",
-                "transition-colors duration-[var(--t-fast)]",
+                "grid size-6 shrink-0 place-items-center rounded-full text-[12px] font-semibold",
+                "transition-colors duration-[var(--dur-1)]",
                 tab.done
-                  ? "bg-[var(--ok)] text-[var(--canvas)]"
+                  ? "bg-[var(--ok)] text-[var(--bg)]"
                   : active
-                    ? "bg-[var(--brand)] text-[var(--ink-on-brand)]"
-                    : "border border-[var(--edge-strong)] text-[var(--ink-4)]",
+                    ? "bg-[var(--green)] text-[var(--text-on-green)]"
+                    : "border border-[var(--line-strong)] text-[var(--text-4)]",
               )}
             >
               {tab.done ? <Check className="size-3" strokeWidth={4} /> : index + 1}
             </span>
 
             <span className="flex items-center gap-1.5">
-              <span className={cn("text-[14px]", active ? "font-semibold" : "font-medium")}>
+              <span className={cn("text-[15px]", active ? "font-semibold" : "font-medium")}>
                 {tab.label}
               </span>
               {tab.count ? (
-                <span className="t-num text-[12px] text-[var(--ink-4)]">{tab.count}</span>
+                <span className="ts-num text-[12.5px] text-[var(--text-4)]">{tab.count}</span>
               ) : null}
             </span>
           </button>
@@ -141,8 +141,8 @@ export function LessonTabs({
         <span
           aria-hidden
           className={cn(
-            "absolute -bottom-px h-[2px] rounded-full bg-[var(--brand)]",
-            "transition-[left,width] duration-[var(--t-base)] ease-[var(--ease-snap)]",
+            "absolute -bottom-px h-[2px] rounded-full bg-[var(--green)]",
+            "transition-[left,width] duration-[var(--dur-2)] ease-[var(--ease)]",
           )}
           style={{ left: line.left, width: line.width }}
         />

@@ -7,30 +7,29 @@ import { useAutoGrow } from "@/hooks/use-auto-grow";
 import { cn } from "@/lib/utils";
 
 /* ==========================================================================
-   Maydonlar
+   MAYDONLAR
    --------------------------------------------------------------------------
-   Maydon OQ sirtda, ingichka kulrang chegara bilan — karta bilan bir xil
-   tilda. Fokusda chegara ko'kka o'tadi va tashqarisida yumshoq ko'k halqa
-   paydo bo'ladi: "endi shu yerdasan" degan aniq signal.
+   Maydon oq sirtda, ingichka chegara bilan — karta bilan bir xil tilda.
+   Fokusda chegara yashilga o'tadi va tizimning umumiy konturi chiziladi
+   (`skog.css`, 7-bo'lim). Maydonning o'z halqasi YO'Q: ikkalasi ustma-ust
+   tushsa, atrofida ikki qavatli yashil ramka hosil bo'lardi.
 
-   Balandlik 44px: barmoq bilan bosish uchun qulay minimal o'lcham va
-   formaga "havodor" korporativ ko'rinish beradi.
+   Balandlik 40px va matn 14px — tugma (40px) bilan bir xil. Ilgari maydon
+   52px edi va tugma yonida turganda forma "qiyshaygan" ko'rinardi.
    ========================================================================== */
 
 export const fieldBase = [
-  "w-full rounded-[var(--r-field)] border border-[var(--edge)]",
-  "bg-[var(--pane)] text-[var(--ink)]",
-  "placeholder:text-[var(--ink-4)]",
-  "transition-[background-color,border-color,box-shadow] duration-[var(--t-base)]",
-  "outline-none",
-  "hover:border-[var(--edge-strong)]",
-  "focus:border-[var(--brand)]",
-  "focus:shadow-[0_0_0_var(--focus-w)_var(--focus)]",
+  "w-full rounded-[var(--radius-sm)] border border-[var(--line-strong)]",
+  "bg-[var(--surface)] text-[var(--text)]",
+  "placeholder:text-[var(--text-4)]",
+  "transition-[border-color] duration-[var(--dur-1)] ease-[var(--ease)]",
+  "hover:border-[var(--text-4)]",
+  "focus:border-[var(--green)]",
   "disabled:opacity-50 disabled:cursor-not-allowed",
 ].join(" ");
 
-export const inputClass = cn(fieldBase, "h-11 px-4 text-[15px]");
-export const textareaClass = cn(fieldBase, "px-4 py-3 text-[15px] leading-relaxed resize-y");
+export const inputClass = cn(fieldBase, "h-10 px-3 text-[14px]");
+export const textareaClass = cn(fieldBase, "px-3 py-2.5 text-[14px] leading-relaxed resize-y");
 
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   function Input({ className, ...rest }, ref) {
@@ -104,10 +103,10 @@ export function Field({
       {label ? (
         <label
           htmlFor={htmlFor}
-          className="mb-2 flex items-center gap-1.5 text-[13.5px] font-semibold text-[var(--ink)]"
+          className="mb-1.5 flex items-center gap-1 text-[13px] font-medium text-[var(--text-2)]"
         >
           {label}
-          {required ? <span className="text-[var(--brand)]">*</span> : null}
+          {required ? <span className="text-[var(--green-text)]">*</span> : null}
         </label>
       ) : null}
 
@@ -117,24 +116,24 @@ export function Field({
       <div
         className={cn(
           error &&
-            "[&_input,&_textarea,&_select]:border-[var(--ink)] [&_input,&_textarea,&_select]:shadow-[inset_0_0_0_1px_var(--ink)]",
+            "[&_input,&_textarea,&_select]:border-[var(--text)] [&_input,&_textarea,&_select]:shadow-[inset_0_0_0_1px_var(--text)]",
         )}
       >
         {children}
       </div>
 
       {error ? (
-        <p className="mt-2 flex items-start gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+        <p className="mt-1.5 flex items-start gap-1.5 text-[13px] font-medium text-[var(--text)]">
           <span
             aria-hidden
-            className="mt-px grid size-4 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-[10px] leading-none font-bold text-[var(--canvas)]"
+            className="mt-[3px] grid size-4 shrink-0 place-items-center rounded-full bg-[var(--danger)] text-[10px] leading-none font-bold text-[var(--bg)]"
           >
             !
           </span>
           {error}
         </p>
       ) : hint ? (
-        <p className="mt-2 text-[13px] text-[var(--ink-3)]">{hint}</p>
+        <p className="mt-1.5 text-[13px] text-[var(--text-4)]">{hint}</p>
       ) : null}
     </div>
   );
@@ -163,7 +162,7 @@ export function SearchField({
   const id = useId();
   return (
     <div className={cn("relative", className)}>
-      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--ink-4)]" />
+      <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--text-4)]" />
       <input
         id={id}
         type="search"
@@ -181,8 +180,8 @@ export function SearchField({
           aria-label="Tozalash"
           className={cn(
             "absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center",
-            "rounded-[6px] text-[var(--ink-4)] transition-colors",
-            "hover:bg-[var(--pane-hover)] hover:text-[var(--ink-2)] focus-ring",
+            "rounded-[6px] text-[var(--text-4)] transition-colors",
+            "hover:bg-[var(--surface-hover)] hover:text-[var(--text-2)] ring-focus",
           )}
         >
           <X className="size-3.5" />
@@ -222,19 +221,19 @@ export function Toggle({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative h-[22px] w-10 shrink-0 rounded-[var(--r-chip)] focus-ring",
-        "transition-colors duration-[var(--t-base)] ease-[var(--ease-snap)]",
+        "relative h-[22px] w-10 shrink-0 rounded-[var(--radius-xs)] ring-focus",
+        "transition-colors duration-[var(--dur-2)] ease-[var(--ease)]",
         "disabled:opacity-50",
         checked
-          ? "bg-[var(--brand)] shadow-[inset_0_1px_2px_rgb(0_0_0/0.16)]"
-          : "border border-[var(--edge-strong)] bg-[var(--pane-sunken)]",
+          ? "bg-[var(--green)]"
+          : "border border-[var(--line-strong)] bg-[var(--surface-sunk)]",
       )}
     >
       <span
         className={cn(
           "absolute top-1/2 size-4 -translate-y-1/2 rounded-full bg-white",
-          "shadow-[0_1px_3px_rgb(10_10_10/0.3)]",
-          "transition-[left] duration-[var(--t-base)] ease-[var(--ease-snap)]",
+          "shadow-[var(--shadow-xs)]",
+          "transition-[left] duration-[var(--dur-2)] ease-[var(--ease)]",
           checked ? "left-[calc(100%-1.125rem)]" : "left-[2px]",
         )}
       />
@@ -246,8 +245,8 @@ export function Toggle({
   return (
     <div className={cn("flex items-start justify-between gap-4", className)}>
       <div className="min-w-0">
-        <p className="text-[13.5px] font-medium text-[var(--ink)]">{label}</p>
-        {hint ? <p className="t-meta mt-0.5 text-[var(--ink-4)]">{hint}</p> : null}
+        <p className="text-[14.5px] font-medium text-[var(--text)]">{label}</p>
+        {hint ? <p className="ts-sm mt-0.5 text-[var(--text-4)]">{hint}</p> : null}
       </div>
       {control}
     </div>
@@ -282,29 +281,29 @@ export function ChoiceRow<T extends string>({
             aria-checked={active}
             onClick={() => onChange(option.value)}
             className={cn(
-              "flex items-start gap-3 rounded-[var(--r-field)] border p-3.5 text-left focus-ring",
-              "transition-[background-color,border-color,box-shadow] duration-[var(--t-fast)]",
+              "flex items-start gap-3 rounded-[var(--radius-sm)] border p-3.5 text-left ring-focus",
+              "transition-[background-color,border-color,box-shadow] duration-[var(--dur-1)]",
               active
-                ? "border-[var(--brand)] bg-[var(--brand-wash)] shadow-[inset_0_0_0_1px_var(--brand)]"
-                : "border-[var(--edge)] bg-[var(--pane-sunken)] hover:border-[var(--edge-strong)]",
+                ? "border-[var(--green)] bg-[var(--green-wash)] shadow-[inset_0_0_0_1px_var(--green)]"
+                : "border-[var(--line)] bg-[var(--surface-sunk)] hover:border-[var(--line-strong)]",
             )}
           >
             {option.icon ? (
-              <span className={cn("mt-0.5", active ? "text-[var(--brand)]" : "text-[var(--ink-4)]")}>
+              <span className={cn("mt-0.5", active ? "text-[var(--green)]" : "text-[var(--text-4)]")}>
                 {option.icon}
               </span>
             ) : null}
             <span className="min-w-0">
               <span
                 className={cn(
-                  "block text-[13.5px] font-medium",
-                  active ? "text-[var(--brand-ink)]" : "text-[var(--ink)]",
+                  "block text-[14.5px] font-medium",
+                  active ? "text-[var(--green-text)]" : "text-[var(--text)]",
                 )}
               >
                 {option.label}
               </span>
               {option.hint ? (
-                <span className="mt-0.5 block text-[12.5px] text-[var(--ink-4)]">{option.hint}</span>
+                <span className="mt-0.5 block text-[13px] text-[var(--text-4)]">{option.hint}</span>
               ) : null}
             </span>
           </button>

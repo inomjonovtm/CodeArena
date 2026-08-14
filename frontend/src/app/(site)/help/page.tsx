@@ -55,7 +55,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: "Qaysi tillarda kod yozish mumkin?",
-        a: "Hozircha Python, JavaScript (Node.js) va C++ qo'llab-quvvatlanadi. Har bir masalada tanlangan til uchun boshlang'ich shablon beriladi.",
+        a: "Bir necha mashhur dasturlash tili qo'llab-quvvatlanadi — to'liq ro'yxatni masala sahifasidagi til tanlagichida ko'rasiz. Har bir masalada tanlangan til uchun boshlang'ich shablon beriladi.",
       },
       {
         q: "Emailimni tasdiqlashim kerakmi?",
@@ -101,7 +101,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: "Reyting nima va qanday o'zgaradi?",
-        a: "Reyting — musobaqalardagi natijalaringizga qarab hisoblanadigan Elo ko'rsatkichi. Boshlang'ich qiymat 1500. Reytingli musobaqadan keyin o'rningizga qarab oshadi yoki kamayadi.",
+        a: "Reyting — musobaqalardagi natijalaringizga qarab hisoblanadigan ko'rsatkich. Har bir yangi ishtirokchi bir xil boshlang'ich qiymatdan boshlaydi; reytingli musobaqadan keyin egallagan o'rningizga qarab oshadi yoki kamayadi.",
       },
       {
         q: "Seriya (streak) qanday ishlaydi?",
@@ -166,7 +166,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: "Ikki bosqichli tasdiqlash (2FA) qanday yoqiladi?",
-        a: "Sozlamalar → Xavfsizlik bo'limida QR kodni Google Authenticator yoki shunga o'xshash ilovada skanerlab, 6 xonali kodni tasdiqlang.",
+        a: "Sozlamalar → Xavfsizlik bo'limida QR kodni tasdiqlash kodi yaratuvchi istalgan ilovada skanerlab, 6 xonali kodni kiriting.",
       },
       {
         q: "Boshqa qurilmadagi sessiyani qanday yopaman?",
@@ -234,28 +234,28 @@ function FaqRow({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         className={cn(
-          "focus-ring flex w-full items-center justify-between gap-4 rounded-[var(--r-ctl)] py-4 text-left",
-          "transition-colors duration-[var(--t-fast)]",
+          "ring-focus flex w-full items-center justify-between gap-4 rounded-[var(--radius-sm)] py-4 text-left",
+          "transition-colors duration-[var(--dur-1)]",
         )}
       >
         <span
           className={cn(
-            "text-[14.5px] font-medium transition-colors duration-[var(--t-fast)]",
-            open ? "text-[var(--brand-ink)]" : "text-[var(--ink)]",
+            "text-[15.5px] font-medium transition-colors duration-[var(--dur-1)]",
+            open ? "text-[var(--green-text)]" : "text-[var(--text)]",
           )}
         >
           {question}
         </span>
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 text-[var(--ink-4)] transition-transform duration-[var(--t-base)] ease-[var(--ease-snap)]",
-            open && "rotate-180 text-[var(--brand)]",
+            "size-4 shrink-0 text-[var(--text-4)] transition-transform duration-[var(--dur-2)] ease-[var(--ease)]",
+            open && "rotate-180 text-[var(--green)]",
           )}
         />
       </button>
 
       {open ? (
-        <p className="t-body enter -mt-1 pr-8 pb-4 text-[var(--ink-3)]">{answer}</p>
+        <p className="ts-body -mt-1 pr-8 pb-4 text-[var(--text-3)]">{answer}</p>
       ) : null}
     </div>
   );
@@ -291,9 +291,9 @@ export default function HelpPage() {
         title="Yordam markazi"
         lead="Ko'p beriladigan savollar va platformadan foydalanish bo'yicha qo'llanma."
         meta={
-          <span className="t-meta text-[var(--ink-4)]">
-            <span className="t-num text-[var(--ink-2)]">{TOTAL_QUESTIONS}</span> ta savol ·{" "}
-            <span className="t-num text-[var(--ink-2)]">{CATEGORIES.length}</span> ta bo&apos;lim
+          <span className="ts-sm text-[var(--text-4)]">
+            <span className="ts-num text-[var(--text-2)]">{TOTAL_QUESTIONS}</span> ta savol ·{" "}
+            <span className="ts-num text-[var(--text-2)]">{CATEGORIES.length}</span> ta bo&apos;lim
           </span>
         }
         actions={
@@ -304,50 +304,50 @@ export default function HelpPage() {
       />
 
       {/* ---------------------------------------- qidiruv va tez o'tish kartasi */}
-      <Pane inset="lg" className="enter">
+      <Pane inset="lg" className="">
         <SearchField
           value={query}
           onValueChange={setQuery}
           placeholder="Savolingizni yozing — masalan «reyting» yoki «parol»"
           className="max-w-xl"
         />
-        <p className="t-meta mt-2.5 text-[var(--ink-3)]">
+        <p className="ts-sm mt-2.5 text-[var(--text-3)]">
           {searching ? (
             <>
-              <span className="t-num text-[var(--ink)]">{found}</span> ta natija
+              <span className="ts-num text-[var(--text)]">{found}</span> ta natija
             </>
           ) : (
             "Javobni topa olmasangiz — pastdagi yo'llardan foydalaning."
           )}
         </p>
 
-        <div className="enter-stagger mt-5 grid gap-2.5 sm:grid-cols-3">
+        <div className="mt-5 grid gap-2.5 sm:grid-cols-3">
           {SHORTCUTS.map((shortcut) => {
             const inner = (
               <>
                 {/* Ikonka plitkasiz — rangli kvadrat matndan ko'proq e'tibor tortadi */}
                 <span
                   className={cn(
-                    "shrink-0 text-[var(--ink-4)] transition-colors duration-[var(--t-fast)]",
-                    "group-hover:text-[var(--brand)] [&_svg]:size-[18px]",
+                    "shrink-0 text-[var(--text-4)] transition-colors duration-[var(--dur-1)]",
+                    "group-hover:text-[var(--green)] [&_svg]:size-[18px]",
                   )}
                 >
                   {shortcut.icon}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-[13.5px] font-semibold text-[var(--ink)]">
+                  <span className="block truncate text-[14.5px] font-semibold text-[var(--text)]">
                     {shortcut.title}
                   </span>
-                  <span className="t-meta block truncate text-[var(--ink-4)]">{shortcut.hint}</span>
+                  <span className="ts-sm block truncate text-[var(--text-4)]">{shortcut.hint}</span>
                 </span>
               </>
             );
 
-            // Karta ichida karta emas — botiq kafel; hoverda ikonka ko'kka to'ladi
+            // Karta ichida karta emas — botiq kafel; hoverda ikonka yashilga to'ladi
             const tileClass = cn(
-              "pane-sunken focus-ring group flex items-center gap-3",
-              "rounded-[var(--r-field)] px-3.5 py-3",
-              "transition-colors duration-[var(--t-fast)] hover:border-[var(--brand-edge)]",
+              "well ring-focus group flex items-center gap-3",
+              "rounded-[var(--radius-sm)] px-3.5 py-3",
+              "transition-colors duration-[var(--dur-1)] hover:border-[var(--green-line)]",
             );
 
             return shortcut.external ? (
@@ -367,19 +367,19 @@ export default function HelpPage() {
       <SplitLayout
         aside={
           <Pane inset="md">
-            <p className="t-eyebrow px-2.5">Bo&apos;limlar</p>
+            <p className="ts-label px-2.5">Bo&apos;limlar</p>
             <nav className="mt-2 flex flex-col gap-0.5">
               {CATEGORIES.map((category) => (
                 <a
                   key={category.id}
                   href={`#${category.id}`}
                   className={cn(
-                    "focus-ring flex items-center gap-2.5 rounded-[var(--r-ctl)] px-2.5 py-2 text-[13px]",
-                    "text-[var(--ink-2)] transition-colors duration-[var(--t-fast)]",
-                    "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                    "ring-focus flex items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-2 text-[14px]",
+                    "text-[var(--text-2)] transition-colors duration-[var(--dur-1)]",
+                    "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                   )}
                 >
-                  <span className="text-[var(--ink-4)]">{category.icon}</span>
+                  <span className="text-[var(--text-4)]">{category.icon}</span>
                   <span className="min-w-0 flex-1 truncate">{category.title}</span>
                   <Count value={category.items.length} />
                 </a>
@@ -388,11 +388,11 @@ export default function HelpPage() {
 
             <Divider className="my-3" />
 
-            <p className="t-meta px-2.5 text-[var(--ink-4)]">
+            <p className="ts-sm px-2.5 text-[var(--text-4)]">
               Savolingizga javob yo&apos;qmi? Bizga yozing —{" "}
               <Link
                 href="/contact"
-                className="focus-ring rounded-[4px] font-medium text-[var(--brand-ink)] hover:text-[var(--brand)]"
+                className="ring-focus rounded-[4px] font-medium text-[var(--green-text)] hover:text-[var(--green)]"
               >
                 aloqa sahifasi
               </Link>
@@ -424,8 +424,8 @@ export default function HelpPage() {
               <Pane key={category.id} inset="lg">
                 <PaneHead
                   title={
-                    <span id={category.id} className="flex scroll-mt-[calc(var(--bar)+24px)] items-center gap-2.5">
-                      <span className="flex size-8 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+                    <span id={category.id} className="flex scroll-mt-[calc(var(--nav-h)+24px)] items-center gap-2.5">
+                      <span className="flex size-8 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
                         {category.icon}
                       </span>
                       {category.title}
@@ -434,7 +434,7 @@ export default function HelpPage() {
                   action={<Count value={category.items.length} />}
                 />
 
-                <div className="enter-stagger mt-3 divide-y divide-[var(--edge-soft)] border-t border-[var(--edge)]">
+                <div className="mt-3 divide-y divide-[var(--line-soft)] border-t border-[var(--line)]">
                   {category.items.map((item) => (
                     <FaqRow
                       key={`${item.q}-${searching ? "s" : ""}`}
@@ -451,20 +451,20 @@ export default function HelpPage() {
       </SplitLayout>
 
       {/* -------------------------------------------- yagona to'yingan chaqiriq */}
-      <div className="pane-brand enter flex flex-wrap items-center gap-5 rounded-[var(--r-pane-lg)] p-7">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-[var(--r-ctl)] bg-[var(--pane-solid)] text-[var(--brand)]">
+      <div className="wash flex flex-wrap items-center gap-5 rounded-[var(--radius-xl)] p-7">
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface)] text-[var(--green)]">
           <LifeBuoy className="size-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[16px] font-semibold">Javob topmadingizmi?</p>
-          <p className="t-meta mt-1 opacity-85">
+          <p className="text-[17px] font-semibold">Javob topmadingizmi?</p>
+          <p className="ts-sm mt-1 opacity-85">
             Muhokamalarda savol bering yoki bizga to&apos;g&apos;ridan-to&apos;g&apos;ri yozing.
           </p>
         </div>
         <LinkButton
           href="/contact"
           variant="ghost"
-          className="bg-[var(--pane-solid)] text-[var(--brand-ink)] hover:bg-[var(--brand-wash)] hover:text-[var(--brand-ink)]"
+          className="bg-[var(--surface)] text-[var(--green-text)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
           iconAfter={<ArrowRight className="size-4" />}
         >
           Bog&apos;lanish

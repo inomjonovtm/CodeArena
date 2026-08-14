@@ -38,12 +38,23 @@ type Sort = (typeof SORTS)[number]["value"];
 
 const PAGE_SIZE = 20;
 
-/* Podium medallari — rang yagona signal emas, o'rin raqami ham turadi.
-   To'ldirma qat'iy (shaffof emas): sirt ostidagi fon bilan aralashmasin. */
-const MEDALS: Record<number, { ink: string; fill: string }> = {
-  1: { ink: "#8a5a0f", fill: "#f7eedd" },
-  2: { ink: "#4b5563", fill: "#eef0f3" },
-  3: { ink: "#8d4c1f", fill: "#f6e9df" },
+/* Podium medallari.
+   Ilgari bu yerda oltin/kumush/bronza ranglari (#f7eedd, #eef0f3, #f6e9df)
+   qat'iy yozilgan edi. Ular ikki sababdan olib tashlandi:
+
+     1. Palitradan tashqarida — tizimda kehribar ham, kulrang ham yo'q.
+     2. Qat'iy yorug' qiymat qorong'i rejimda qora sahifada uchta yorqin
+        krem dog' bo'lib qolardi.
+
+   Daraja endi RANG bilan emas TO'YINGANLIK bilan beriladi: birinchi o'rin
+   to'la YASHIL muhr, ikkinchi — och yashil yuvindi, uchinchi — faqat
+   ingichka halqa. Uchalasi ham bitta yashilning uch pog'onasi, ya'ni
+   palitradan chiqilmaydi. Ma'no baribir rangga bog'liq emas: doiraning
+   ichida o'rin RAQAMI turadi. */
+const MEDALS: Record<number, string> = {
+  1: "bg-[var(--green)] text-[var(--text-on-green)]",
+  2: "bg-[var(--green-wash-2)] text-[var(--green-text)] ring-1 ring-[var(--green-line)] ring-inset",
+  3: "bg-transparent text-[var(--text-3)] ring-1 ring-[var(--line-strong)] ring-inset",
 };
 
 /* Jadval ustunlari — sarlavha va qatorlar bir xil to'rda turadi */
@@ -64,15 +75,15 @@ function StandingsRow({
       href={`/u/${row.username}`}
       className={cn(
         ROW_GRID,
-        "row-mark focus-ring px-4 py-2.5 transition-colors hover:bg-[var(--pane-hover)] sm:px-5",
-        me && "bg-[var(--brand-wash)]",
+        " ring-focus px-4 py-2.5 transition-colors hover:bg-[var(--surface-hover)] sm:px-5",
+        me && "bg-[var(--green-wash)]",
       )}
       data-active={me ? "true" : undefined}
     >
       <span
         className={cn(
-          "t-num text-[13px] font-semibold",
-          row.position <= 3 ? "text-[var(--ink)]" : "text-[var(--ink-4)]",
+          "ts-num text-[14px] font-semibold",
+          row.position <= 3 ? "text-[var(--text)]" : "text-[var(--text-4)]",
         )}
       >
         {row.position}
@@ -82,35 +93,35 @@ function StandingsRow({
         <RankAvatar src={row.avatar_url} name={row.full_name || row.username} size={36} rank={row.rank} />
         <span className="min-w-0">
           <span className="flex items-center gap-2">
-            <span className="truncate text-[14px] font-medium text-[var(--ink)]">
+            <span className="truncate text-[15px] font-medium text-[var(--text)]">
               {row.username}
             </span>
             {me ? (
-              <span className="shrink-0 text-[11px] font-semibold text-[var(--brand-ink)]">siz</span>
+              <span className="shrink-0 text-[12px] font-semibold text-[var(--green-text)]">siz</span>
             ) : null}
             <RankBadge rank={row.rank} size="xs" className="hidden md:inline-flex" />
           </span>
           {row.full_name ? (
-            <span className="t-meta block truncate text-[var(--ink-4)]">{row.full_name}</span>
+            <span className="ts-sm block truncate text-[var(--text-4)]">{row.full_name}</span>
           ) : null}
         </span>
       </span>
 
-      <span className="t-num hidden text-right text-[13.5px] text-[var(--ink-3)] sm:block">
+      <span className="ts-num hidden text-right text-[14.5px] text-[var(--text-3)] sm:block">
         {row.problems_solved}
       </span>
       <span
         className={cn(
-          "t-num hidden text-right text-[13.5px] sm:block",
-          sort === "rating" ? "font-semibold text-[var(--brand-ink)]" : "text-[var(--ink-3)]",
+          "ts-num hidden text-right text-[14.5px] sm:block",
+          sort === "rating" ? "font-semibold text-[var(--green-text)]" : "text-[var(--text-3)]",
         )}
       >
         {row.rating}
       </span>
       <span
         className={cn(
-          "t-num text-right text-[13.5px]",
-          sort === "points" ? "font-semibold text-[var(--brand-ink)]" : "text-[var(--ink-3)]",
+          "ts-num text-right text-[14.5px]",
+          sort === "points" ? "font-semibold text-[var(--green-text)]" : "text-[var(--text-3)]",
         )}
       >
         {formatNumber(row.total_points)}
@@ -185,15 +196,15 @@ export default function LeaderboardPage() {
         lead="Eng ko'p ball to'plagan va eng yuqori reytingga ega ishtirokchilar."
         meta={
           data ? (
-            <p className="t-meta text-[var(--ink-4)]">
-              Jami <span className="t-num text-[var(--ink-2)]">{formatNumber(data.count)}</span> ishtirokchi
+            <p className="ts-sm text-[var(--text-4)]">
+              Jami <span className="ts-num text-[var(--text-2)]">{formatNumber(data.count)}</span> ishtirokchi
             </p>
           ) : null
         }
       />
 
       {/* ------------------------------------------------- 2. asboblar paneli */}
-      <Pane className="enter" inset="md">
+      <Pane className="" inset="md">
         <div className="flex flex-wrap items-center gap-3">
           <SearchField
             value={search}
@@ -206,9 +217,9 @@ export default function LeaderboardPage() {
         </div>
 
         {query ? (
-          <p className="t-meta mt-4 border-t border-[var(--edge)] pt-4 text-[var(--ink-3)]">
+          <p className="ts-sm mt-4 border-t border-[var(--line)] pt-4 text-[var(--text-3)]">
             «{query}» bo&apos;yicha{" "}
-            <span className="t-num text-[var(--ink)]">{formatNumber(data?.count ?? 0)}</span> ta natija
+            <span className="ts-num text-[var(--text)]">{formatNumber(data?.count ?? 0)}</span> ta natija
           </p>
         ) : null}
       </Pane>
@@ -219,7 +230,7 @@ export default function LeaderboardPage() {
       {isLoading ? (
         /* Skelet — haqiqiy jadval qatorlarini takrorlaydi */
         <Pane tone="solid" inset="none" className="overflow-hidden">
-          <div className="divide-y divide-[var(--edge-soft)]">
+          <div className="divide-y divide-[var(--line-soft)]">
             {Array.from({ length: 10 }).map((_, index) => (
               <div key={index} className={cn(ROW_GRID, "px-4 py-3 sm:px-5")}>
                 <Block className="h-3.5 w-6" />
@@ -264,19 +275,22 @@ export default function LeaderboardPage() {
             <Pane
               tone="solid"
               inset="none"
-              className="enter grid divide-y divide-[var(--edge)] overflow-hidden sm:grid-cols-3 sm:divide-x sm:divide-y-0"
+              className="grid divide-y divide-[var(--line)] overflow-hidden sm:grid-cols-3 sm:divide-x sm:divide-y-0"
             >
               {podium.map((row) => {
-                const medal = MEDALS[row.position];
+                const medal = MEDALS[row.position] ?? MEDALS[3];
                 return (
                   <Link
                     key={row.username}
                     href={`/u/${row.username}`}
-                    className="focus-ring flex items-center gap-3 px-4 py-5 transition-colors hover:bg-[var(--pane-hover)] sm:px-5"
+                    className="ring-focus flex items-center gap-3 px-4 py-5 transition-colors hover:bg-[var(--surface-hover)] sm:px-5"
                   >
                     <span
-                      className="t-num flex size-7 shrink-0 items-center justify-center rounded-full text-[12.5px] font-bold"
-                      style={{ color: medal.ink, backgroundColor: medal.fill }}
+                      className={cn(
+                        "ts-num flex size-7 shrink-0 items-center justify-center rounded-full",
+                        "text-[13px] font-bold",
+                        medal,
+                      )}
                     >
                       {row.position}
                     </span>
@@ -287,16 +301,16 @@ export default function LeaderboardPage() {
                       rank={row.rank}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13.5px] font-semibold text-[var(--ink)]">
+                      <span className="block truncate text-[14.5px] font-semibold text-[var(--text)]">
                         {row.username}
                       </span>
                       <RankBadge rank={row.rank} size="xs" className="mt-0.5" />
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="t-num block text-[15px] font-semibold text-[var(--ink)]">
+                      <span className="ts-num block text-[16px] font-semibold text-[var(--text)]">
                         {formatNumber(sort === "rating" ? row.rating : row.total_points)}
                       </span>
-                      <span className="t-meta text-[var(--ink-4)]">
+                      <span className="ts-sm text-[var(--text-4)]">
                         {sort === "rating" ? "reyting" : "ball"}
                       </span>
                     </span>
@@ -308,7 +322,7 @@ export default function LeaderboardPage() {
 
           {/* ----------------------------------------------- 5. asosiy jadval */}
           <Pane tone="solid" inset="none" className="overflow-hidden">
-            <div className={cn(ROW_GRID, "t-eyebrow border-b border-[var(--edge)] px-4 py-2.5 sm:px-5")}>
+            <div className={cn(ROW_GRID, "ts-label border-b border-[var(--line)] px-4 py-2.5 sm:px-5")}>
               <span>#</span>
               <span>Ishtirokchi</span>
               <span className="hidden text-right sm:block">Yechildi</span>
@@ -316,7 +330,7 @@ export default function LeaderboardPage() {
               <span className="text-right">Ball</span>
             </div>
 
-            <div className="enter-stagger divide-y divide-[var(--edge-soft)]">
+            <div className="divide-y divide-[var(--line-soft)]">
               {tableRows.map((row) => (
                 <StandingsRow
                   key={row.username}
@@ -331,12 +345,12 @@ export default function LeaderboardPage() {
             {/* Mobilda pastda `MobileTabBar` turadi — yopishqoq qator uning
                 ostida qolib ketmasligi uchun shuncha ko'tariladi. */}
             {myRank && !inTopList ? (
-              <div className="edge-brand sticky bottom-[var(--tabbar)] border-t border-[var(--edge)] bg-[var(--pane-solid)] lg:bottom-0">
+              <div className="edge-green sticky bottom-[var(--tabbar-h)] border-t border-[var(--line)] bg-[var(--surface)] lg:bottom-0">
                 <Link
                   href={`/u/${myRank.username}`}
-                  className={cn(ROW_GRID, "focus-ring bg-[var(--brand-wash)] px-4 py-3 sm:px-5")}
+                  className={cn(ROW_GRID, "ring-focus bg-[var(--green-wash)] px-4 py-3 sm:px-5")}
                 >
-                  <span className="t-num text-[13px] font-semibold text-[var(--brand-ink)]">
+                  <span className="ts-num text-[14px] font-semibold text-[var(--green-text)]">
                     {myRank.position}
                   </span>
                   <span className="flex min-w-0 items-center gap-3">
@@ -348,25 +362,25 @@ export default function LeaderboardPage() {
                     />
                     <span className="min-w-0">
                       <span className="flex items-center gap-2">
-                        <span className="truncate text-[14px] font-medium text-[var(--ink)]">
+                        <span className="truncate text-[15px] font-medium text-[var(--text)]">
                           {myRank.username}
                         </span>
-                        <span className="shrink-0 text-[11px] font-semibold text-[var(--brand-ink)]">
+                        <span className="shrink-0 text-[12px] font-semibold text-[var(--green-text)]">
                           siz
                         </span>
                       </span>
-                      <span className="t-meta block truncate text-[var(--ink-4)]">
+                      <span className="ts-sm block truncate text-[var(--text-4)]">
                         {formatNumber(myRank.total)} ishtirokchi orasida
                       </span>
                     </span>
                   </span>
-                  <span className="t-num hidden text-right text-[13.5px] text-[var(--ink-3)] sm:block">
+                  <span className="ts-num hidden text-right text-[14.5px] text-[var(--text-3)] sm:block">
                     {myRank.problems_solved}
                   </span>
-                  <span className="t-num hidden text-right text-[13.5px] text-[var(--ink-3)] sm:block">
+                  <span className="ts-num hidden text-right text-[14.5px] text-[var(--text-3)] sm:block">
                     {myRank.rating}
                   </span>
-                  <span className="t-num text-right text-[13.5px] font-semibold text-[var(--brand-ink)]">
+                  <span className="ts-num text-right text-[14.5px] font-semibold text-[var(--green-text)]">
                     {formatNumber(myRank.total_points)}
                   </span>
                 </Link>

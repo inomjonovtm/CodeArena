@@ -53,6 +53,8 @@ class PlagiarismPair(BaseModel):
 
     class Meta:
         db_table = "plagiarism_pairs"
+        verbose_name = "Plagiat juftligi"
+        verbose_name_plural = "Plagiat juftliklari"
         ordering = ["-similarity", "-created_at"]
         unique_together = [("submission_a", "submission_b")]
 
@@ -79,6 +81,8 @@ class AuditLog(models.Model):
 
     class Meta:
         db_table = "audit_logs"
+        verbose_name = "Audit yozuvi"
+        verbose_name_plural = "Audit jurnali"
         ordering = ["-created_at"]
         indexes = [models.Index(fields=["actor", "-created_at"])]
 
@@ -117,6 +121,8 @@ class SiteSetting(TimeStampedModel):
 
     class Meta:
         db_table = "site_settings"
+        verbose_name = "Sayt sozlamasi"
+        verbose_name_plural = "Sayt sozlamalari"
         ordering = ["group", "key"]
 
     def __str__(self) -> str:
@@ -204,6 +210,8 @@ class Announcement(BaseModel):
 
     class Meta:
         db_table = "announcements"
+        verbose_name = "E'lon"
+        verbose_name_plural = "E'lonlar"
         ordering = ["-is_pinned", "-created_at"]
 
     def __str__(self) -> str:
@@ -246,25 +254,54 @@ class Announcement(BaseModel):
         return True
 
 
-class JudgeLanguage(TimeStampedModel):
-    """Judge0 tillari — kodda qotib qolmasdan paneldan boshqariladi."""
+class LegalDocument(TimeStampedModel):
+    """Maxfiylik siyosati, foydalanish shartlari va shunga o'xshash sahifalar.
 
-    key = models.SlugField(max_length=24, unique=True, help_text="python, cpp, javascript ...")
-    label = models.CharField(max_length=60)
-    judge0_id = models.PositiveIntegerField(help_text="Judge0 language_id")
-    version = models.CharField(max_length=40, blank=True)
-    monaco_id = models.CharField(max_length=24, blank=True, help_text="Monaco muharriri tili")
-    file_extension = models.CharField(max_length=10, blank=True)
-    starter_template = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True, db_index=True)
-    order = models.PositiveIntegerField(default=0)
+    NEGA BAZADA. Bu matnlar huquqiy hujjat: ular qonun o'zgarganda yoki
+    kompaniya ma'lumoti yangilanganda tahrirlanadi. Kodda saqlansa har bir
+    kichik tuzatish uchun dasturchi, commit va deploy kerak bo'lardi —
+    natijada sahifalar eskirib qolardi. Endi ular admin panelda,
+    Markdown ko'rinishida tahrirlanadi va darhol saytda ko'rinadi.
+
+    VERSIYA VA SANA alohida maydonlar: foydalanuvchi «qaysi tahrirni qabul
+    qilgani» huquqiy jihatdan muhim, shuning uchun ular matn ichida emas,
+    ustunda turadi va sahifada avtomatik ko'rsatiladi.
+    """
+
+    SLUGS = [
+        ("privacy", "Maxfiylik siyosati"),
+        ("terms", "Foydalanish shartlari"),
+        ("rules", "Sayt qoidalari"),
+        ("about", "Biz haqimizda"),
+    ]
+
+    slug = models.SlugField(max_length=32, unique=True, choices=SLUGS, db_index=True)
+    title_uz = models.CharField(max_length=160)
+    summary_uz = models.CharField(
+        max_length=300, blank=True,
+        help_text="Sarlavha ostidagi bir jumlalik izoh (ixtiyoriy).",
+    )
+    body_md = models.TextField(help_text="Markdown: ## sarlavha, - ro'yxat, **qalin**.")
+    version = models.CharField(max_length=20, blank=True, help_text="Masalan: 1.2")
+    effective_from = models.DateField(
+        null=True, blank=True, help_text="Ushbu tahrir kuchga kirgan sana.",
+    )
+    is_published = models.BooleanField(
+        default=True, help_text="O'chirilsa sahifa o'rniga 404 qaytadi.",
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="legal_updates",
+    )
 
     class Meta:
-        db_table = "judge_languages"
-        ordering = ["order", "label"]
+        db_table = "legal_documents"
+        verbose_name = "Huquqiy hujjat"
+        verbose_name_plural = "Huquqiy hujjatlar"
+        ordering = ["slug"]
 
     def __str__(self) -> str:
-        return f"{self.label} (#{self.judge0_id})"
+        return self.get_slug_display()
 
 
 class BackupRecord(TimeStampedModel):

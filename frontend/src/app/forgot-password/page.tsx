@@ -32,16 +32,11 @@ export default function ForgotPasswordPage() {
   return (
     <AuthShell
       title="Parolni tiklash"
-      subtitle={
-        sent
-          ? "Xat yuborildi — pochtangizni tekshiring."
-          : "Hisobingizga bog'langan emailni kiriting."
-      }
       error={error}
       footer={
         <Link
           href="/login"
-          className="focus-ring inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] font-medium text-[var(--brand)] hover:underline"
+          className="ring-focus inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] font-medium text-[var(--green)] hover:underline"
         >
           <ArrowLeft className="size-3.5" />
           Kirish sahifasiga qaytish
@@ -49,12 +44,12 @@ export default function ForgotPasswordPage() {
       }
     >
       {sent ? (
-        <div className="enter mt-6 flex flex-col items-center gap-4 text-center">
+        <div className="mt-6 flex flex-col items-center gap-4 text-center">
           <span className="flex size-12 items-center justify-center rounded-full border border-[var(--ok)] bg-[var(--ok-wash)] text-[var(--ok)]">
             <MailCheck className="size-7" />
           </span>
-          <p className="t-body max-w-sm text-[var(--ink-3)]">
-            Agar <span className="font-medium text-[var(--ink)]">{email}</span> manzili
+          <p className="ts-body max-w-sm text-[var(--text-3)]">
+            Agar <span className="font-medium text-[var(--text)]">{email}</span> manzili
             ro&apos;yxatdan o&apos;tgan bo&apos;lsa, tiklash havolasi yuborildi. Havola 2 soat
             amal qiladi.
           </p>

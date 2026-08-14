@@ -9,6 +9,20 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://backend:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+# Saytning TASHQI manzili. `NEXT_PUBLIC_*` o'zgaruvchilarini Next BUILD
+# PAYTIDA kodga singdiradi — konteynerni ishga tushirishda berilgan qiymat
+# hech narsani o'zgartirmaydi. Shuning uchun u aynan shu yerda, build
+# argumenti sifatida kerak.
+#
+# Berilmasa `lib/site.ts` `http://localhost:3000` ga qaytadi va produksiyada
+# `sitemap.xml` dagi barcha havolalar, `robots.txt` dagi sitemap manzili
+# hamda ijtimoiy kartaning `og:image` i localhost'ga ishora qiladi — ya'ni
+# qidiruv tizimlari uchun sitemap yaroqsiz, ulashilgan havolada esa rasm
+# ochilmaydi.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

@@ -2,7 +2,7 @@
 
 Nega registr kerak: ilgari sozlamalar faqat `seed_demo` ichida ro'yxat sifatida
 bor edi, ya'ni yangi o'rnatilgan bazada ular umuman yo'q edi va kod ularni
-o'qimasdi ham (Judge0 manzili `.env` dan olinardi). Endi:
+o'qimasdi ham (xizmat manzili `.env` dan olinardi). Endi:
 
 * `SETTING_DEFS` — barcha sozlamalarning yagona manbasi (kalit, tip, guruh, izoh);
 * `sync_defaults()` — bazada yo'q qatorlarni yaratadi (migratsiya va admin API);
@@ -65,41 +65,24 @@ SETTING_DEFS: list[tuple[str, Any, str, str, str, str, str, bool]] = [
     ("social_x", "", "string", "social",
      "X (Twitter)", "X (Twitter)", "To'liq havola: https://x.com/...", True),
 
-    # ------------------------------------------------------------- judge0
-    ("judge0_enabled", True, "boolean", "judge",
-     "Judge0 yoqilgan", "Judge0 enabled",
-     "O'chirilsa faqat lokal runner ishlatiladi", False),
-    ("judge0_url", _env("JUDGE0_URL", "http://localhost:2358"), "string", "judge",
-     "Judge0 manzili", "Judge0 URL", "Masalan: http://judge0:2358", False),
-    ("judge0_token", _env("JUDGE0_TOKEN", ""), "string", "judge",
-     "Judge0 tokeni", "Judge0 token", "X-Auth-Token sarlavhasi (bo'sh bo'lishi mumkin)", False),
-    ("judge0_timeout_sec", 30, "number", "judge",
-     "So'rov taymauti (s)", "Request timeout (s)", "Judge0 ga HTTP so'rov kutish vaqti", False),
-    ("judge0_batch_size", 20, "number", "judge",
-     "Batch hajmi", "Batch size", "Bitta so'rovda nechta test yuboriladi", False),
-    ("judge0_poll_interval_ms", 400, "number", "judge",
-     "Tekshirish oralig'i (ms)", "Poll interval (ms)", "Natijani qayta so'rash oralig'i", False),
-    ("judge0_max_poll_attempts", 60, "number", "judge",
-     "Maksimal urinish", "Max poll attempts", "Shundan keyin SYSTEM_ERROR qaytadi", False),
-    ("judge0_cpu_extra_time_sec", 1.0, "number", "judge",
-     "Qo'shimcha CPU vaqti (s)", "CPU extra time (s)", "Judge0 `cpu_extra_time`", False),
-    ("judge0_wall_time_extra_sec", 3.0, "number", "judge",
-     "Qo'shimcha real vaqt (s)", "Wall time extra (s)", "Vaqt limitiga qo'shiladi", False),
-    ("judge0_stack_limit_kb", 64000, "number", "judge",
-     "Stek limiti (KB)", "Stack limit (KB)", "0 — Judge0 standarti", False),
-    ("judge0_max_processes", 60, "number", "judge",
-     "Maksimal jarayon", "Max processes", "Judge0 `max_processes_and_or_threads`", False),
-    ("judge0_max_file_size_kb", 10240, "number", "judge",
-     "Fayl hajmi limiti (KB)", "Max file size (KB)", "Judge0 `max_file_size`", False),
-    ("judge0_enable_network", False, "boolean", "judge",
-     "Tarmoqqa ruxsat", "Enable network", "Yechim internetga chiqa oladimi (tavsiya: yo'q)", False),
-    ("judge0_redirect_stderr", False, "boolean", "judge",
-     "stderr → stdout", "Redirect stderr to stdout", "Judge0 `redirect_stderr_to_stdout`", False),
-    ("judge0_health_cache_sec", 30, "number", "judge",
-     "Holat keshi (s)", "Health cache (s)", "Judge0 tirikligini qayta tekshirish oralig'i", False),
-    ("judge0_local_fallback", True, "boolean", "judge",
-     "Lokal runner zaxira sifatida", "Local runner fallback",
-     "Judge0 ishlamasa lokal runner ishlatiladi (produksiyada tavsiya etilmaydi)", False),
+    # -------------------------------------------------------------- runner
+    # Kod bajarish xizmati (`infra/runner`) — ishonchsiz kod o'sha yerda,
+    # alohida konteynerda va tarmoqsiz muhitda ishlaydi.
+    ("runner_enabled", True, "boolean", "judge",
+     "Kod bajarish yoqilgan", "Runner enabled",
+     "O'chirilsa yechim yuborib bo'lmaydi", False),
+    ("runner_url", _env("RUNNER_URL", "http://localhost:2400"), "string", "judge",
+     "Runner manzili", "Runner URL", "Masalan: http://runner:2400", False),
+    ("runner_token", _env("RUNNER_TOKEN", ""), "string", "judge",
+     "Runner tokeni", "Runner token", "X-Runner-Token sarlavhasi (bo'sh bo'lishi mumkin)", False),
+    ("runner_timeout_sec", 120, "number", "judge",
+     "So'rov taymauti (s)", "Request timeout (s)",
+     "Butun to'plamni bajarish uchun kutish vaqti", False),
+    ("runner_health_cache_sec", 30, "number", "judge",
+     "Holat keshi (s)", "Health cache (s)", "Tirikligini qayta tekshirish oralig'i", False),
+    ("runner_local_fallback", True, "boolean", "judge",
+     "Lokal ijro zaxira sifatida", "Local execution fallback",
+     "Runner ishlamasa kod shu serverda bajariladi — PRODUKSIYADA O'CHIRING", False),
     ("default_time_limit_ms", 2000, "number", "judge",
      "Standart vaqt limiti (ms)", "Default time limit (ms)", "", False),
     ("default_memory_limit_kb", 262144, "number", "judge",

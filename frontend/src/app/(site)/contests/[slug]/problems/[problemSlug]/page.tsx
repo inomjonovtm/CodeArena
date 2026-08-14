@@ -23,20 +23,16 @@ import { CodeEditor } from "@/components/ui/code-editor";
 import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
 import { publicApi, TERMINAL_STATUSES } from "@/lib/public-api";
+import { FALLBACK_CATALOG, starterFor } from "@/lib/languages";
 import type { ContestProblemDetail, Language, PublicSubmission, RunResponse } from "@/lib/types";
 import { formatDuration, formatRelative } from "@/lib/utils";
 
-const LANGUAGES: { value: Language; label: string }[] = [
-  { value: "python", label: "Python" },
-  { value: "javascript", label: "JavaScript" },
-  { value: "cpp", label: "C++" },
-];
-
-const STARTER_KEY: Record<Language, keyof ContestProblemDetail> = {
-  python: "starter_code_python",
-  javascript: "starter_code_javascript",
-  cpp: "starter_code_cpp",
-};
+/* Musobaqada til ro'yxati masala sahifasidagi bilan bir xil manbadan —
+   `FALLBACK_CATALOG` faqat server javob bermaguncha ishlatiladi. */
+const LANGUAGES: { value: Language; label: string }[] = FALLBACK_CATALOG.map((item) => ({
+  value: item.key,
+  label: item.label,
+}));
 
 const draftKey = (contest: string, slug: string, language: Language) =>
   `codearena-contest-draft-${contest}-${slug}-${language}`;
@@ -124,7 +120,7 @@ export default function ContestProblemPage() {
       typeof window !== "undefined"
         ? localStorage.getItem(draftKey(contestSlug, problemSlug, language))
         : null;
-    setCode(saved ?? ((data[STARTER_KEY[language]] as string) ?? ""));
+    setCode(saved ?? starterFor(data as unknown as Record<string, unknown>, language, FALLBACK_CATALOG));
   }, [data, contestSlug, problemSlug, language]);
 
   useEffect(() => {
@@ -208,13 +204,13 @@ export default function ContestProblemPage() {
     // Skelet ish maydonining shaklini takrorlaydi: shart, ostida muharrir
     return (
       <div className="flex flex-col gap-6">
-        <Block className="h-12 rounded-[var(--r-pane)]" />
+        <Block className="h-12 rounded-[var(--radius-lg)]" />
         <div className="flex items-center gap-3">
-          <Block className="size-10 rounded-[var(--r-ctl)]" />
+          <Block className="size-10 rounded-[var(--radius-sm)]" />
           <Block className="h-7 w-1/3" />
         </div>
-        <Block className="h-[26rem] rounded-[var(--r-pane)]" />
-        <Block className="h-[26rem] rounded-[var(--r-pane)]" />
+        <Block className="h-[26rem] rounded-[var(--radius-lg)]" />
+        <Block className="h-[26rem] rounded-[var(--radius-lg)]" />
       </div>
     );
   }
@@ -263,11 +259,11 @@ export default function ContestProblemPage() {
       />
 
       {/* ------------------------------------------------------- sarlavha */}
-      <div className="enter flex flex-wrap items-center gap-3">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--r-ctl)] bg-[var(--brand-wash)] text-[15px] font-semibold text-[var(--brand-ink)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--green-wash)] text-[16px] font-semibold text-[var(--green-text)]">
           {data.label}
         </span>
-        <h1 className="t-title min-w-0 flex-1 truncate text-[var(--ink)]">
+        <h1 className="ts-h1 min-w-0 flex-1 truncate text-[var(--text)]">
           {data.title_uz}
         </h1>
         {data.is_solved ? (
@@ -277,20 +273,20 @@ export default function ContestProblemPage() {
         ) : null}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-[var(--ink-3)]">
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[14px] text-[var(--text-3)]">
         <DifficultyMark
           value={data.difficulty}
           label={t.site.difficulty[data.difficulty] ?? data.difficulty}
         />
         <span className="inline-flex items-center gap-1.5">
-          <Trophy className="size-3.5 text-[var(--ink-4)]" />
-          <span className="t-num">{data.points}</span> {t.site.problem.points}
+          <Trophy className="size-3.5 text-[var(--text-4)]" />
+          <span className="ts-num">{data.points}</span> {t.site.problem.points}
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <Clock className="size-3.5 text-[var(--ink-4)]" />
-          <span className="t-num">{formatDuration(data.time_limit_ms)}</span>
+          <Clock className="size-3.5 text-[var(--text-4)]" />
+          <span className="ts-num">{formatDuration(data.time_limit_ms)}</span>
         </span>
-        <span className="t-num">
+        <span className="ts-num">
           {data.attempts} {t.site.problem.attempts}
         </span>
       </div>
@@ -309,7 +305,7 @@ export default function ContestProblemPage() {
 
             {data.constraints_uz.trim() ? (
               <div className="mt-7">
-                <p className="t-eyebrow">{t.site.problem.constraints}</p>
+                <p className="ts-label">{t.site.problem.constraints}</p>
                 <div className="mt-2.5">
                   <Markdown source={data.constraints_uz} />
                 </div>
@@ -322,28 +318,28 @@ export default function ContestProblemPage() {
               {data.samples.map((sample, index) => (
                 /* Har bir namuna soch chizig'i bilan ajraladi — amaliyot
                    sahifasidagi bilan bir xil */
-                <div key={index} className="rule pt-4">
-                  <p className="t-eyebrow">
+                <div key={index} className="divider pt-4">
+                  <p className="ts-label">
                     {t.site.problem.sample} {index + 1}
                   </p>
                   {/* `flex-1` — kirish va chiqish bloklari qatorlar soni
                       har xil bo'lsa ham bir xil balandlikda turadi */}
                   <div className="mt-2.5 grid gap-3 sm:grid-cols-2">
                     <div className="flex min-w-0 flex-col">
-                      <p className="t-meta mb-1.5 text-[var(--ink-4)]">{t.site.problem.input}</p>
-                      <pre className="pane-sunken flex-1 overflow-auto rounded-[var(--r-field)] p-3 font-mono text-[12.5px] text-[var(--ink)]">
+                      <p className="ts-sm mb-1.5 text-[var(--text-4)]">{t.site.problem.input}</p>
+                      <pre className="well flex-1 overflow-auto rounded-[var(--radius-sm)] p-3 font-mono text-[13px] text-[var(--text)]">
                         {sample.input}
                       </pre>
                     </div>
                     <div className="flex min-w-0 flex-col">
-                      <p className="t-meta mb-1.5 text-[var(--ink-4)]">{t.site.problem.output}</p>
-                      <pre className="pane-sunken flex-1 overflow-auto rounded-[var(--r-field)] p-3 font-mono text-[12.5px] text-[var(--ink)]">
+                      <p className="ts-sm mb-1.5 text-[var(--text-4)]">{t.site.problem.output}</p>
+                      <pre className="well flex-1 overflow-auto rounded-[var(--radius-sm)] p-3 font-mono text-[13px] text-[var(--text)]">
                         {sample.expected_output}
                       </pre>
                     </div>
                   </div>
                   {sample.explanation_uz ? (
-                    <p className="t-meta mt-2.5 max-w-[72ch] text-[var(--ink-3)]">
+                    <p className="ts-sm mt-2.5 max-w-[72ch] text-[var(--text-3)]">
                       {sample.explanation_uz}
                     </p>
                   ) : null}
@@ -356,7 +352,7 @@ export default function ContestProblemPage() {
         {/* Pastda — muharrir va natijalar */}
         <div className="flex min-w-0 flex-col gap-4">
           <Pane tone="solid" inset="none" className="overflow-hidden">
-            <div className="flex flex-wrap items-center gap-2 border-b border-[var(--edge)] px-3 py-2.5">
+            <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] px-3 py-2.5">
               <Segmented
                 size="sm"
                 value={language}
@@ -373,7 +369,7 @@ export default function ContestProblemPage() {
                 className="ml-auto"
                 onClick={() => {
                   localStorage.removeItem(draftKey(contestSlug, problemSlug, language));
-                  setCode((data[STARTER_KEY[language]] as string) ?? "");
+                  setCode(starterFor(data as unknown as Record<string, unknown>, language, FALLBACK_CATALOG));
                   toast.info(t.site.problem.codeReset);
                 }}
               >
@@ -390,7 +386,7 @@ export default function ContestProblemPage() {
               className="rounded-none border-0"
             />
 
-            <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-[var(--edge)] bg-[var(--pane-sunken)] px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-[var(--line)] bg-[var(--surface-sunk)] px-3 py-2.5">
               <Button
                 onClick={() => runMutation.mutate()}
                 loading={runMutation.isPending}
@@ -421,22 +417,22 @@ export default function ContestProblemPage() {
 
           {/* Namunalarda sinash natijasi — konsol oq kartada turadi */}
           {runResult ? (
-            <Pane tone="solid" inset="md" className="enter">
-              <p className="t-eyebrow">{t.site.problem.runResult}</p>
-              <p className="t-num mt-2 text-[14px] text-[var(--ink-2)]">
+            <Pane tone="solid" inset="md" className="">
+              <p className="ts-label">{t.site.problem.runResult}</p>
+              <p className="ts-num mt-2 text-[15px] text-[var(--text-2)]">
                 {runResult.passed}/{runResult.total} {t.site.problem.sample.toLowerCase()}
               </p>
               <div className="mt-3 flex flex-col gap-2.5">
                 {runResult.results.map((row) => (
-                  <div key={row.order} className="pane-sunken rounded-[var(--r-field)] p-3">
+                  <div key={row.order} className="well rounded-[var(--radius-sm)] p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="t-meta text-[var(--ink-3)]">
+                      <span className="ts-sm text-[var(--text-3)]">
                         {t.site.problem.sample} {row.order}
                       </span>
                       <StatusChip value={row.status} />
                     </div>
                     {row.stdout ? (
-                      <pre className="mt-2 max-h-32 overflow-auto rounded-[var(--r-ctl)] bg-[var(--pane-solid)] p-2.5 font-mono text-[12px] text-[var(--ink-2)]">
+                      <pre className="mt-2 max-h-32 overflow-auto rounded-[var(--radius-sm)] bg-[var(--surface)] p-2.5 font-mono text-[12.5px] text-[var(--text-2)]">
                         {row.stdout}
                       </pre>
                     ) : null}
@@ -449,21 +445,21 @@ export default function ContestProblemPage() {
           {/* Mening urinishlarim */}
           {data.my_submissions.length > 0 ? (
             <Pane tone="solid" inset="none" className="overflow-hidden">
-              <p className="t-eyebrow border-b border-[var(--edge)] px-4 py-3">
-                {t.site.contest.myAttempts} · <span className="t-num">{data.my_submissions.length}</span>
+              <p className="ts-label border-b border-[var(--line)] px-4 py-3">
+                {t.site.contest.myAttempts} · <span className="ts-num">{data.my_submissions.length}</span>
               </p>
-              <ul className="divide-y divide-[var(--edge-soft)]">
+              <ul className="divide-y divide-[var(--line-soft)]">
                 {data.my_submissions.map((row) => (
                   <li key={row.id} className="flex flex-wrap items-center gap-3 px-4 py-2.5">
                     <StatusChip value={row.status} />
-                    <span className="t-num text-[12.5px] text-[var(--ink-2)]">
+                    <span className="ts-num text-[13px] text-[var(--text-2)]">
                       {row.passed_tests}/{row.total_tests}
                     </span>
-                    <span className="t-meta text-[var(--ink-4)]">{row.language}</span>
+                    <span className="ts-sm text-[var(--text-4)]">{row.language}</span>
                     {row.runtime_ms ? (
-                      <span className="t-num t-meta text-[var(--ink-4)]">{row.runtime_ms} ms</span>
+                      <span className="ts-num ts-sm text-[var(--text-4)]">{row.runtime_ms} ms</span>
                     ) : null}
-                    <span className="t-meta ml-auto text-[var(--ink-4)]">
+                    <span className="ts-sm ml-auto text-[var(--text-4)]">
                       {formatRelative(row.created_at)}
                     </span>
                   </li>
@@ -474,22 +470,22 @@ export default function ContestProblemPage() {
 
           {/* Yuborilgan yechim natijasi — konsol oq kartada turadi */}
           {result ? (
-            <Pane tone="solid" inset="md" className="enter">
+            <Pane tone="solid" inset="md" className="">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="t-eyebrow">{t.site.problem.submitResult}</p>
+                <p className="ts-label">{t.site.problem.submitResult}</p>
                 <StatusChip value={result.status} />
               </div>
-              <p className="t-num mt-3 text-[14px] text-[var(--ink-2)]">
+              <p className="ts-num mt-3 text-[15px] text-[var(--text-2)]">
                 {result.passed_tests}/{result.total_tests} test
                 {result.runtime_ms ? ` · ${result.runtime_ms} ms` : ""}
               </p>
               {result.failed_test_index ? (
-                <p className="t-meta mt-1 text-[var(--ink-3)]">
-                  {t.site.contest.failedAt} <span className="t-num">{result.failed_test_index}</span>
+                <p className="ts-sm mt-1 text-[var(--text-3)]">
+                  {t.site.contest.failedAt} <span className="ts-num">{result.failed_test_index}</span>
                 </p>
               ) : null}
               {result.compile_output ? (
-                <pre className="pane-sunken mt-3 max-h-40 overflow-auto rounded-[var(--r-ctl)] p-3 font-mono text-[12px] whitespace-pre-wrap text-[var(--ink-2)]">
+                <pre className="well mt-3 max-h-40 overflow-auto rounded-[var(--radius-sm)] p-3 font-mono text-[12.5px] whitespace-pre-wrap text-[var(--text-2)]">
                   {result.compile_output}
                 </pre>
               ) : null}

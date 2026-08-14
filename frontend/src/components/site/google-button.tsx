@@ -120,7 +120,7 @@ export function GoogleButton({
         window.google.accounts.id.renderButton(containerRef.current, {
           theme: "outline",
           size: "large",
-          shape: "rectangular",
+          shape: "pill",
           text,
           width: 320,
           logo_alignment: "center",
@@ -139,23 +139,23 @@ export function GoogleButton({
   if (!config?.google_enabled) return null;
 
   return (
-    <div className="mt-6">
+    <div className="mt-10">
       <div className="flex items-center gap-3">
-        <span className="h-px flex-1 bg-[var(--edge)]" />
-        <span className="t-eyebrow">yoki</span>
-        <span className="h-px flex-1 bg-[var(--edge)]" />
+        <span className="h-px flex-1 bg-[var(--line)]" />
+        <span className="ts-label">yoki</span>
+        <span className="h-px flex-1 bg-[var(--line)]" />
       </div>
 
       {/* Tugma yuklanguncha o'sha o'lchamdagi skelet turadi — sakrash bo'lmaydi */}
-      <div className="relative mt-5 flex min-h-[2.75rem] justify-center">
+      <div className="relative mt-7 flex min-h-[3rem] justify-center">
         <div ref={containerRef} />
         {!ready ? (
-          <div className="loading-block absolute inset-0 rounded-[var(--r-ctl)]" />
+          <div className="loading-block absolute inset-0 rounded-full" />
         ) : null}
       </div>
 
       {error ? (
-        <p className="mt-2.5 text-center text-[12px] text-[var(--bad)]">{error}</p>
+        <p className="mt-3 text-center text-[14px] text-[var(--danger)]">{error}</p>
       ) : null}
     </div>
   );

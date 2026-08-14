@@ -1,0 +1,105 @@
+{% extends "unfold/layouts/base_simple.html" %}
+{% load i18n %}
+
+{#
+  Admin bosh sahifasi — "bugun nima qilishim kerak?"
+  ---------------------------------------------------------------------------
+  MUAMMO. `config/admin_site.py` dagi `dashboard_callback` allaqachon ikkita
+  ma'lumot to'plamini hisoblab berardi: `kpi` (umumiy raqamlar) va `queues`
+  (e'tibor talab qiladigan navbatlar). Lekin loyihada `admin/index.html`
+  qayta yozilmagani uchun ular HECH QAYERDA chizilmasdi — panel ochilganda
+  faqat modellar ro'yxati ko'rinardi va administrator ochiq shikoyat yoki
+  navbatda qotib qolgan yechim borligini o'zi qidirib topishi kerak edi.
+
+  YECHIM. Sahifa uch qavatga bo'lindi va tartib ataylab shunday:
+
+    1. OGOHLANTIRISH — nolga teng bo'lmagan navbatlar. Faqat MUAMMO bo'lsa
+       chiziladi; hammasi joyida bo'lsa bu blok umuman ko'rinmaydi va
+       o'rniga bitta tinch qator qoladi. Ya'ni ekranda qizil rang doim
+       turmaydi — u paydo bo'lsa, demak haqiqatan ish bor.
+    2. RAQAMLAR — to'rtta umumiy ko'rsatkich, bir qator.
+    3. MODELLAR — Django'ning odatiy ro'yxati (unfold komponenti).
+
+  Rang tizimi saytnikiga mos: oq sirt, yashil aksent. Ogohlantirish rang
+  bilan emas, OG'IRLIK bilan ajraladi (qalin chegara + qora matn), chunki
+  palitrada qizil yo'q.
+#}
+
+{% block content %}
+    {# ------------------------------------------------- 1. OGOHLANTIRISHLAR #}
+    {% if queues %}
+        {% with has_work=0 %}{% endwith %}
+        <section class="mb-8">
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-base-500 dark:text-base-400">
+                {% trans "E'tibor talab qiladi" %}
+            </h2>
+
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                {% for queue in queues %}
+                    <a href="{{ queue.link }}"
+                       class="group flex items-start gap-3 rounded-xl border p-4 transition-colors
+                              {% if queue.value %}
+                                  border-base-900 bg-white dark:border-base-100 dark:bg-base-900
+                              {% else %}
+                                  border-base-200 bg-base-50 dark:border-base-800 dark:bg-base-900
+                              {% endif %}">
+                        <span class="material-symbols-outlined shrink-0 text-xl
+                                     {% if queue.value %}text-base-900 dark:text-base-100{% else %}text-base-400{% endif %}">
+                            {% if queue.value %}priority_high{% else %}check_circle{% endif %}
+                        </span>
+
+                        <span class="min-w-0 flex-1">
+                            <span class="block text-sm font-medium
+                                         {% if queue.value %}text-base-900 dark:text-base-100{% else %}text-base-500 dark:text-base-400{% endif %}">
+                                {{ queue.title }}
+                            </span>
+                            <span class="mt-1 block text-2xl font-bold leading-none
+                                         {% if queue.value %}text-primary-600 dark:text-primary-400{% else %}text-base-400{% endif %}">
+                                {{ queue.value }}
+                            </span>
+                            <span class="mt-1.5 block text-xs text-base-400">
+                                {% if queue.value %}
+                                    {% trans "ochish va hal qilish →" %}
+                                {% else %}
+                                    {% trans "hammasi joyida" %}
+                                {% endif %}
+                            </span>
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ------------------------------------------------------- 2. RAQAMLAR #}
+    {% if kpi %}
+        <section class="mb-8">
+            <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-base-500 dark:text-base-400">
+                {% trans "Umumiy holat" %}
+            </h2>
+
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                {% for card in kpi %}
+                    <div class="rounded-xl border border-base-200 bg-white p-4 dark:border-base-800 dark:bg-base-900">
+                        <p class="text-xs font-medium uppercase tracking-wider text-base-400">
+                            {{ card.title }}
+                        </p>
+                        <p class="mt-2 text-3xl font-bold leading-none text-base-900 dark:text-base-100">
+                            {{ card.metric }}
+                        </p>
+                        <p class="mt-2 text-xs text-base-500 dark:text-base-400">{{ card.footer }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ------------------------------------------------------- 3. MODELLAR #}
+    <div class="flex flex-col lg:flex-row lg:gap-8">
+        <div class="grow">
+            {% include "unfold/helpers/app_list_default.html" %}
+        </div>
+
+        {% include "unfold/helpers/history.html" %}
+    </div>
+{% endblock %}

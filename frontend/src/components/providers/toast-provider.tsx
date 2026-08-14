@@ -53,9 +53,9 @@ const ICONS = {
    oq suzuvchi panelda faqat chap belgi rangli. */
 const STYLES: Record<ToastVariant, { color: string; wash: string }> = {
   success: { color: "var(--ok)", wash: "var(--ok-wash)" },
-  error: { color: "var(--bad)", wash: "var(--bad-wash)" },
+  error: { color: "var(--danger)", wash: "var(--danger-wash)" },
   warning: { color: "var(--warn)", wash: "var(--warn-wash)" },
-  info: { color: "var(--note)", wash: "var(--note-wash)" },
+  info: { color: "var(--info)", wash: "var(--info-wash)" },
 };
 
 const UNDO_MS = 7000;
@@ -102,7 +102,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed right-4 bottom-[calc(var(--tabbar)+1rem)] z-[100] flex w-full max-w-sm flex-col gap-2.5 sm:bottom-5">
+      <div className="pointer-events-none fixed right-4 bottom-[calc(var(--tabbar-h)+1rem)] z-[100] flex w-full max-w-sm flex-col gap-2.5 sm:bottom-5">
         {toasts.map((row) => {
           const Icon = ICONS[row.variant];
           const style = STYLES[row.variant];
@@ -112,21 +112,21 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               role="status"
               className={cn(
                 "enter-pop pointer-events-auto overflow-hidden",
-                "rounded-[var(--r-pane)] border border-[var(--edge)] bg-[var(--pane-solid)]",
-                "shadow-[var(--lift-pop)]",
+                "rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)]",
+                "shadow-[var(--shadow-lg)]",
               )}
             >
               <div className="flex items-start gap-3 px-4 py-3.5">
                 <span
-                  className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-[var(--r-ctl)]"
+                  className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)]"
                   style={{ backgroundColor: style.wash, color: style.color }}
                 >
                   <Icon className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13.5px] font-semibold text-[var(--ink)]">{row.title}</p>
+                  <p className="text-[14.5px] font-semibold text-[var(--text)]">{row.title}</p>
                   {row.description ? (
-                    <p className="t-meta mt-0.5 text-[var(--ink-3)]">{row.description}</p>
+                    <p className="ts-sm mt-0.5 text-[var(--text-3)]">{row.description}</p>
                   ) : null}
                   {row.action ? (
                     <button
@@ -136,10 +136,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                         await row.action?.onRun();
                       }}
                       className={cn(
-                        "focus-ring mt-2.5 inline-flex items-center gap-1.5 rounded-[var(--r-ctl)]",
-                        "border border-[var(--edge)] bg-[var(--pane-sunken)] px-2.5 py-1",
-                        "text-[12px] font-semibold text-[var(--ink)]",
-                        "transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] hover:border-[var(--edge-strong)]",
+                        "ring-focus mt-2.5 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)]",
+                        "border border-[var(--line)] bg-[var(--surface-sunk)] px-2.5 py-1",
+                        "text-[12.5px] font-semibold text-[var(--text)]",
+                        "transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] hover:border-[var(--line-strong)]",
                       )}
                     >
                       <Undo2 className="size-3" />
@@ -151,8 +151,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   type="button"
                   onClick={() => dismiss(row.id)}
                   className={cn(
-                    "focus-ring shrink-0 rounded-[var(--r-ctl)] p-1 text-[var(--ink-4)]",
-                    "transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                    "ring-focus shrink-0 rounded-[var(--radius-sm)] p-1 text-[var(--text-4)]",
+                    "transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                   )}
                   aria-label="Yopish"
                 >
@@ -160,7 +160,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 </button>
               </div>
               {row.action ? (
-                <div className="h-0.5 w-full bg-[var(--pane-sunken)]">
+                <div className="h-0.5 w-full bg-[var(--surface-sunk)]">
                   <div
                     className="h-full"
                     style={{

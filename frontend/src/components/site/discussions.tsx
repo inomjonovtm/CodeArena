@@ -75,7 +75,7 @@ export function UserAvatar({
       style={{ width: inner, height: inner, fontSize: Math.max(9, inner * 0.36) }}
       className={cn(
         "flex shrink-0 items-center justify-center overflow-hidden rounded-full",
-        "bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]",
+        "bg-[var(--green-wash)] font-semibold text-[var(--green-text)]",
         !rank && className,
       )}
     >
@@ -124,25 +124,25 @@ function VoteButton({
       aria-pressed={active}
       aria-label="Foydali"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-[var(--r-chip)] px-2.5 py-1 text-[12.5px] font-medium",
-        "transition-colors duration-[var(--t-fast)] focus-ring",
+        "inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] px-2.5 py-1 text-[13px] font-medium",
+        "transition-colors duration-[var(--dur-1)] ring-focus",
         active
-          ? "bg-[var(--brand-wash)] text-[var(--brand-ink)]"
-          : "text-[var(--ink-4)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink-2)]",
+          ? "bg-[var(--green-wash)] text-[var(--green-text)]"
+          : "text-[var(--text-4)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-2)]",
         disabled && "cursor-not-allowed opacity-55",
       )}
     >
       <ChevronUp className="size-3.5" />
-      <span className="t-num">{count}</span>
+      <span className="ts-num">{count}</span>
     </button>
   );
 }
 
 /** Izoh ostidagi sokin amal tugmasi (javob, tahrirlash, ...). */
 const quietAction = cn(
-  "inline-flex items-center gap-1.5 rounded-[var(--r-chip)] px-2 py-1 text-[12px] font-medium",
-  "text-[var(--ink-4)] transition-colors duration-[var(--t-fast)] focus-ring",
-  "hover:bg-[var(--pane-hover)] hover:text-[var(--ink-2)]",
+  "inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] px-2 py-1 text-[12.5px] font-medium",
+  "text-[var(--text-4)] transition-colors duration-[var(--dur-1)] ring-focus",
+  "hover:bg-[var(--surface-hover)] hover:text-[var(--text-2)]",
 );
 
 /* --------------------------------------------------------------- shikoyat */
@@ -188,7 +188,7 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={cn(quietAction, "hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]")}
+        className={cn(quietAction, "hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]")}
       >
         <Flag className="size-3" />
         Xabar berish
@@ -247,13 +247,17 @@ type SortKey = "new" | "top" | "active";
 /** Yarim yozilgan mavzu sahifa yopilsa yo'qolmasin. */
 const DRAFT_KEY = "codearena:discussion-draft";
 
+/** Ro'yxat kelmaganda ishlatiladigan BARQAROR bo'sh massiv — pastdagi
+    `useMemo` bog'liqligi har renderda o'zgarib ketmasligi uchun. */
+const EMPTY_ROWS: PublicDiscussion[] = [];
+
 /** Kompozitordagi talab qatori — bajarilgani yashil belgi oladi. */
 function Requirement({ ok, label }: { ok: boolean; label: string }) {
   return (
     <li
       className={cn(
-        "flex items-center gap-1.5 text-[11.5px]",
-        ok ? "text-[var(--good)]" : "text-[var(--ink-4)]",
+        "flex items-center gap-1.5 text-[12px]",
+        ok ? "text-[var(--ok)]" : "text-[var(--text-4)]",
       )}
     >
       <Check className={cn("size-3", !ok && "opacity-40")} />
@@ -332,7 +336,11 @@ export function DiscussionList({ emptyHint }: { emptyHint?: string }) {
     },
   });
 
-  const rows = data?.results ?? [];
+  /* `data?.results ?? []` ni to'g'ridan-to'g'ri `useMemo` bog'liqligiga
+     qo'yib bo'lmaydi: `data` bo'lmagan har bir renderda `[]` YANGI massiv
+     bo'ladi va quyidagi memo har safar qaytadan hisoblanardi. Zaxira
+     qiymat modul darajasida bir marta yaratiladi va o'zgarmaydi. */
+  const rows = data?.results ?? EMPTY_ROWS;
 
   // Qidiruv va tartiblash — joriy sahifa ichida, so'rovlar o'zgarmaydi.
   // Qadalgan mavzular har qanday tartibda tepada qoladi.
@@ -362,7 +370,7 @@ export function DiscussionList({ emptyHint }: { emptyHint?: string }) {
       {/* ------------------------------------------------------ kompozitor */}
       {user ? (
         composerOpen ? (
-          <Pane inset="lg" className="enter flex flex-col gap-4">
+          <Pane inset="lg" className="flex flex-col gap-4">
             <Field label="Sarlavha" htmlFor="discussion-title" required>
               <Input
                 id="discussion-title"
@@ -395,7 +403,7 @@ export function DiscussionList({ emptyHint }: { emptyHint?: string }) {
                 <Requirement ok={title.trim().length >= 5} label="Sarlavha: 5+ belgi" />
                 <Requirement ok={body.trim().length >= 10} label="Matn: 10+ belgi" />
               </ul>
-              <span className="t-num text-[11.5px] text-[var(--ink-4)]">
+              <span className="ts-num text-[12px] text-[var(--text-4)]">
                 {body.length} belgi
               </span>
             </div>
@@ -439,19 +447,19 @@ export function DiscussionList({ emptyHint }: { emptyHint?: string }) {
             type="button"
             onClick={() => setComposerOpen(true)}
             className={cn(
-              "pane pane-interactive flex w-full items-center gap-3 rounded-[var(--r-pane)]",
-              "px-5 py-4 text-left focus-ring",
+              "card card-link flex w-full items-center gap-3 rounded-[var(--radius-lg)]",
+              "px-5 py-4 text-left ring-focus",
             )}
           >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
               <Plus className="size-4" />
             </span>
-            <span className="t-body text-[var(--ink-3)]">Yangi mavzu ochish...</span>
+            <span className="ts-body text-[var(--text-3)]">Yangi mavzu ochish...</span>
           </button>
         )
       ) : (
         <Pane inset="md" className="flex flex-wrap items-center gap-3">
-          <p className="t-body min-w-0 flex-1 text-[var(--ink-3)]">
+          <p className="ts-body min-w-0 flex-1 text-[var(--text-3)]">
             Muhokamada qatnashish uchun hisobingizga kiring.
           </p>
           <LinkButton href="/login" size="sm">
@@ -538,7 +546,7 @@ export function DiscussionList({ emptyHint }: { emptyHint?: string }) {
       ) : (
         <>
           <Pane inset="none" className="overflow-hidden">
-            <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+            <ul className="divide-y divide-[var(--line-soft)]">
               {visible.map((discussion) => (
                 <li key={discussion.id}>
                   <DiscussionRow discussion={discussion} />
@@ -571,21 +579,21 @@ function DiscussionRow({ discussion }: { discussion: PublicDiscussion }) {
       href={`/discussions/${discussion.id}`}
       className={cn(
         "group relative flex items-start gap-4 px-5 py-4 transition-colors sm:px-6",
-        "duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] focus-ring",
-        discussion.is_pinned && "edge-brand",
+        "duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] ring-focus",
+        discussion.is_pinned && "edge-green",
       )}
     >
       {/* Ovoz/izoh klasteri — jimgina raqamlar */}
       <div className="hidden w-12 shrink-0 flex-col items-center gap-2 pt-0.5 sm:flex">
         <div className="text-center">
-          <p className="t-num text-[15px] font-semibold leading-none text-[var(--ink)]">
+          <p className="ts-num text-[16px] font-semibold leading-none text-[var(--text)]">
             {discussion.upvotes}
           </p>
-          <p className="mt-1 text-[10.5px] text-[var(--ink-4)]">ovoz</p>
+          <p className="mt-1 text-[12px] text-[var(--text-4)]">ovoz</p>
         </div>
-        <div className="flex items-center gap-1 text-[var(--ink-4)]">
+        <div className="flex items-center gap-1 text-[var(--text-4)]">
           <MessageSquare className="size-3" />
-          <span className="t-num text-[11.5px]">{discussion.comment_count}</span>
+          <span className="ts-num text-[12px]">{discussion.comment_count}</span>
         </div>
       </div>
 
@@ -599,16 +607,16 @@ function DiscussionRow({ discussion }: { discussion: PublicDiscussion }) {
           {discussion.is_locked ? (
             <Chip icon={<Lock className="size-3" />}>Yopilgan</Chip>
           ) : null}
-          <p className="min-w-0 truncate text-[14.5px] font-semibold text-[var(--ink)] transition-colors group-hover:text-[var(--brand-ink)]">
+          <p className="min-w-0 truncate text-[15.5px] font-semibold text-[var(--text)] transition-colors group-hover:text-[var(--green-text)]">
             {discussion.title}
           </p>
         </div>
 
-        <p className="mt-1 line-clamp-1 text-[13px] leading-relaxed text-[var(--ink-3)]">
+        <p className="mt-1 line-clamp-1 text-[14px] leading-relaxed text-[var(--text-3)]">
           {discussion.body_md.replace(/[#*`>]/g, "").slice(0, 180)}
         </p>
 
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-[var(--ink-4)]">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12.5px] text-[var(--text-4)]">
           <span className="inline-flex items-center gap-1.5">
             <UserAvatar
               src={discussion.author_avatar}
@@ -616,7 +624,7 @@ function DiscussionRow({ discussion }: { discussion: PublicDiscussion }) {
               size={20}
               rank={discussion.author_rank}
             />
-            <span className="font-medium text-[var(--ink-3)]">
+            <span className="font-medium text-[var(--text-3)]">
               {discussion.author_username ?? "o'chirilgan"}
             </span>
           </span>
@@ -624,11 +632,11 @@ function DiscussionRow({ discussion }: { discussion: PublicDiscussion }) {
           {/* Mobilda klaster o'rniga meta ichida ko'rsatiladi */}
           <span className="inline-flex items-center gap-1 sm:hidden">
             <ChevronUp className="size-3" />
-            <span className="t-num">{discussion.upvotes}</span>
+            <span className="ts-num">{discussion.upvotes}</span>
           </span>
           <span className="inline-flex items-center gap-1 sm:hidden">
             <MessageSquare className="size-3" />
-            <span className="t-num">{discussion.comment_count}</span>
+            <span className="ts-num">{discussion.comment_count}</span>
           </span>
         </div>
       </div>
@@ -756,7 +764,7 @@ export function CommentThread({
   const renderNode = (node: CommentNode, depth: number) => (
     <li
       key={node.id}
-      className={cn(depth > 0 && "ml-4 border-l border-[var(--edge)] pl-4 sm:ml-6")}
+      className={cn(depth > 0 && "ml-4 border-l border-[var(--line)] pl-4 sm:ml-6")}
     >
       <div className="py-3.5">
         <div className="flex items-start gap-3">
@@ -771,18 +779,18 @@ export function CommentThread({
               {node.author_username ? (
                 <Link
                   href={`/u/${node.author_username}`}
-                  className="rounded-[6px] text-[13.5px] font-semibold text-[var(--ink)] transition-colors hover:text-[var(--brand)] focus-ring"
+                  className="rounded-[6px] text-[14.5px] font-semibold text-[var(--text)] transition-colors hover:text-[var(--green)] ring-focus"
                 >
                   {node.author_username}
                 </Link>
               ) : (
-                <span className="text-[13.5px] text-[var(--ink-4)]">o&apos;chirilgan</span>
+                <span className="text-[14.5px] text-[var(--text-4)]">o&apos;chirilgan</span>
               )}
-              <span className="text-[12px] text-[var(--ink-4)]">
+              <span className="text-[12.5px] text-[var(--text-4)]">
                 {formatRelative(node.created_at)}
               </span>
               {node.updated_at !== node.created_at ? (
-                <span className="text-[11px] text-[var(--ink-4)] opacity-75">tahrirlangan</span>
+                <span className="text-[12px] text-[var(--text-4)] opacity-75">tahrirlangan</span>
               ) : null}
             </div>
 
@@ -805,7 +813,7 @@ export function CommentThread({
                 </div>
               </div>
             ) : (
-              <div className="t-body mt-1.5 text-[var(--ink-2)]">
+              <div className="ts-body mt-1.5 text-[var(--text-2)]">
                 <Markdown source={node.body_md} />
               </div>
             )}
@@ -846,7 +854,7 @@ export function CommentThread({
                   <button
                     type="button"
                     onClick={() => deleteMutation.mutate(node.id)}
-                    className={cn(quietAction, "hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]")}
+                    className={cn(quietAction, "hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]")}
                   >
                     <Trash2 className="size-3" />
                     O&apos;chirish
@@ -858,7 +866,7 @@ export function CommentThread({
             </div>
 
             {replyTo === node.id ? (
-              <div className="enter mt-3 flex flex-col gap-2">
+              <div className="mt-3 flex flex-col gap-2">
                 <RichEditor
                   value={draft}
                   onChange={setDraft}
@@ -905,7 +913,7 @@ export function CommentThread({
             placeholder="Izohingizni yozing..."
           />
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[11.5px] text-[var(--ink-4)]">
+            <p className="text-[12px] text-[var(--text-4)]">
               Formatlash paneli va jonli ko&apos;rinish mavjud
             </p>
             <Button
@@ -938,7 +946,7 @@ export function CommentThread({
           description={emptyHint ?? "Birinchi bo'lib fikringizni yozing."}
         />
       ) : (
-        <ul className="enter-stagger flex flex-col divide-y divide-[var(--edge-soft)] border-t border-[var(--edge)]">
+        <ul className="flex flex-col divide-y divide-[var(--line-soft)] border-t border-[var(--line)]">
           {tree.map((node) => renderNode(node, 0))}
         </ul>
       )}

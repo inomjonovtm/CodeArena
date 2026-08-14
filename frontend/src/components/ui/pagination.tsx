@@ -32,9 +32,9 @@ export function Pagination({
   }, [page, totalPages]);
 
   const arrowClass = cn(
-    "flex size-8 items-center justify-center rounded-[var(--r-ctl)] text-[var(--ink-3)] focus-ring",
-    "transition-colors duration-[var(--t-fast)]",
-    "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+    "flex size-10 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-3)] ring-focus",
+    "transition-colors duration-[var(--dur-1)]",
+    "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
     "disabled:pointer-events-none disabled:opacity-35",
   );
 
@@ -52,7 +52,7 @@ export function Pagination({
 
       {items.map((item, index) =>
         item === "…" ? (
-          <span key={`gap-${index}`} className="px-1 text-[13px] text-[var(--ink-4)]">
+          <span key={`gap-${index}`} className="px-1 text-[14px] text-[var(--text-4)]">
             …
           </span>
         ) : (
@@ -62,11 +62,11 @@ export function Pagination({
             onClick={() => onChange(item)}
             aria-current={item === page ? "page" : undefined}
             className={cn(
-              "t-num flex size-8 items-center justify-center rounded-[var(--r-ctl)] text-[13px] focus-ring",
-              "transition-colors duration-[var(--t-fast)]",
+              "ts-num flex size-10 items-center justify-center rounded-[var(--radius-sm)] text-[14px] ring-focus",
+              "transition-colors duration-[var(--dur-1)]",
               item === page
-                ? "bg-[var(--brand)] font-semibold text-[var(--ink-on-brand)]"
-                : "text-[var(--ink-3)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                ? "bg-[var(--green)] font-semibold text-[var(--text-on-green)]"
+                : "text-[var(--text-3)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
             )}
           >
             {item}

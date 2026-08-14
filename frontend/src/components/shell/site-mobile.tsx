@@ -18,8 +18,9 @@ import { useAccountLinks, useMobileTabs, useNavModel } from "./nav-model";
    joyda turadi va har safar qo'lni qayta joylashtirishga majbur qiladi.
 
    Pastki panelda to'rtta eng ko'p ishlatiladigan yo'nalish va beshinchi
-   "Yana" tugmasi — u to'liq varaqni ochadi. Faol element ustida qisqa brend
-   chizig'i: ikonka rangi bilan birga ikkita signal.
+   "Yana" tugmasi — u to'liq varaqni ochadi. Faol element ikonkasi YASHIL
+   kapsula ichiga tushadi: rang va shakl — ikkita mustaqil signal, ya'ni
+   rang ko'rmaydigan foydalanuvchi ham qayerdaligini biladi.
    ========================================================================== */
 
 export function MobileTabBar({ onMore }: { onMore: () => void }) {
@@ -32,11 +33,11 @@ export function MobileTabBar({ onMore }: { onMore: () => void }) {
     <nav
       className={cn(
         "fixed inset-x-0 bottom-0 z-60 lg:hidden",
-        "border-t border-[var(--edge)] bg-[var(--canvas)]",
+        "border-t border-[var(--line)] bg-[var(--bg)]",
         "pb-[env(safe-area-inset-bottom)]",
       )}
     >
-      <div className="flex h-[var(--tabbar)] items-stretch">
+      <div className="flex h-[var(--tabbar-h)] items-stretch px-1">
         {tabs.map((tab) => {
           const active = isActive(tab.href);
           return (
@@ -45,16 +46,21 @@ export function MobileTabBar({ onMore }: { onMore: () => void }) {
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-1 focus-ring",
-                "transition-colors duration-[var(--t-fast)]",
-                active ? "text-[var(--brand)]" : "text-[var(--ink-4)]",
+                "relative flex flex-1 flex-col items-center justify-center gap-1 ring-focus",
+                "transition-colors duration-[var(--dur-1)]",
+                active ? "text-[var(--green)]" : "text-[var(--text-4)]",
               )}
             >
-              {active ? (
-                <span aria-hidden className="absolute top-0 h-[2px] w-7 bg-[var(--brand)]" />
-              ) : null}
-              <span className="[&_svg]:size-[18px]">{tab.icon}</span>
-              <span className={cn("text-[10px]", active ? "font-semibold" : "font-medium")}>
+              <span
+                className={cn(
+                  "grid h-8 w-14 place-items-center rounded-[var(--radius-md)] transition-colors",
+                  "duration-[var(--dur-1)] [&_svg]:size-[20px]",
+                  active ? "bg-[var(--green-wash)]" : "bg-transparent",
+                )}
+              >
+                {tab.icon}
+              </span>
+              <span className={cn("text-[12px]", active ? "font-semibold" : "font-medium")}>
                 {tab.label}
               </span>
             </Link>
@@ -66,12 +72,14 @@ export function MobileTabBar({ onMore }: { onMore: () => void }) {
           onClick={onMore}
           aria-haspopup="dialog"
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1 focus-ring",
-            "text-[var(--ink-4)] transition-colors",
+            "flex flex-1 flex-col items-center justify-center gap-1 ring-focus",
+            "text-[var(--text-4)] transition-colors",
           )}
         >
-          <MoreHorizontal className="size-[18px]" />
-          <span className="text-[10px] font-medium">{t.site.nav.more}</span>
+          <span className="grid h-8 w-14 place-items-center rounded-[var(--radius-md)]">
+            <MoreHorizontal className="size-[20px]" />
+          </span>
+          <span className="text-[12px] font-medium">{t.site.nav.more}</span>
         </button>
       </div>
     </nav>
@@ -90,7 +98,11 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
   const { t } = useI18n();
   const { resolved, toggle: toggleTheme } = useTheme();
   const { groups, support, legal } = useNavModel();
-  const accountLinks = useAccountLinks(user?.username, user?.permissions?.can_access_admin);
+  const accountLinks = useAccountLinks(
+    user?.username,
+    user?.permissions?.can_access_studio,
+    user?.permissions?.can_access_admin,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -119,17 +131,17 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
       key={href}
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-[var(--r-ctl)] px-3 py-2.5 focus-ring",
-        "text-[14px] transition-colors",
+        "flex items-center gap-3 rounded-[14px] px-3.5 py-3 ring-focus",
+        "text-[15px] transition-colors",
         isActive(href)
-          ? "bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]"
-          : "font-medium text-[var(--ink-2)] hover:bg-[var(--pane-hover)]",
+          ? "bg-[var(--green-wash)] font-semibold text-[var(--green-text)]"
+          : "font-medium text-[var(--text-2)] hover:bg-[var(--surface-hover)]",
       )}
     >
       <span
         className={cn(
-          "shrink-0 [&_svg]:size-4",
-          isActive(href) ? "text-[var(--brand)]" : "text-[var(--ink-4)]",
+          "shrink-0 [&_svg]:size-[18px]",
+          isActive(href) ? "text-[var(--green)]" : "text-[var(--text-4)]",
         )}
       >
         {icon}
@@ -140,7 +152,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
 
   return (
     <div className="fixed inset-0 z-100 flex flex-col justify-end lg:hidden">
-      <div className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]" onClick={onClose} />
+      <div className="enter-veil absolute inset-0 bg-[rgb(16_24_20/0.45)] backdrop-blur-[3px]" onClick={onClose} />
 
       <div
         role="dialog"
@@ -148,17 +160,17 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
         aria-label={t.site.nav.menu}
         className={cn(
           "enter-sheet relative flex max-h-[88dvh] flex-col",
-          "rounded-t-[var(--r-pane-lg)] border-t border-[var(--edge)] bg-[var(--pane-solid)]",
-          "shadow-[var(--lift-pop)]",
+          "rounded-t-[var(--radius-xl)] border-t border-[var(--line)] bg-[var(--surface)]",
+          "shadow-[var(--shadow-lg)]",
         )}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--edge)] px-5 pt-3.5 pb-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-[var(--line)] px-5 pt-3.5 pb-3">
           <Logo size="sm" />
           <button
             type="button"
             onClick={onClose}
             aria-label={t.common.close}
-            className="flex size-9 items-center justify-center rounded-[var(--r-ctl)] text-[var(--ink-3)] focus-ring hover:bg-[var(--pane-hover)]"
+            className="flex size-11 items-center justify-center rounded-full text-[var(--text-3)] ring-focus hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
           >
             <X className="size-5" />
           </button>
@@ -170,7 +182,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
             if (!links.length) return null;
             return (
               <div key={group.key} className="mb-4">
-                <p className="t-eyebrow mb-1.5 px-3">{group.label}</p>
+                <p className="ts-label mb-1.5 px-3">{group.label}</p>
                 <div className="flex flex-col gap-0.5">
                   {links.map((link) => row(link.href, link.icon, link.label))}
                 </div>
@@ -180,7 +192,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
 
           {user ? (
             <div className="mb-4">
-              <p className="t-eyebrow mb-1.5 px-3">{t.site.nav.account}</p>
+              <p className="ts-label mb-1.5 px-3">{t.site.nav.account}</p>
               <div className="flex flex-col gap-0.5">
                 {accountLinks.map((link) => row(link.href, link.icon, link.label))}
               </div>
@@ -188,23 +200,23 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
           ) : null}
 
           <div className="mb-4">
-            <p className="t-eyebrow mb-1.5 px-3">{t.site.sections.support}</p>
+            <p className="ts-label mb-1.5 px-3">{t.site.sections.support}</p>
             <div className="flex flex-col gap-0.5">
               {[...support, ...legal].map((link) => row(link.href, link.icon, link.label))}
             </div>
           </div>
 
           {/* Tema — yuqori paneldagi `PrefsMenu` ning mobil ko'rinishi */}
-          <div className="mb-4 border-t border-[var(--edge)] pt-4">
-            <p className="t-eyebrow mb-1.5 px-3">{t.site.nav.appearance}</p>
+          <div className="mb-4 border-t border-[var(--line)] pt-4">
+            <p className="ts-label mb-1.5 px-3">{t.site.nav.appearance}</p>
             <div className="px-1">
               <button
                 type="button"
                 onClick={toggleTheme}
                 aria-label={resolved === "dark" ? t.site.nav.themeLight : t.site.nav.themeDark}
                 className={cn(
-                  "flex h-10 w-full items-center justify-center gap-2 rounded-[var(--r-ctl)] focus-ring",
-                  "border border-[var(--edge)] bg-[var(--pane-sunken)] text-[13.5px] font-medium text-[var(--ink-2)]",
+                  "flex h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] ring-focus",
+                  "border border-[var(--line)] bg-[var(--surface-sunk)] text-[15px] font-medium text-[var(--text-2)]",
                 )}
               >
                 {resolved === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -213,7 +225,7 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
             </div>
           </div>
 
-          <div className="flex items-center gap-2 border-t border-[var(--edge)] px-1 pt-4">
+          <div className="flex items-center gap-2 border-t border-[var(--line)] px-1 pt-4">
             {user ? (
               <button
                 type="button"
@@ -222,8 +234,8 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
                   void logout();
                 }}
                 className={cn(
-                  "flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--r-ctl)] focus-ring",
-                  "bg-[var(--bad-wash)] text-[13.5px] font-medium text-[var(--bad)]",
+                  "flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] ring-focus",
+                  "bg-[var(--danger-wash)] text-[15px] font-medium text-[var(--danger)]",
                 )}
               >
                 <LogOut className="size-4" />
@@ -234,8 +246,8 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
                 <Link
                   href="/login"
                   className={cn(
-                    "flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--r-ctl)] focus-ring",
-                    "border border-[var(--edge)] bg-[var(--pane-sunken)] text-[13.5px] font-medium text-[var(--ink-2)]",
+                    "flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] ring-focus",
+                    "border border-[var(--line)] bg-[var(--surface-sunk)] text-[15px] font-medium text-[var(--text-2)]",
                   )}
                 >
                   {t.site.nav.signIn}
@@ -243,8 +255,8 @@ export function MobileMenu({ open, onClose }: { open: boolean; onClose: () => vo
                 <Link
                   href="/register"
                   className={cn(
-                    "flex h-10 flex-1 items-center justify-center gap-2 rounded-[var(--r-ctl)] focus-ring",
-                    "bg-[var(--brand)] text-[13.5px] font-semibold text-[var(--ink-on-brand)]",
+                    "flex h-12 flex-1 items-center justify-center gap-2 rounded-[var(--radius-md)] ring-focus",
+                    "bg-[var(--green)] text-[15px] font-semibold text-[var(--text-on-green)]",
                     "shadow-[inset_0_1px_0_rgb(255_255_255/0.2)]",
                   )}
                 >

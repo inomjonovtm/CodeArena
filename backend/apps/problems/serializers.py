@@ -53,7 +53,11 @@ class TestCaseNestedSerializer(serializers.ModelSerializer):
         fields = (
             "id", "order", "input", "expected_output", "is_sample",
             "explanation_uz", "explanation_en", "time_limit_ms", "memory_limit_kb",
+            # Generator izlari faqat O'QISH uchun: qaysi test qo'lda yozilgani
+            # va qaysisi qaysi urug'dan yasalgani Studio'da ko'rinadi.
+            "source", "generator", "seed",
         )
+        read_only_fields = ("source", "generator", "seed")
 
 
 class ProblemListSerializer(serializers.ModelSerializer):
@@ -68,6 +72,9 @@ class ProblemListSerializer(serializers.ModelSerializer):
             "id", "slug", "title_uz", "title_en", "difficulty", "points", "status",
             "tags", "is_premium", "is_contest_only", "total_submissions",
             "accepted_submissions", "acceptance_rate", "test_case_count",
+            # Limitlar ro'yxatda ham kerak: Studio jadvalida ular ustun bo'lib
+            # turadi va har bir masalani ochib ko'rish shart bo'lmaydi.
+            "time_limit_ms", "memory_limit_kb", "checker_type",
             "author_username", "published_at", "publish_at", "created_at", "updated_at",
         )
 
@@ -88,11 +95,14 @@ class ProblemDetailSerializer(serializers.ModelSerializer):
             "description_uz", "description_en", "constraints_uz", "constraints_en",
             "hint_uz", "hint_en", "editorial_uz", "editorial_en",
             "tags", "tag_ids",
-            "starter_code_python", "starter_code_javascript", "starter_code_cpp",
+            "starter_code_python", "starter_code_javascript", "starter_code_cpp", "starter_code",
             "solution_code_python", "time_limit_ms", "memory_limit_kb",
             "is_premium", "is_contest_only", "total_submissions", "accepted_submissions",
             "acceptance_rate", "author_username", "published_at", "publish_at",
             "cover_image_url", "created_at", "updated_at", "test_cases",
+            # --- javobni tekshirish (Studio «Checker» tabi)
+            "checker_type", "checker_language", "checker_code", "float_epsilon",
+            "validator_language", "validator_code",
         )
         read_only_fields = (
             "id", "total_submissions", "accepted_submissions", "acceptance_rate",
@@ -206,10 +216,15 @@ class PublicProblemDetailSerializer(UserStateMixin, serializers.ModelSerializer)
             "description_uz", "description_en", "constraints_uz", "constraints_en",
             "hint_uz", "hint_en", "editorial_uz", "editorial_en",
             "has_editorial", "editorial_locked", "tags",
-            "starter_code_python", "starter_code_javascript", "starter_code_cpp",
+            "starter_code_python", "starter_code_javascript", "starter_code_cpp", "starter_code",
             "time_limit_ms", "memory_limit_kb", "acceptance_rate",
             "total_submissions", "accepted_submissions", "sample_test_cases",
             "is_solved", "is_attempted", "is_bookmarked",
+            # Javob QANDAY tekshirilishi — foydalanuvchiga ham kerak.
+            # «Istalgan to'g'ri javob qabul qilinadi» degan bilim yechim
+            # yozish usulini butunlay o'zgartiradi: odam etalon javobni
+            # taxmin qilishga urinmaydi.
+            "checker_type", "float_epsilon",
         )
 
     def get_sample_test_cases(self, obj):

@@ -70,6 +70,8 @@ class Submission(BaseModel):
 
     class Meta:
         db_table = "submissions"
+        verbose_name = "Yuborish"
+        verbose_name_plural = "Yuborishlar"
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["user", "-created_at"]),
@@ -102,6 +104,8 @@ class SubmissionTestResult(models.Model):
 
     class Meta:
         db_table = "submission_test_results"
+        verbose_name = "Test natijasi"
+        verbose_name_plural = "Test natijalari"
         ordering = ["order"]
 
     def __str__(self) -> str:

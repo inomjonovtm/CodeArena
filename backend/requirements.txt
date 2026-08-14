@@ -4,6 +4,10 @@ djangorestframework-simplejwt>=5.4,<6.0
 django-cors-headers>=4.6,<5.0
 django-filter>=24.3
 drf-spectacular>=0.28
+
+# Boshqaruv paneli temasi. `django.contrib.admin` shablonlarini almashtiradi,
+# shuning uchun `INSTALLED_APPS` da undan OLDIN turishi shart.
+django-unfold>=0.100,<1.0
 psycopg[binary]>=3.2
 celery>=5.4,<6.0
 redis>=5.2

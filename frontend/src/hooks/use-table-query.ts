@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { Query } from "@/lib/api";
 
@@ -25,6 +25,15 @@ export function useTableQuery(initial?: Partial<TableQueryState>) {
     filters: {},
     ...initial,
   });
+
+  /* Qidiruv DEBOUNCE bilan serverga boradi: har bosilgan harf alohida
+     so'rov yubormasin. Input qiymati (`search`) darhol yangilanadi,
+     `params` esa 300 ms tinimdan keyingina o'zgaradi. */
+  const [debouncedSearch, setDebouncedSearch] = useState(state.search);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(state.search), 300);
+    return () => clearTimeout(timer);
+  }, [state.search]);
 
   const setPage = useCallback((page: number) => setState((s) => ({ ...s, page })), []);
 
@@ -73,12 +82,12 @@ export function useTableQuery(initial?: Partial<TableQueryState>) {
       page_size: state.pageSize,
       ordering: state.ordering,
     };
-    if (state.search) query.search = state.search;
+    if (debouncedSearch) query.search = debouncedSearch;
     for (const [key, value] of Object.entries(state.filters)) {
       if (value !== undefined) query[key] = value as string | string[];
     }
     return query;
-  }, [state]);
+  }, [state, debouncedSearch]);
 
   return {
     ...state,

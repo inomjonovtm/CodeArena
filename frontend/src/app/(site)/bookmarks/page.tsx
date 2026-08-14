@@ -40,10 +40,10 @@ const NOTE_FILTERS: { value: NoteFilter; label: string }[] = [
 /** Ro'yxat skeleti — haqiqiy qator tartibini takrorlaydi. */
 function RowsSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-[var(--edge-soft)]">
+    <div className="divide-y divide-[var(--line-soft)]">
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="flex items-start gap-3.5 px-4 py-4 sm:px-5">
-          <Block className="size-9 shrink-0 rounded-[var(--r-ctl)]" />
+          <Block className="size-9 shrink-0 rounded-[var(--radius-sm)]" />
           <div className="min-w-0 flex-1">
             <Block className="h-3.5 w-1/3" />
             <Block className="mt-2 h-2.5 w-24" />
@@ -79,20 +79,20 @@ function BookmarkRow({
   onRemove: () => void;
 }) {
   return (
-    <div className="group px-4 py-4 transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)] sm:px-5">
+    <div className="group px-4 py-4 transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)] sm:px-5">
       <div className="flex items-start gap-3.5">
-        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
           <BookmarkCheck className="size-4" />
         </span>
 
         <div className="min-w-0 flex-1">
           <Link
             href={`/problems/${row.problem_slug}`}
-            className="focus-ring rounded-[6px] text-[13.5px] font-medium text-[var(--ink)] transition-colors hover:text-[var(--brand)]"
+            className="ring-focus rounded-[6px] text-[14.5px] font-medium text-[var(--text)] transition-colors hover:text-[var(--green)]"
           >
             {row.problem_title}
           </Link>
-          <p className="t-meta mt-0.5 text-[var(--ink-4)]">
+          <p className="ts-sm mt-0.5 text-[var(--text-4)]">
             {formatRelative(row.created_at)} saqlangan
           </p>
 
@@ -115,7 +115,7 @@ function BookmarkRow({
               </div>
             </div>
           ) : row.note ? (
-            <p className="t-meta pane-sunken mt-2.5 rounded-[var(--r-field)] px-3.5 py-2.5 leading-relaxed text-[var(--ink-2)]">
+            <p className="ts-sm well mt-2.5 rounded-[var(--radius-sm)] px-3.5 py-2.5 leading-relaxed text-[var(--text-2)]">
               {row.note}
             </p>
           ) : null}
@@ -124,7 +124,7 @@ function BookmarkRow({
         {/* Amallar hoverda ochiladi; sensor ekranda doim ko'rinadi */}
         <div
           className={cn(
-            "flex shrink-0 items-center gap-0.5 transition-opacity duration-[var(--t-fast)]",
+            "flex shrink-0 items-center gap-0.5 transition-opacity duration-[var(--dur-1)]",
             "opacity-0 group-hover:opacity-100 focus-within:opacity-100 max-sm:opacity-100",
             editing && "opacity-100",
           )}
@@ -137,7 +137,7 @@ function BookmarkRow({
             label="Saqlanganlardan olib tashlash"
             disabled={removing}
             onClick={onRemove}
-            className="hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]"
+            className="hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]"
           >
             <Trash2 className="size-4" />
           </IconButton>
@@ -230,13 +230,13 @@ export default function BookmarksPage() {
         lead="Keyinroq qaytadigan masalalaringiz va ular uchun shaxsiy izohlaringiz."
         meta={
           <Chip tone="neutral" icon={<Bookmark className="size-3.5" />}>
-            <span className="t-num font-semibold">{data?.count ?? 0}</span> ta masala
+            <span className="ts-num font-semibold">{data?.count ?? 0}</span> ta masala
           </Chip>
         }
       />
 
       {/* ------------------------------------------------- 2. boshqaruv */}
-      <Pane className="enter" inset="md">
+      <Pane className="" inset="md">
         <div className="flex flex-wrap items-center gap-2.5">
           <SearchField
             value={search}
@@ -287,8 +287,8 @@ export default function BookmarksPage() {
           />
         </Pane>
       ) : (
-        <Pane tone="solid" inset="none" className="enter">
-          <div className="enter-stagger divide-y divide-[var(--edge-soft)]">
+        <Pane tone="solid" inset="none" className="">
+          <div className="divide-y divide-[var(--line-soft)]">
             {rows.map((row) => (
               <BookmarkRow
                 key={row.id}

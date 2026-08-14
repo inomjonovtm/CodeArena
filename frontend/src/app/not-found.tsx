@@ -28,15 +28,15 @@ const SUGGESTIONS = [
 export default function NotFound() {
   return (
     <SiteShell>
-      <div className="mx-auto flex w-full max-w-[var(--page-tight)] flex-col items-start py-10 sm:py-16">
-        <p className="t-eyebrow flex items-center gap-2">
-          <span className="text-[var(--brand)]">404</span>
-          <span aria-hidden className="h-px w-6 bg-[var(--edge-strong)]" />
+      <div className="mx-auto flex w-full max-w-[var(--container-narrow)] flex-col items-start py-10 sm:py-16">
+        <p className="ts-label flex items-center gap-2">
+          <span className="text-[var(--green)]">404</span>
+          <span aria-hidden className="h-px w-6 bg-[var(--line-strong)]" />
           Sahifa topilmadi
         </p>
 
-        <h1 className="t-title mt-5 text-[var(--ink)]">Bu manzilda hech narsa yo&apos;q</h1>
-        <p className="t-body mt-4 max-w-md text-[var(--ink-3)]">
+        <h1 className="ts-h1 mt-5 text-[var(--text)]">Bu manzilda hech narsa yo&apos;q</h1>
+        <p className="ts-body mt-4 max-w-md text-[var(--text-3)]">
           Havola eskirgan, manzil xato yozilgan yoki sahifa o&apos;chirilgan bo&apos;lishi mumkin.
           Quyidagi bo&apos;limlardan davom eting.
         </p>
@@ -48,14 +48,14 @@ export default function NotFound() {
           <LinkButton href="/">Bosh sahifa</LinkButton>
         </div>
 
-        <div className="rule mt-10 w-full pt-5">
-          <p className="t-eyebrow">Balki shu kerakdir</p>
+        <div className="divider mt-10 w-full pt-5">
+          <p className="ts-label">Balki shu kerakdir</p>
           <nav className="mt-3.5 flex flex-wrap gap-x-6 gap-y-2.5">
             {SUGGESTIONS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="focus-ring rounded-[5px] text-[13.5px] text-[var(--ink-3)] transition-colors hover:text-[var(--brand)]"
+                className="ring-focus rounded-[5px] text-[14.5px] text-[var(--text-3)] transition-colors hover:text-[var(--green)]"
               >
                 {item.label}
               </Link>

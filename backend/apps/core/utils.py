@@ -38,3 +38,21 @@ def unique_slug(model, value: str, *, field: str = "slug", instance=None, max_le
 def invite_code(length: int = 8) -> str:
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
     return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def to_int(value, default: int, *, low: int | None = None, high: int | None = None) -> int:
+    """So'rov parametridan xavfsiz butun son.
+
+    Foydalanuvchi kiritgan `?limit=abc` kabi qiymat 500 emas, standart
+    qiymat bilan davom etishi kerak. Chegaralar berilsa, natija ularga
+    qisib qo'yiladi.
+    """
+    try:
+        result = int(value)
+    except (TypeError, ValueError):
+        result = default
+    if low is not None:
+        result = max(result, low)
+    if high is not None:
+        result = min(result, high)
+    return result

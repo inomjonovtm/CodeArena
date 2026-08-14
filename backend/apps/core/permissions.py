@@ -48,12 +48,29 @@ def _role(request) -> str:
 
 
 class IsStaff(BasePermission):
-    """Admin panelga umumiy kirish: rol admin yoki moderator."""
+    """Panel API'siga umumiy kirish: admin, moderator yoki muallif.
 
-    message = "Bu bo'limga faqat administrator yoki moderator kira oladi."
+    Bu faqat BIRINCHI eshik. Haqiqiy chegara — `HasResourcePerm`: har bir
+    viewset `perm_resource` e'lon qiladi va foydalanuvchining huquq kodlari
+    tekshiriladi. Shuning uchun muallif (setter) roli shu klassdan o'tsa ham,
+    `SETTER_PERMISSIONS` da yo'q bo'limlar (foydalanuvchilar, moderatsiya,
+    sozlamalar, audit, savat) unga 403 qaytaradi.
+    """
+
+    message = "Bu bo'limga faqat administrator, moderator yoki muallif kira oladi."
 
     def has_permission(self, request, view):
-        return _role(request) in {"admin", "moderator"}
+        return _role(request) in {"admin", "moderator", "setter"}
+
+
+class IsStudioStaff(BasePermission):
+    """Studio (muallif paneli) API'si: `authoring.view` huquqi talab qilinadi."""
+
+    message = "Studio paneliga kirish huquqi yo'q."
+
+    def has_permission(self, request, view):
+        user = _user(request)
+        return bool(user and user.has_perm_code("authoring.view"))
 
 
 class IsAdmin(BasePermission):
@@ -105,6 +122,12 @@ class HasResourcePerm(BasePermission):
         overrides = getattr(view, "perm_actions", None) or {}
 
         suffix = overrides.get(action)
+        if suffix is None and action == "bulk":
+            # Bulk huquqi TANLANGAN amalga qarab aniqlanadi: bulk-publish
+            # `publish` huquqini so'raydi, `delete` esa faqat o'chirishda.
+            # Ilgari har qanday bulk `delete` talab qilardi — moderator
+            # (unda `delete` yo'q) hatto bulk-publish ham qila olmasdi.
+            suffix = self._bulk_suffix(request, view)
         if suffix is None:
             suffix = ACTION_SUFFIX.get(action)
         if suffix is None:
@@ -118,6 +141,24 @@ class HasResourcePerm(BasePermission):
         code = suffix if "." in suffix else f"{resource}.{suffix}"
         self.message = f"«{code}» huquqi yo'q — administratorga murojaat qiling."
         return user.has_perm_code(code)
+
+    @staticmethod
+    def _bulk_suffix(request, view) -> str:
+        """Bulk so'rovi uchun huquq qo'shimchasi.
+
+        Viewset `bulk_perm_actions = {"ban": "ban", "publish": "publish"}`
+        bilan aniqlashtiradi; ro'yxatda bo'lmagan amal uchun: `delete` →
+        `delete`, qolgani → `edit`. Bo'sh/noma'lum amal baribir view ichida
+        400 oladi, shuning uchun bu yerda qat'iy `delete` bilan to'sish shart
+        emas — lekin ehtiyotkorlik uchun bo'sh amal `delete` deb qaraladi.
+        """
+        requested = str(request.data.get("action") or "").strip()
+        mapping = getattr(view, "bulk_perm_actions", None) or {}
+        if requested in mapping:
+            return mapping[requested]
+        if requested in ("", "delete"):
+            return "delete"
+        return "edit"
 
 
 def require(code: str):

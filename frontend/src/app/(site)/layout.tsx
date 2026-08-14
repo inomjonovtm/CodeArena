@@ -10,10 +10,9 @@ export const metadata: Metadata = {
 /**
  * Foydalanuvchi qismining qobig'i.
  *
- * Navigatsiya chapdagi railda va mobil pastki panelda — tepada gorizontal
- * menyu yo'q (`components/shell/` ga qarang). Footer ham olib tashlandi:
- * railda yordam va huquqiy havolalar doim qo'l ostida, ya'ni har bir
- * sahifaning oxiriga takroriy blok qo'shish shart emas.
+ * Navigatsiya TEPADA (ochiluvchi menyular bilan), mobilda esa pastki
+ * tab-panelda. Eng pastda futer — huquqiy va yordam havolalari o'sha yerda.
+ * Tafsilotlar: `components/wrap/site-shell.tsx`.
  */
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -124,6 +124,40 @@ def public_settings(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+def legal_document(request, slug: str):
+    """`GET /api/site/legal/<slug>/` — maxfiylik, shartlar va shu kabi matnlar.
+
+    Matn admin panelda tahrirlanadi; sahifa uni har safar shu yerdan oladi,
+    shuning uchun tuzatish deploysiz ko'rinadi.
+    """
+    from apps.core import site_settings
+    from apps.moderation.models import LegalDocument
+
+    document = LegalDocument.objects.filter(slug=slug, is_published=True).first()
+    if document is None:
+        return Response({"detail": "Hujjat topilmadi."}, status=404)
+
+    # Matndagi `{email}` — aloqa manzili uchun joy egallovchi. Manzil sayt
+    # sozlamalarida turadi, shuning uchun u o'zgarganda hujjatlarni qayta
+    # tahrirlash shart emas.
+    email = site_settings.get_str("site_email", "")
+    body = document.body_md.replace("{email}", email) if email else document.body_md
+
+    return Response(
+        {
+            "slug": document.slug,
+            "title": document.title_uz,
+            "summary": document.summary_uz,
+            "body_md": body,
+            "version": document.version,
+            "effective_from": document.effective_from,
+            "updated_at": document.updated_at,
+        }
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def geo_regions(request):
     """`GET /api/geo/regions/` — ro'yxatdan o'tish formasi uchun viloyat/tuman."""
     from apps.accounts.regions import as_list
@@ -156,8 +190,6 @@ def public_search(request):
     """
     from apps.accounts.models import User
     from apps.contests.models import Contest, ContestStatus
-    from apps.courses.models import Course, Lesson
-    from apps.courses.models import PublishStatus as CoursePublishStatus
     from apps.problems.models import Problem, ProblemStatus
 
     query = (request.query_params.get("q") or "").strip()
@@ -180,44 +212,6 @@ def public_search(request):
                 "subtitle": f"{problem.get_difficulty_display()} · {problem.points} ball",
                 "difficulty": problem.difficulty,
                 "url": f"/problems/{problem.slug}",
-            }
-        )
-
-    # Kurs va mavzu — o'quv kontenti masaladan alohida turadi, chunki
-    # foydalanuvchi ko'pincha «sikl», «funksiya» kabi TUSHUNCHANI qidiradi
-    # va unga masala emas, o'sha tushuncha tushuntirilgan mavzu kerak.
-    courses = Course.objects.filter(status=CoursePublishStatus.PUBLISHED).filter(
-        Q(title_uz__icontains=query) | Q(subtitle_uz__icontains=query) | Q(slug__icontains=query)
-    )
-    for course in courses[:limit]:
-        results.append(
-            {
-                "type": "course",
-                "id": str(course.id),
-                "title": course.title_uz,
-                "title_en": course.title_uz,
-                "subtitle": course.subtitle_uz or course.get_language_display(),
-                "url": f"/courses/{course.slug}",
-            }
-        )
-
-    lessons = (
-        Lesson.objects.filter(
-            status=CoursePublishStatus.PUBLISHED,
-            course__status=CoursePublishStatus.PUBLISHED,
-        )
-        .filter(Q(title_uz__icontains=query) | Q(summary_uz__icontains=query))
-        .select_related("course")
-    )
-    for lesson in lessons[:limit]:
-        results.append(
-            {
-                "type": "lesson",
-                "id": str(lesson.id),
-                "title": lesson.title_uz,
-                "title_en": lesson.title_uz,
-                "subtitle": lesson.course.title_uz,
-                "url": f"/courses/{lesson.course.slug}/{lesson.slug}",
             }
         )
 

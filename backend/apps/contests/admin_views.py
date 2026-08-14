@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import django_filters as filters
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -9,16 +9,17 @@ from rest_framework.response import Response
 
 from apps.core import ranks
 from apps.core.exports import ExportMixin
-from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
+from apps.core.mixins import AuditLogMixin, BulkActionMixin, OwnScopedMixin, write_audit
 from apps.core.permissions import HasResourcePerm, IsStaff
 from apps.core.trash import SoftDeleteViewSetMixin
 
-from .models import Contest, ContestParticipant, ContestProblem, ContestStatus
+from .models import Contest, ContestParticipant, ContestProblem, ContestStaff, ContestStatus
 from .serializers import (
     ContestDetailSerializer,
     ContestListSerializer,
     ContestParticipantSerializer,
     ContestProblemSerializer,
+    ContestStaffSerializer,
     DisqualifySerializer,
 )
 
@@ -35,11 +36,13 @@ class ContestFilter(filters.FilterSet):
 
 
 class AdminContestViewSet(
-    SoftDeleteViewSetMixin, ExportMixin, AuditLogMixin, BulkActionMixin, viewsets.ModelViewSet
+    OwnScopedMixin, SoftDeleteViewSetMixin, ExportMixin, AuditLogMixin, BulkActionMixin,
+    viewsets.ModelViewSet,
 ):
     """`/api/admin/contests/` — musobaqalarni boshqarish (11-bo'lim)."""
 
     queryset = Contest.objects.all()
+    owner_field = "created_by"
     permission_classes = [IsStaff, HasResourcePerm]
     perm_resource = "contests"
     perm_actions = {
@@ -73,8 +76,11 @@ class AdminContestViewSet(
         return self.export_csv(request)
 
     def get_queryset(self):
-        return (
-            super()
+        # `OwnScopedMixin` ni CHETLAB o'tamiz: musobaqada egalik `created_by`
+        # bilan tugamaydi — unga hakam yoki muallif sifatida biriktirilgan
+        # odam ham musobaqani ko'rishi kerak.
+        queryset = (
+            super(OwnScopedMixin, self)
             .get_queryset()
             .select_related("created_by")
             .annotate(
@@ -82,9 +88,20 @@ class AdminContestViewSet(
                 participant_count=Count("participants", distinct=True),
             )
         )
+        user = self.request.user
+        if getattr(user, "role", "") == "setter":
+            return queryset.filter(
+                Q(created_by=user) | Q(staff__user=user)
+            ).distinct()
+        return queryset
 
     def get_serializer_class(self):
         return ContestListSerializer if self.action == "list" else ContestDetailSerializer
+
+    def perform_create(self, serializer):
+        # Muallif biriktirilmasa, `OwnScopedMixin` yaratuvchining o'zidan
+        # musobaqani yashirib qo'yardi.
+        serializer.save(created_by=self.request.user)
 
     # ------------------------------------------------------------- problems
     @action(detail=True, methods=["get", "post"], url_path="problems")
@@ -149,15 +166,26 @@ class AdminContestViewSet(
         entries = list(contest.contest_problems.select_related("problem").order_by("order"))
         problem_ids = [entry.problem_id for entry in entries]
 
+        # Jadval leaderboard bilan bir xil chegarada — dastlabki 500 o'rin.
+        # Chegarasiz variant katta musobaqada (minglab ishtirokchi × yuz
+        # minglab submission) xotirani yutib, so'rovni muzlatib qo'yardi.
+        total_participants = contest.participants.count()
         participants = list(
-            contest.participants.select_related("user").order_by("rank", "-score", "penalty")
+            contest.participants.select_related("user")
+            .order_by("rank", "-score", "penalty")[:500]
         )
+        participant_user_ids = [p.user_id for p in participants]
 
-        # Bitta so'rovda barcha submissionlarni olib, xotirada guruhlaymiz —
-        # ishtirokchi × masala bo'yicha alohida so'rov yuborish sekin bo'lardi.
+        # Bitta so'rovda ko'rinayotgan ishtirokchilarning submissionlari,
+        # xotirada guruhlaymiz — ishtirokchi × masala bo'yicha alohida so'rov
+        # yuborish sekin bo'lardi.
         cells: dict[tuple, dict] = {}
         submissions = (
-            Submission.objects.filter(contest=contest, problem_id__in=problem_ids)
+            Submission.objects.filter(
+                contest=contest,
+                problem_id__in=problem_ids,
+                user_id__in=participant_user_ids,
+            )
             .values("user_id", "problem_id", "status", "created_at")
             .order_by("created_at")
         )
@@ -184,6 +212,8 @@ class AdminContestViewSet(
                 "contest": ContestListSerializer(contest).data,
                 "state": contest.computed_status,
                 "server_time": now,
+                "total_participants": total_participants,
+                "truncated": total_participants > len(participants),
                 "problems": [
                     {
                         "id": str(entry.problem_id),
@@ -358,7 +388,9 @@ class AdminContestViewSet(
 
     @action(detail=False, methods=["get"])
     def summary(self, request):
-        qs = Contest.objects.all()
+        # Jadval bilan bir xil manba: muallif (setter) chegarasi va faol
+        # filtrlar hisob kartalariga ham ta'sir qiladi.
+        qs = self.filter_queryset(self.get_queryset())
         now = timezone.now()
         return Response(
             {
@@ -370,6 +402,45 @@ class AdminContestViewSet(
                 "total_participants": ContestParticipant.objects.count(),
             }
         )
+
+
+class AdminContestStaffViewSet(AuditLogMixin, viewsets.ModelViewSet):
+    """`/api/admin/contest-staff/` — olimpiada mas'ullari (hakamlar).
+
+    Alohida `contests.staff` huquqi bilan boshqariladi: musobaqani tahrirlay
+    olish va unga YANGI ODAM biriktira olish har xil vakolat — ikkinchisi
+    kirish huquqini kengaytiradi.
+    """
+
+    queryset = ContestStaff.objects.select_related("user", "contest", "added_by")
+    serializer_class = ContestStaffSerializer
+    permission_classes = [IsStaff, HasResourcePerm]
+    perm_resource = "contests"
+    perm_actions = {
+        "list": "view", "retrieve": "view",
+        "create": "staff", "update": "staff", "partial_update": "staff", "destroy": "staff",
+    }
+    filterset_fields = ["contest", "role", "user"]
+    search_fields = ["user__username", "user__full_name"]
+    ordering = ["role", "created_at"]
+    pagination_class = None
+    audit_label = "contest_staff"
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        user = self.request.user
+        if getattr(user, "role", "") == "setter":
+            # Muallif faqat o'zi tuzgan yoki o'zi biriktirilgan musobaqalarni
+            # ko'radi — begona musobaqaning hakamlar ro'yxati unga yopiq.
+            return queryset.filter(
+                Q(contest__created_by=user) | Q(contest__staff__user=user)
+            ).distinct()
+        return queryset
+
+    def perform_create(self, serializer):
+        instance = serializer.save(added_by=self.request.user)
+        write_audit(self.request, action_name="contest.staff_add", obj=instance.contest,
+                    changes={"user": instance.user.username, "role": instance.role})
 
 
 class AdminContestParticipantViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelViewSet):

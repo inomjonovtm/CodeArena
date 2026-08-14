@@ -86,7 +86,7 @@ export default function DiscussionDetailPage() {
   if (isLoading) {
     // Skelet haqiqiy tartibni takrorlaydi: post kartasi va izohlar kartasi
     return (
-      <div className="mx-auto flex max-w-[var(--page-tight)] flex-col gap-5">
+      <div className="mx-auto flex max-w-[var(--container-narrow)] flex-col gap-5">
         <Pane inset="lg">
           <Block className="h-3.5 w-32" />
           <Block className="mt-5 h-7 w-2/3" />
@@ -102,7 +102,7 @@ export default function DiscussionDetailPage() {
 
   if (isError || !data) {
     return (
-      <div className="mx-auto max-w-[var(--page-tight)]">
+      <div className="mx-auto max-w-[var(--container-narrow)]">
         <Pane tone="solid" inset="none" className="overflow-hidden">
           <Empty
             icon={<MessageSquare className="size-5" />}
@@ -119,14 +119,14 @@ export default function DiscussionDetailPage() {
 
   return (
     /* Ikki karta: mavzu va izohlar. Ular orasida bir tekis bo'shliq. */
-    <div className="mx-auto flex max-w-[var(--page-tight)] flex-col gap-5">
-      <Pane inset="lg" className="enter">
+    <div className="mx-auto flex max-w-[var(--container-narrow)] flex-col gap-5">
+      <Pane inset="lg" className="">
         {/* Orqaga qaytish — karta ichida, sahifada yalang'och qolmasin */}
         <Link
           href="/discussions"
           className={cn(
-            "mb-5 inline-flex items-center gap-1.5 rounded-[var(--r-ctl)] px-1 py-0.5 text-[13.5px]",
-            "text-[var(--ink-3)] transition-colors hover:text-[var(--ink)] focus-ring",
+            "mb-5 inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] px-1 py-0.5 text-[14.5px]",
+            "text-[var(--text-3)] transition-colors hover:text-[var(--text)] ring-focus",
           )}
         >
           <ArrowLeft className="size-4" />
@@ -171,11 +171,11 @@ export default function DiscussionDetailPage() {
                 aria-pressed={voteActive}
                 aria-label="Foydali"
                 className={cn(
-                  "flex size-9 items-center justify-center rounded-[var(--r-ctl)] border focus-ring",
-                  "transition-colors duration-[var(--t-fast)]",
+                  "flex size-9 items-center justify-center rounded-[var(--radius-sm)] border ring-focus",
+                  "transition-colors duration-[var(--dur-1)]",
                   voteActive
-                    ? "border-[var(--brand-edge)] bg-[var(--brand-wash)] text-[var(--brand)]"
-                    : "border-[var(--edge)] bg-[var(--pane-sunken)] text-[var(--ink-3)] hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+                    ? "border-[var(--green-line)] bg-[var(--green-wash)] text-[var(--green)]"
+                    : "border-[var(--line)] bg-[var(--surface-sunk)] text-[var(--text-3)] hover:border-[var(--line-strong)] hover:text-[var(--text)]",
                   !user && "cursor-not-allowed opacity-55",
                 )}
               >
@@ -183,8 +183,8 @@ export default function DiscussionDetailPage() {
               </button>
               <span
                 className={cn(
-                  "t-num text-[13.5px] font-semibold",
-                  voteActive ? "text-[var(--brand-ink)]" : "text-[var(--ink-2)]",
+                  "ts-num text-[14.5px] font-semibold",
+                  voteActive ? "text-[var(--green-text)]" : "text-[var(--text-2)]",
                 )}
               >
                 {data.upvotes}
@@ -205,7 +205,7 @@ export default function DiscussionDetailPage() {
                 </div>
               ) : null}
 
-              <h1 className="t-title mt-3 text-[var(--ink)]">{data.title}</h1>
+              <h1 className="ts-h1 mt-3 text-[var(--text)]">{data.title}</h1>
 
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <span className="inline-flex items-center gap-2.5">
@@ -218,24 +218,24 @@ export default function DiscussionDetailPage() {
                   {data.author_username ? (
                     <Link
                       href={`/u/${data.author_username}`}
-                      className="rounded-[6px] text-[13.5px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--brand)] focus-ring"
+                      className="rounded-[6px] text-[14.5px] font-medium text-[var(--text-2)] transition-colors hover:text-[var(--green)] ring-focus"
                     >
                       {data.author_username}
                     </Link>
                   ) : (
-                    <span className="text-[13.5px] text-[var(--ink-4)]">o&apos;chirilgan</span>
+                    <span className="text-[14.5px] text-[var(--text-4)]">o&apos;chirilgan</span>
                   )}
                 </span>
-                <span className="text-[12.5px] text-[var(--ink-4)]">
+                <span className="text-[13px] text-[var(--text-4)]">
                   {formatRelative(data.created_at)}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[12.5px] text-[var(--ink-4)]">
+                <span className="inline-flex items-center gap-1 text-[13px] text-[var(--text-4)]">
                   <Eye className="size-3.5" />
-                  <span className="t-num">{data.views}</span>
+                  <span className="ts-num">{data.views}</span>
                 </span>
-                <span className="inline-flex items-center gap-1 text-[12.5px] text-[var(--ink-4)]">
+                <span className="inline-flex items-center gap-1 text-[13px] text-[var(--text-4)]">
                   <MessageSquare className="size-3.5" />
-                  <span className="t-num">{data.comment_count}</span>
+                  <span className="ts-num">{data.comment_count}</span>
                 </span>
               </div>
 
@@ -243,7 +243,7 @@ export default function DiscussionDetailPage() {
                 <Markdown source={data.body_md} />
               </div>
 
-              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[var(--edge)] pt-4">
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[var(--line)] pt-4">
                 {data.is_mine ? (
                   <>
                     <Button
@@ -264,7 +264,7 @@ export default function DiscussionDetailPage() {
                       icon={<Trash2 className="size-3.5" />}
                       onClick={() => deleteMutation.mutate()}
                       loading={deleteMutation.isPending}
-                      className="text-[var(--bad)] hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]"
+                      className="text-[var(--danger)] hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]"
                     >
                       O&apos;chirish
                     </Button>

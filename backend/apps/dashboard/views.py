@@ -14,6 +14,7 @@ from apps.content.models import Comment, ContentReport, Discussion
 from apps.contests.models import Contest, ContestStatus
 from apps.core import ranks
 from apps.core.permissions import require
+from apps.core.utils import to_int
 from apps.judge import engine as judge_engine
 from apps.judge.models import Submission, SubmissionStatus
 from apps.moderation.models import AuditLog, PlagiarismPair, PlagiarismStatus
@@ -99,7 +100,7 @@ def stats(request):
 @permission_classes([require("dashboard.view")])
 def charts(request):
     """Grafiklar uchun vaqt qatorlari. `?days=30`"""
-    days = min(int(request.query_params.get("days", 30)), 365)
+    days = to_int(request.query_params.get("days"), 30, low=1, high=365)
     start = timezone.now() - datetime.timedelta(days=days)
 
     def series(queryset, field="created_at"):
@@ -163,7 +164,7 @@ def activity(request):
     from apps.judge.serializers import AdminSubmissionListSerializer
     from apps.moderation.serializers import AuditLogSerializer
 
-    limit = min(int(request.query_params.get("limit", 10)), 50)
+    limit = to_int(request.query_params.get("limit"), 10, low=1, high=50)
     return Response(
         {
             "recent_submissions": AdminSubmissionListSerializer(
@@ -199,7 +200,8 @@ def system_health(request):
     elif judge["backend"] == "local":
         warnings.append(
             {"level": "info",
-             "message": "Judge0 ishlamayapti; lokal runner ishlatilmoqda (produksiya uchun tavsiya etilmaydi)."}
+             "message": "Runner xizmati ishlamayapti; kod shu serverda bajarilmoqda "
+                        "(produksiya uchun tavsiya etilmaydi)."}
         )
     if stuck:
         warnings.append({"level": "danger", "message": f"{stuck} ta submission 10 daqiqadan ortiq navbatda."})
@@ -220,12 +222,13 @@ def system_health(request):
 
     return Response(
         {
-            "judge0": {
-                "url": judge["judge0_url"],
+            "judge": {
                 "available": judge["available"],
                 "backend": judge["backend"],
-                "judge0_available": judge["judge0_available"],
+                "runner_ok": judge["runner_ok"],
+                "runner_error": judge["runner_error"],
                 "languages": judge["languages"],
+                "language_count": judge["language_count"],
             },
             "queue": {
                 "pending": Submission.objects.filter(status=SubmissionStatus.PENDING).count(),

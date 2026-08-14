@@ -51,10 +51,10 @@ const KIND_ICON: Record<NotificationKind, React.ReactNode> = {
    birinchi qat'iy taqiqi ("ikonka rangli plitkada" — eng aniq shablon
    belgisi). Endi ikonka soch chizig'idagi doirada, yalang'och. */
 const LEVEL_INK: Record<AppNotification["level"], string> = {
-  info: "var(--note)",
+  info: "var(--info)",
   success: "var(--ok)",
   warning: "var(--warn)",
-  danger: "var(--bad)",
+  danger: "var(--danger)",
 };
 
 const PAGE_SIZE = 20;
@@ -62,7 +62,7 @@ const PAGE_SIZE = 20;
 /** Ro'yxat skeleti — haqiqiy qator tartibini takrorlaydi. */
 function RowsSkeleton({ rows = 6 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-[var(--edge-soft)]">
+    <div className="divide-y divide-[var(--line-soft)]">
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="flex items-start gap-3.5 px-4 py-3.5 sm:px-5">
           <Block className="size-9 shrink-0 rounded-full" />
@@ -193,7 +193,7 @@ export default function NotificationsPage() {
             <Button
               variant="quiet"
               size="sm"
-              className="border-[var(--edge)] bg-[var(--pane-sunken)] hover:bg-[var(--pane-hover)]"
+              className="border-[var(--line)] bg-[var(--surface-sunk)] hover:bg-[var(--surface-hover)]"
               icon={<CheckCheck className="size-4" />}
               loading={readAllMutation.isPending}
               onClick={() => readAllMutation.mutate()}
@@ -214,7 +214,7 @@ export default function NotificationsPage() {
       />
 
       {/* ---------------------------------------------------- 2. filtr paneli */}
-      <Pane className="enter" inset="md">
+      <Pane className="" inset="md">
         <Segmented
           value={filter}
           onChange={(value) => {
@@ -263,22 +263,22 @@ export default function NotificationsPage() {
         /* BITTA karta, ichida kunlar bo'yicha yopishqoq yorliqlar.
            Ilgari har bir kun alohida karta edi — bu "har element alohida
            karta" uslubi, ro'yxat sahifalari uchun qo'llanma taqiqlaydi. */
-        <Pane tone="solid" inset="none" className="enter">
+        <Pane tone="solid" inset="none" className="">
           {groups.map((group) => (
             <section key={group.label}>
               <p
-                className="sticky-edge t-eyebrow border-y border-[var(--edge)] px-4 py-2 first:border-t-0 sm:px-5"
-                style={{ top: "var(--bar)" }}
+                className="sticky top-0 z-10 ts-label border-y border-[var(--line)] px-4 py-2 first:border-t-0 sm:px-5"
+                style={{ top: "var(--nav-h)" }}
               >
                 {group.label}
               </p>
 
-              <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+              <ul className="divide-y divide-[var(--line-soft)]">
                 {group.items.map((row) => {
                   /* Ikonka soch chizig'idagi doirada — rang faqat glifda */
                   const icon = (
                     <span
-                      className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--edge)]"
+                      className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--line)]"
                       style={{ color: LEVEL_INK[row.level] }}
                     >
                       {KIND_ICON[row.kind] ?? <Bell className="size-4" />}
@@ -289,20 +289,20 @@ export default function NotificationsPage() {
                     <div className="min-w-0 flex-1">
                       <p
                         className={cn(
-                          "text-[14px]",
+                          "text-[15px]",
                           row.is_read
-                            ? "font-normal text-[var(--ink-2)]"
-                            : "font-semibold text-[var(--ink)]",
+                            ? "font-normal text-[var(--text-2)]"
+                            : "font-semibold text-[var(--text)]",
                         )}
                       >
                         {row.title}
                       </p>
                       {row.body ? (
-                        <p className="t-meta mt-0.5 line-clamp-2 text-[var(--ink-3)]">
+                        <p className="ts-sm mt-0.5 line-clamp-2 text-[var(--text-3)]">
                           {row.body}
                         </p>
                       ) : null}
-                      <p className="t-meta t-num mt-1 text-[var(--ink-4)]">
+                      <p className="ts-sm ts-num mt-1 text-[var(--text-4)]">
                         {formatRelative(row.created_at)}
                       </p>
                     </div>
@@ -311,7 +311,7 @@ export default function NotificationsPage() {
                   const dot = !row.is_read ? (
                     <span
                       aria-label="o'qilmagan"
-                      className="mt-2 size-2 shrink-0 rounded-full bg-[var(--brand)]"
+                      className="mt-2 size-2 shrink-0 rounded-full bg-[var(--green)]"
                     />
                   ) : null;
 
@@ -319,20 +319,20 @@ export default function NotificationsPage() {
                     <li
                       key={row.id}
                       /* O'qilmagan qator butunlay bo'yalmaydi: chap qirradagi
-                         brend chizig'i (`row-mark`) va nuqta yetarli signal,
+                         brend chizig'i (``) va nuqta yetarli signal,
                          to'liq yuvindi esa ro'yxatni shovqinga to'ldirardi. */
                       data-active={row.is_read ? undefined : "true"}
                       className={cn(
-                        "group row-mark relative flex items-start gap-3.5 px-4 py-3.5 sm:px-5",
-                        "transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)]",
-                        !row.is_read && "bg-[var(--brand-wash)]/40",
+                        "group  relative flex items-start gap-3.5 px-4 py-3.5 sm:px-5",
+                        "transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)]",
+                        !row.is_read && "bg-[var(--green-wash)]/40",
                       )}
                     >
                       {row.url ? (
                         <Link
                           href={row.url}
                           onClick={() => !row.is_read && readMutation.mutate(row.id)}
-                          className="flex min-w-0 flex-1 items-start gap-3.5 rounded-[var(--r-ctl)] focus-ring"
+                          className="flex min-w-0 flex-1 items-start gap-3.5 rounded-[var(--radius-sm)] ring-focus"
                         >
                           {icon}
                           {body}
@@ -354,9 +354,9 @@ export default function NotificationsPage() {
                             title="O'qildi deb belgilash"
                             onClick={() => readMutation.mutate(row.id)}
                             className={cn(
-                              "flex size-8 items-center justify-center rounded-[var(--r-ctl)] focus-ring",
-                              "text-[var(--ink-4)] transition-[opacity,color,background-color] duration-[var(--t-fast)]",
-                              "hover:bg-[var(--brand-wash)] hover:text-[var(--brand)]",
+                              "flex size-8 items-center justify-center rounded-[var(--radius-sm)] ring-focus",
+                              "text-[var(--text-4)] transition-[opacity,color,background-color] duration-[var(--dur-1)]",
+                              "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                               // Sensorli ekranda hover yo'q — doim ko'rinadi
                               "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-100",
                             )}
@@ -370,9 +370,9 @@ export default function NotificationsPage() {
                           title="O'chirish"
                           onClick={() => removeMutation.mutate(row.id)}
                           className={cn(
-                            "flex size-8 items-center justify-center rounded-[var(--r-ctl)] focus-ring",
-                            "text-[var(--ink-4)] transition-[opacity,color,background-color] duration-[var(--t-fast)]",
-                            "hover:bg-[var(--bad-wash)] hover:text-[var(--bad)]",
+                            "flex size-8 items-center justify-center rounded-[var(--radius-sm)] ring-focus",
+                            "text-[var(--text-4)] transition-[opacity,color,background-color] duration-[var(--dur-1)]",
+                            "hover:bg-[var(--danger-wash)] hover:text-[var(--danger)]",
                             "opacity-0 group-hover:opacity-100 focus-visible:opacity-100 max-sm:opacity-100",
                           )}
                         >

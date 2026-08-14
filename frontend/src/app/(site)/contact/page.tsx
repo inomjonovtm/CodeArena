@@ -123,7 +123,7 @@ export default function ContactPage() {
         meta={
           <a
             href={`mailto:${siteEmail}`}
-            className="focus-ring flex items-center gap-2 rounded-[6px] text-[14px] font-medium text-[var(--ink-2)] transition-colors hover:text-[var(--brand)]"
+            className="ring-focus flex items-center gap-2 rounded-[6px] text-[15px] font-medium text-[var(--text-2)] transition-colors hover:text-[var(--green)]"
           >
             <Mail className="size-4" />
             {siteEmail}
@@ -134,31 +134,31 @@ export default function ContactPage() {
       <SplitLayout
         aside={
           /* ---------------------------------------------- ma'lumot kartasi */
-          <Pane inset="lg" className="enter">
+          <Pane inset="lg" className="">
             <div className="flex flex-col gap-5">
               <div>
-                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
                   <Mail className="size-4" />
                 </span>
-                <p className="mt-3 text-[13.5px] font-semibold text-[var(--ink)]">
+                <p className="mt-3 text-[14.5px] font-semibold text-[var(--text)]">
                   {t.site.contact.emailUsTitle}
                 </p>
-                <p className="t-meta mt-1 text-[var(--ink-3)]">{t.site.contact.emailUsBody}</p>
+                <p className="ts-sm mt-1 text-[var(--text-3)]">{t.site.contact.emailUsBody}</p>
               </div>
 
               <Divider />
 
               <div>
-                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
                   <MessageSquare className="size-4" />
                 </span>
-                <p className="mt-3 text-[13.5px] font-semibold text-[var(--ink)]">
+                <p className="mt-3 text-[14.5px] font-semibold text-[var(--text)]">
                   {t.site.contact.communityTitle}
                 </p>
-                <p className="t-meta mt-1 text-[var(--ink-3)]">{t.site.contact.communityBody}</p>
+                <p className="ts-sm mt-1 text-[var(--text-3)]">{t.site.contact.communityBody}</p>
                 <Link
                   href="/discussions"
-                  className="focus-ring mt-2.5 inline-flex items-center gap-1.5 rounded-[6px] text-[13px] font-medium text-[var(--brand-ink)] transition-colors hover:text-[var(--brand)]"
+                  className="ring-focus mt-2.5 inline-flex items-center gap-1.5 rounded-[6px] text-[14px] font-medium text-[var(--green-text)] transition-colors hover:text-[var(--green)]"
                 >
                   {t.site.nav.discussions}
                   <ArrowRight className="size-3.5" />
@@ -168,20 +168,20 @@ export default function ContactPage() {
               <Divider />
 
               <div>
-                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane)] text-[var(--ink-4)]">
+                <span className="flex size-9 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface)] text-[var(--text-4)]">
                   <Clock className="size-4" />
                 </span>
-                <p className="mt-3 text-[13.5px] font-semibold text-[var(--ink)]">
+                <p className="mt-3 text-[14.5px] font-semibold text-[var(--text)]">
                   {t.site.contact.responseTitle}
                 </p>
-                <p className="t-meta mt-1 text-[var(--ink-3)]">{t.site.contact.responseBody}</p>
+                <p className="ts-sm mt-1 text-[var(--text-3)]">{t.site.contact.responseBody}</p>
               </div>
             </div>
           </Pane>
         }
       >
         {/* ---------------------------------------------------- forma kartasi */}
-        <Pane inset="lg" className="enter">
+        <Pane inset="lg" className="">
           {sent ? (
             <Alert tone="ok" title={t.site.contact.sentTitle} className="mb-6">
               {t.site.contact.sentBody}
@@ -267,7 +267,7 @@ export default function ContactPage() {
             </Field>
 
             <div className="mt-2 flex flex-wrap items-center justify-between gap-4">
-              <p className="flex items-center gap-2 text-[13.5px] text-[var(--ink-3)]">
+              <p className="flex items-center gap-2 text-[14.5px] text-[var(--text-3)]">
                 <Clock className="size-4" />
                 {t.site.contact.responseBody}
               </p>

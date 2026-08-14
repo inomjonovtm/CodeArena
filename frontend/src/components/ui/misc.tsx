@@ -40,7 +40,7 @@ export function Avatar({
     <div
       style={{ width: inner, height: inner, fontSize: Math.max(9, inner * 0.36) }}
       className={cn(
-        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]",
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--green-wash)] font-semibold text-[var(--green-text)]",
         !rank && className,
       )}
     >
@@ -87,8 +87,8 @@ export function Tabs({
   className?: string;
 }) {
   return (
-    <div className={cn("scrollbar-thin overflow-x-auto", className)}>
-      <div className="flex min-w-max gap-0.5 rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-sunken)] p-1">
+    <div className={cn("scroll-thin overflow-x-auto", className)}>
+      <div className="flex min-w-max gap-1 rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-sunk)] p-1.5">
         {items.map((item) => {
           const isActive = item.key === active;
           return (
@@ -97,11 +97,11 @@ export function Tabs({
               type="button"
               onClick={() => onChange(item.key)}
               className={cn(
-                "relative flex items-center gap-1.5 whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-[13px] font-medium focus-ring",
-                "transition-colors duration-[var(--t-fast)]",
+                "relative flex items-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] px-4 py-2 text-[15px] font-medium ring-focus",
+                "transition-colors duration-[var(--dur-1)]",
                 isActive
-                  ? "bg-[var(--pane-solid)] text-[var(--ink)] shadow-[var(--lift-1),0_0_0_1px_var(--edge-soft)]"
-                  : "text-[var(--ink-3)] hover:text-[var(--ink)]",
+                  ? "bg-[var(--green)] text-[var(--text-on-green)] shadow-[var(--shadow-sm)]"
+                  : "text-[var(--text-3)] hover:text-[var(--text)]",
               )}
             >
               {item.icon}
@@ -109,10 +109,10 @@ export function Tabs({
               {item.badge !== undefined && item.badge !== null ? (
                 <span
                   className={cn(
-                    "t-num rounded-[var(--r-chip)] px-1.5 py-px text-[10px] font-semibold",
+                    "ts-num rounded-[var(--radius-xs)] px-1.5 py-px text-[11px] font-semibold",
                     isActive
-                      ? "bg-[var(--brand-wash)] text-[var(--brand-ink)]"
-                      : "bg-[var(--pane-sunken)] text-[var(--ink-4)]",
+                      ? "bg-[var(--green-wash)] text-[var(--green-text)]"
+                      : "bg-[var(--surface-sunk)] text-[var(--text-4)]",
                   )}
                 >
                   {item.badge}
@@ -188,26 +188,26 @@ export function MultiSelect<T extends { id: string | number }>({
         type="button"
         onClick={() => setOpen((state) => !state)}
         className={cn(
-          "flex min-h-9 w-full flex-wrap items-center gap-1.5 rounded-[var(--r-field)] border border-[var(--edge)]",
-          "bg-[var(--pane-sunken)] px-3 py-1.5 text-left text-sm focus-ring",
-          "transition-[background-color,border-color,box-shadow] duration-[var(--t-fast)]",
-          "hover:border-[var(--edge)]",
-          open && "border-[var(--brand-edge)] bg-[var(--pane-solid)] shadow-[0_0_0_var(--focus-w)_var(--focus)]",
+          "flex min-h-11 w-full flex-wrap items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--line)]",
+          "bg-[var(--surface-sunk)] px-3 py-1.5 text-left text-sm ring-focus",
+          "transition-[background-color,border-color,box-shadow] duration-[var(--dur-1)]",
+          "hover:border-[var(--line)]",
+          open && "border-[var(--green-line)] bg-[var(--surface)] shadow-[0_0_0_var(--focus-w)_var(--focus-ring)]",
         )}
       >
         {selectedOptions.length === 0 ? (
-          <span className="text-[var(--ink-4)]">{placeholder}</span>
+          <span className="text-[var(--text-4)]">{placeholder}</span>
         ) : (
           selectedOptions.map((option) => {
             const color = colorOf?.(option);
             return (
               <span
                 key={option.id}
-                className="inline-flex items-center gap-1 rounded-[var(--r-chip)] px-2 py-0.5 text-[11px] font-medium"
+                className="inline-flex items-center gap-1 rounded-[var(--radius-xs)] px-2 py-0.5 text-[12px] font-medium"
                 style={
                   color
                     ? { backgroundColor: `${color}1f`, color }
-                    : { backgroundColor: "var(--brand-wash)", color: "var(--brand-ink)" }
+                    : { backgroundColor: "var(--green-wash)", color: "var(--green-text)" }
                 }
               >
                 {labelOf(option)}
@@ -226,30 +226,30 @@ export function MultiSelect<T extends { id: string | number }>({
             );
           })
         )}
-        <ChevronDown className="ml-auto size-4 shrink-0 text-[var(--ink-4)]" />
+        <ChevronDown className="ml-auto size-4 shrink-0 text-[var(--text-4)]" />
       </button>
 
       {open ? (
-        <div className="enter-pop absolute z-30 mt-1.5 w-full origin-top overflow-hidden rounded-[var(--r-pane)] pane-float">
-          <div className="border-b border-[var(--edge)] p-2">
+        <div className="enter-pop absolute z-30 mt-1.5 w-full origin-top overflow-hidden rounded-[var(--radius-lg)] float">
+          <div className="border-b border-[var(--line)] p-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--ink-4)]" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--text-4)]" />
               <input
                 autoFocus
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Qidirish..."
                 className={cn(
-                  "h-8 w-full rounded-[var(--r-ctl)] border border-[var(--edge)] bg-[var(--pane-sunken)] pl-8 pr-2",
-                  "text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]",
-                  "focus:border-[var(--brand-edge)] focus:bg-[var(--pane-solid)]",
+                  "h-10 w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] pl-8 pr-2",
+                  "text-[14px] text-[var(--text)] outline-none placeholder:text-[var(--text-4)]",
+                  "focus:border-[var(--green-line)] focus:bg-[var(--surface)]",
                 )}
               />
             </div>
           </div>
           <div className="max-h-56 overflow-y-auto p-1.5">
             {filtered.length === 0 ? (
-              <p className="px-2 py-3 text-center text-xs text-[var(--ink-4)]">{emptyText}</p>
+              <p className="px-2 py-3 text-center text-xs text-[var(--text-4)]">{emptyText}</p>
             ) : (
               filtered.map((option) => {
                 const checked = value.includes(option.id);
@@ -262,14 +262,14 @@ export function MultiSelect<T extends { id: string | number }>({
                         checked ? value.filter((id) => id !== option.id) : [...value, option.id],
                       )
                     }
-                    className="flex w-full items-center gap-2 rounded-[var(--r-ctl)] px-2 py-1.5 text-left text-[13px] text-[var(--ink-2)] transition-colors hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]"
+                    className="flex w-full items-center gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 text-left text-[14px] text-[var(--text-2)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
                   >
                     <span
                       className={cn(
                         "flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors",
                         checked
-                          ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--ink-on-brand)]"
-                          : "border-[var(--edge-strong)]",
+                          ? "border-[var(--green)] bg-[var(--green)] text-[var(--text-on-green)]"
+                          : "border-[var(--line-strong)]",
                       )}
                     >
                       {checked ? <Check className="size-3" /> : null}
@@ -305,25 +305,25 @@ export function CodeBlock({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-solid)]",
+        "overflow-hidden rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface)]",
         className,
       )}
     >
       {language ? (
-        <div className="flex items-center justify-between border-b border-[var(--edge)] bg-[var(--pane-sunken)] px-3 py-1.5">
-          <span className="t-eyebrow normal-case">{language}</span>
+        <div className="flex items-center justify-between border-b border-[var(--line)] bg-[var(--surface-sunk)] px-3 py-1.5">
+          <span className="ts-label normal-case">{language}</span>
           <CopyButton value={code} />
         </div>
       ) : null}
-      <div className="scrollbar-thin overflow-auto" style={{ maxHeight }}>
-        <table className="w-full border-collapse font-mono text-[12.5px] leading-[1.6]">
+      <div className="scroll-thin overflow-auto" style={{ maxHeight }}>
+        <table className="w-full border-collapse font-mono text-[13px] leading-[1.6]">
           <tbody>
             {lines.map((line, index) => (
               <tr key={index} className={cn(highlight.has(index + 1) && "bg-[var(--warn-wash)]")}>
-                <td className="w-10 select-none border-r border-[var(--edge)] px-2 text-right align-top text-[var(--ink-4)]">
+                <td className="w-10 select-none border-r border-[var(--line)] px-2 text-right align-top text-[var(--text-4)]">
                   {index + 1}
                 </td>
-                <td className="whitespace-pre px-3 text-[var(--ink)]">{line || " "}</td>
+                <td className="whitespace-pre px-3 text-[var(--text)]">{line || " "}</td>
               </tr>
             ))}
           </tbody>
@@ -345,8 +345,8 @@ export function StatRow({
 }) {
   return (
     <div className={cn("flex items-center justify-between gap-4 py-1.5 text-sm", className)}>
-      <span className="text-[var(--ink-3)]">{label}</span>
-      <span className="t-num font-medium text-[var(--ink)]">{value}</span>
+      <span className="text-[var(--text-3)]">{label}</span>
+      <span className="ts-num font-medium text-[var(--text)]">{value}</span>
     </div>
   );
 }
@@ -364,15 +364,15 @@ export function ProgressBar({
 }) {
   const percent = Math.min(100, Math.max(0, (value / (max || 1)) * 100));
   const colors = {
-    accent: "var(--brand)",
+    accent: "var(--green)",
     success: "var(--ok)",
     warning: "var(--warn)",
-    danger: "var(--bad)",
+    danger: "var(--danger)",
   };
   return (
-    <div className={cn("h-1.5 w-full overflow-hidden rounded-full bg-[var(--pane-sunken)]", className)}>
+    <div className={cn("h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-sunk)]", className)}>
       <div
-        className="h-full rounded-full transition-[width] duration-[var(--t-slow)] ease-[var(--ease-soft)]"
+        className="h-full rounded-full transition-[width] duration-[var(--dur-2)] ease-[var(--ease)]"
         style={{ width: `${percent}%`, backgroundColor: colors[tone] }}
       />
     </div>

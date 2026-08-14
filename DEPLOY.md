@@ -17,12 +17,21 @@ baza yo'q.
 Repozitoriy ildizidagi `Dockerfile` bitta image quradi va bitta port ochadi:
 
 ```
-nginx :$PORT ── /api/, /health/, /static/, /media/ → gunicorn :8000
-             └─ qolgan hammasi                      → next     :3000
+nginx :$PORT ── /api/, /admin/, /health/, /static/, /media/ → gunicorn :8000
+             └─ qolgan hammasi                                → next     :3000
 ```
 
 Jarayonlarni `supervisord` boshqaradi va biri tushsa qayta ko'taradi.
 Migratsiya va `collectstatic` har ishga tushishda avtomatik bajariladi.
+
+`/admin/` — **Django admin** (boshqaruv paneli). U saytning o'zida, bitta
+domenda turadi: alohida port yoki subdomen bo'lsa, sessiya cookie'si ham
+alohida bo'lib qolardi va panel foydalanuvchini tanimasdi.
+
+Deploydan keyin `python manage.py compile_locale` (panel tarjimasi) va
+`python manage.py sync_roles` ishga tushiring —
+u rol guruhlarini yaratadi va yangi modellar uchun moderator huquqlarini
+qo'shadi. Buyruq idempotent, har deployda ishlatish xavfsiz.
 
 ### Kerakli muhit o'zgaruvchilari
 
@@ -51,9 +60,9 @@ Administrator hisobi qo'lda yaratiladi — platformaning konsolida:
 cd /app/backend && python manage.py createsuperuser
 ```
 
-> **Judge0 bu rejimda yo'q.** Kod tekshiruvi lokal runnerga tushadi
+> **Runner bu rejimda yo'q.** Kod tekshiruvi lokal ijroga tushadi
 > (`LOCAL_JUDGE_ENABLED=True`), u esa **to'liq sandbox emas**: tarmoq va fayl
-> tizimi bloklanmagan. Ishonchsiz foydalanuvchilar kodi uchun alohida Judge0
+> tizimi bloklanmagan. Ishonchsiz foydalanuvchilar kodi uchun alohida runner
 > ko'taring va `JUDGE0_URL` ni ko'rsating.
 
 ---
@@ -81,7 +90,7 @@ push → main
 ### 1. Serverni tayyorlash
 
 Talab: Ubuntu 22.04+ (yoki shunga o'xshash), 4 GB RAM dan yuqori
-(Judge0 konteynerlari ochko'z), Docker Engine + Compose plugin.
+(kompilyatorlar joy oladi), Docker Engine + Compose plugin.
 
 ```bash
 curl -fsSL https://get.docker.com | sh
@@ -105,11 +114,10 @@ Serverga qo'lda joylashtiriladigan fayllar (ular Git'da ham, CI'da ham yo'q):
 |---|---|
 | `/srv/codearena/.env` | compose o'zgaruvchilari — `POSTGRES_*`, `JUDGE0_*` |
 | `/srv/codearena/backend/.env` | Django sozlamalari (`backend/.env.example` dan) |
-| `/srv/codearena/infra/judge0.conf` | Judge0 konfiguratsiyasi, `AUTHN_TOKEN` bilan |
 
 `docker-compose.prod.yml`, `infra/nginx/*` va `infra/certbot/entrypoint.sh`
 har deploy'da CI tomonidan yangilanadi — ularni qo'lda tahrirlamang.
-`infra/judge0.conf` esa nusxalanmaydi (unda serverdagi `AUTHN_TOKEN` bor).
+Runner image CI'da quriladi va registrdan tortiladi.
 
 ### `/srv/codearena/.env`
 
@@ -176,6 +184,21 @@ Repozitoriy → Settings → Secrets and variables → Actions:
 | `DEPLOY_PATH` | `/srv/codearena` | ha |
 | `DEPLOY_PORT` | `22` | yo'q (sukut: 22) |
 | `DEPLOY_HEALTH_URL` | `https://codearena.uz/health/` | yo'q |
+
+Shu sahifadagi **Variables** yorlig'ida (Secrets emas — bu maxfiy emas):
+
+| Variable | Misol | Majburiymi |
+|---|---|---|
+| `SITE_URL` | `https://codearena.uz` | **ha** |
+
+> `SITE_URL` aynan IMAGE QURILAYOTGANDA kerak. Next `NEXT_PUBLIC_*`
+> qiymatlarini build paytida kodga singdiradi — konteyner ishga tushganda
+> berilgan qiymat e'tiborga olinmaydi. Qo'yilmasa sayt ishlaydi, lekin
+> TASHQARIDAN buziladi: `sitemap.xml` dagi barcha havolalar va
+> `robots.txt` dagi sitemap manzili `localhost` bo'ladi (Google sitemap'ni
+> rad etadi), Telegram yoki X'ga tashlangan havolada esa `og:image`
+> ochilmaydi. Build jurnalida bu holat `[site-url] OGOHLANTIRISH` qatori
+> bilan ko'rinadi.
 
 > `DEPLOY_HEALTH_URL` berilsa, workflow undan `/health/ready/` manzilini
 > yasab so'raydi — u baza, kesh va qo'llanmagan migratsiyalarni ham

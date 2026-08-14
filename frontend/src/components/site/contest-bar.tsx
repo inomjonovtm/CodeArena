@@ -57,7 +57,7 @@ export function formatRemaining(remaining: number): string {
   return `${days > 0 ? `${days}k ` : ""}${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 }
 
-/** Teskari sanoq — raqamlar doim `t-num` bilan tekis turadi. */
+/** Teskari sanoq — raqamlar doim `ts-num` bilan tekis turadi. */
 export function Countdown({
   target,
   serverNow,
@@ -70,7 +70,7 @@ export function Countdown({
   className?: string;
 }) {
   const remaining = useRemaining(target, serverNow, onDone);
-  return <span className={cn("t-num", className)}>{formatRemaining(remaining)}</span>;
+  return <span className={cn("ts-num", className)}>{formatRemaining(remaining)}</span>;
 }
 
 /** Qolgan vaqt shu chegaradan tushsa taymer warn tusiga o'tadi. */
@@ -129,18 +129,18 @@ export function ContestBar({
 
   const stepClass = (enabled: boolean) =>
     cn(
-      "flex size-8 shrink-0 items-center justify-center rounded-[var(--r-ctl)] focus-ring",
-      "transition-colors duration-[var(--t-fast)]",
+      "flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] ring-focus",
+      "transition-colors duration-[var(--dur-1)]",
       enabled
-        ? "text-[var(--ink-3)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]"
-        : "pointer-events-none text-[var(--ink-4)] opacity-35",
+        ? "text-[var(--text-3)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
+        : "pointer-events-none text-[var(--text-4)] opacity-35",
     );
 
   return (
     <div
       className={cn(
-        "enter sticky top-[calc(var(--bar)+12px)] z-30 mb-6",
-        "pane rounded-[var(--r-pane)] px-3 py-2",
+        " sticky top-[calc(var(--nav-h)+12px)] z-30 mb-6",
+        "card rounded-[var(--radius-lg)] px-3 py-2",
       )}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -149,15 +149,15 @@ export function ContestBar({
           href={`/contests/${slug}`}
           title={t.site.contest.backToContest}
           className={cn(
-            "min-w-0 max-w-56 truncate rounded-[var(--r-ctl)] px-2 py-1.5 focus-ring",
-            "text-[13px] font-semibold text-[var(--ink)] transition-colors",
-            "hover:bg-[var(--pane-hover)]",
+            "min-w-0 max-w-56 truncate rounded-[var(--radius-sm)] px-2 py-1.5 ring-focus",
+            "text-[14px] font-semibold text-[var(--text)] transition-colors",
+            "hover:bg-[var(--surface-hover)]",
           )}
         >
           {title ?? t.site.contest.problems}
         </Link>
 
-        <span aria-hidden className="hidden h-5 w-px shrink-0 bg-[var(--edge)] sm:block" />
+        <span aria-hidden className="hidden h-5 w-px shrink-0 bg-[var(--line)] sm:block" />
 
         {/* Masala almashtirgich: oldingi / harflar / keyingi */}
         <div className="flex min-w-0 items-center gap-1">
@@ -177,7 +177,7 @@ export function ContestBar({
             )
           ) : null}
 
-          <div className="fade-edges flex items-center gap-1 overflow-x-auto px-1 py-0.5">
+          <div className="fade-x flex items-center gap-1 overflow-x-auto px-1 py-0.5">
             {problems.map((row) => {
               const active = row.problem_slug === activeProblemSlug;
               return (
@@ -187,16 +187,16 @@ export function ContestBar({
                   title={`${row.label} · ${row.title_uz}`}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-[var(--r-ctl)]",
-                    "text-[13px] font-semibold focus-ring",
-                    "transition-colors duration-[var(--t-fast)]",
+                    "flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+                    "text-[14px] font-semibold ring-focus",
+                    "transition-colors duration-[var(--dur-1)]",
                     active
-                      ? "bg-[var(--brand)] text-[var(--ink-on-brand)] shadow-[var(--lift-brand)]"
+                      ? "bg-[var(--green)] text-[var(--text-on-green)] shadow-[var(--shadow-sm)]"
                       : row.is_solved
                         ? "bg-[var(--ok-wash)] text-[var(--ok)]"
                         : row.is_attempted
-                          ? "bg-[var(--bad-wash)] text-[var(--bad)]"
-                          : "bg-[var(--pane-sunken)] text-[var(--ink-3)] hover:bg-[var(--brand-wash)] hover:text-[var(--brand-ink)]",
+                          ? "bg-[var(--danger-wash)] text-[var(--danger)]"
+                          : "bg-[var(--surface-sunk)] text-[var(--text-3)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                   )}
                 >
                   {row.is_solved && !active ? <Check className="size-3.5" strokeWidth={3} /> : row.label}
@@ -223,7 +223,7 @@ export function ContestBar({
         </div>
 
         {/* Yechilganlar hisobi */}
-        <span className="t-num hidden text-[12.5px] text-[var(--ink-4)] md:inline">
+        <span className="ts-num hidden text-[13px] text-[var(--text-4)] md:inline">
           {solved}/{problems.length}
         </span>
 
@@ -232,9 +232,9 @@ export function ContestBar({
           <Link
             href={`/contests/${slug}?tab=standings`}
             className={cn(
-              "inline-flex h-8 items-center gap-1.5 rounded-[var(--r-ctl)] px-2.5 focus-ring",
-              "text-[12.5px] font-medium text-[var(--ink-3)] transition-colors",
-              "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+              "inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5 ring-focus",
+              "text-[13px] font-medium text-[var(--text-3)] transition-colors",
+              "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
             )}
           >
             <BarChart3 className="size-3.5" />
@@ -245,16 +245,16 @@ export function ContestBar({
           {running ? (
             <span
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-[var(--r-ctl)] px-2.5",
-                "text-[13px] font-semibold",
-                low ? "bg-[var(--warn-wash)] text-[var(--warn)]" : "bg-[var(--pane-sunken)] text-[var(--ink-2)]",
+                "inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5",
+                "text-[14px] font-semibold",
+                low ? "bg-[var(--warn-wash)] text-[var(--warn)]" : "bg-[var(--surface-sunk)] text-[var(--text-2)]",
               )}
             >
               <Timer className="size-3.5" />
-              <span className="t-num">{formatRemaining(remaining)}</span>
+              <span className="ts-num">{formatRemaining(remaining)}</span>
             </span>
           ) : (
-            <span className="text-[12px] text-[var(--ink-4)]">{t.site.contest.finished}</span>
+            <span className="text-[12.5px] text-[var(--text-4)]">{t.site.contest.finished}</span>
           )}
         </div>
       </div>

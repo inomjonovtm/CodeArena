@@ -28,6 +28,12 @@ COPY frontend/ ./
 ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+# Saytning tashqi manzili — `sitemap.xml`, `robots.txt` va ijtimoiy
+# kartaning `og:image` manzillari shundan quriladi. `NEXT_PUBLIC_*` build
+# paytida kodga singadi, ya'ni konteyner ishga tushganda berilsa kech.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3000
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+
 # Xotirasi tor build muhitlari uchun (qarang: frontend/next.config.mjs).
 # Tip tekshiruvi alohida jarayonda ketib, ~400MB heap chegarasiga urilib
 # tushardi; tiplar CI dagi `npm run typecheck` qadamida tekshiriladi.

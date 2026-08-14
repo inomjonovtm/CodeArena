@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { api, ApiError } from "@/lib/api";
-import type { CurrentUser } from "@/lib/types";
+import type { CurrentUser, Permissions } from "@/lib/types";
 
 interface AuthContextValue {
   user: CurrentUser | null;
@@ -43,15 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  // Admin marshrutlarini himoyalash (rol asosida)
+  // Studio marshrutlarini himoyalash.
+  //
+  // `/admin` bu yerda TEKSHIRILMAYDI: u Django adminiga tegishli va Next
+  // sahifasi emas (`next.config.mjs` dagi rewrite). Uni Django o'zi
+  // himoyalaydi — o'z login sahifasi va `is_staff` tekshiruvi bilan.
   useEffect(() => {
     if (loading) return;
-    const isAdminRoute = pathname?.startsWith("/admin");
-    if (isAdminRoute && !user) {
-      router.replace(`/login?next=${encodeURIComponent(pathname ?? "/admin")}`);
-    } else if (isAdminRoute && user && !user.permissions.can_access_admin) {
-      router.replace("/login?error=forbidden");
+    const isStudioRoute = pathname?.startsWith("/studio");
+    if (isStudioRoute && !user) {
+      router.replace(`/login?next=${encodeURIComponent(pathname ?? "/studio")}`);
     }
+    // Kirgan, lekin huquqi yo'q foydalanuvchi BU YERDA yo'naltirilmaydi:
+    // StudioShell unga «Studio yopiq» ekranini ko'rsatadi. Login sahifasiga
+    // haydash chalg'itardi — u allaqachon tizimda, muammo hisobda emas,
+    // rolda.
   }, [loading, user, pathname, router]);
 
   const login = useCallback(
@@ -87,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     queryClient.clear();
     // Admin paneldan chiqilsa — kirish sahifasiga, saytdan chiqilsa — bosh sahifaga
-    router.replace(pathname?.startsWith("/admin") ? "/login" : "/");
+    router.replace(pathname?.startsWith("/studio") ? "/login" : "/");
   }, [queryClient, router, pathname]);
 
   const value = useMemo(
@@ -104,21 +110,26 @@ export function useAuth() {
   return context;
 }
 
+/** Kirmagan foydalanuvchi uchun — hech narsaga ruxsat yo'q.
+ *  Tip ATAYLAB e'lon qilingan: `Permissions` ga yangi maydon qo'shilsa,
+ *  bu yerda ham to'ldirilmagani kompilyatsiyada ko'rinadi. */
+const NO_PERMISSIONS: Permissions = {
+  is_admin: false,
+  is_moderator: false,
+  is_setter: false,
+  can_access_admin: false,
+  can_access_studio: false,
+  can_manage_users: false,
+  can_manage_problems: false,
+  can_manage_settings: false,
+  can_moderate_content: false,
+  codes: [],
+};
+
 /** Rol asosidagi ruxsatlarni tekshirish uchun qulay hook. */
-export function usePermissions() {
+export function usePermissions(): Permissions {
   const { user } = useAuth();
-  return (
-    user?.permissions ?? {
-      is_admin: false,
-      is_moderator: false,
-      can_access_admin: false,
-      can_manage_users: false,
-      can_manage_problems: false,
-      can_manage_settings: false,
-      can_moderate_content: false,
-      codes: [],
-    }
-  );
+  return user?.permissions ?? NO_PERMISSIONS;
 }
 
 /** Granular ruxsat kodini tekshiradi (`problems.delete` kabi). */

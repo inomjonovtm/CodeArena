@@ -10,6 +10,7 @@ import {
   Copy,
   Cpu,
   FileCode2,
+  Info,
   Lightbulb,
   ListChecks,
   Loader2,
@@ -46,6 +47,7 @@ import { CommentThread } from "@/components/site/discussions";
 import { CodeEditor } from "@/components/ui/code-editor";
 import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
+import { FALLBACK_CATALOG, LANGUAGE_LABEL, starterFor } from "@/lib/languages";
 import { publicApi, TERMINAL_STATUSES } from "@/lib/public-api";
 import type {
   Language,
@@ -57,17 +59,6 @@ import type {
 } from "@/lib/types";
 import { cn, formatBytes, formatDuration, formatRelative } from "@/lib/utils";
 
-const LANGUAGES: { value: Language; label: string }[] = [
-  { value: "python", label: "Python" },
-  { value: "javascript", label: "JavaScript" },
-  { value: "cpp", label: "C++" },
-];
-
-const STARTER_KEY: Record<Language, keyof PublicProblemDetail> = {
-  python: "starter_code_python",
-  javascript: "starter_code_javascript",
-  cpp: "starter_code_cpp",
-};
 
 /** Yechim uchun localStorage kaliti — sahifa yangilansa ham kod yo'qolmaydi. */
 const draftKey = (slug: string, language: Language) => `codearena-draft-${slug}-${language}`;
@@ -86,12 +77,12 @@ type MobilePane = "task" | "code" | "result";
  * ustidan yozamiz (havola, kod bloki, iqtibos).
  */
 const PROSE = [
-  "t-body text-[var(--ink-2)]!",
-  "[&_h1]:text-[var(--ink)] [&_h2]:text-[var(--ink)] [&_h3]:text-[var(--ink)]",
-  "[&_a]:text-[var(--brand)]!",
-  "[&_blockquote]:border-[var(--brand)]! [&_blockquote]:text-[var(--ink-3)]!",
-  "[&_code]:bg-[var(--pane-sunken)]!",
-  "[&_pre]:bg-[var(--pane-sunken)]! [&_pre]:border-[var(--edge)]!",
+  "ts-body text-[var(--text-2)]!",
+  "[&_h1]:text-[var(--text)] [&_h2]:text-[var(--text)] [&_h3]:text-[var(--text)]",
+  "[&_a]:text-[var(--green)]!",
+  "[&_blockquote]:border-[var(--green)]! [&_blockquote]:text-[var(--text-3)]!",
+  "[&_code]:bg-[var(--surface-sunk)]!",
+  "[&_pre]:bg-[var(--surface-sunk)]! [&_pre]:border-[var(--line)]!",
 ].join(" ");
 
 /* ------------------------------------------------------------ status chip */
@@ -145,8 +136,8 @@ function CopyButton({ text, label = "Nusxalash" }: { text: string; label?: strin
         }
       }}
       className={cn(
-        "flex size-7 items-center justify-center rounded-[var(--r-ctl)] focus-ring",
-        "text-[var(--ink-4)] transition-colors hover:bg-[var(--pane-hover)] hover:text-[var(--ink-2)]",
+        "flex size-7 items-center justify-center rounded-[var(--radius-sm)] ring-focus",
+        "text-[var(--text-4)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-2)]",
       )}
     >
       {copied ? <Check className="size-3.5 text-[var(--ok)]" /> : <Copy className="size-3.5" />}
@@ -158,24 +149,55 @@ function CopyButton({ text, label = "Nusxalash" }: { text: string; label?: strin
 /**
  * Namunadagi kirish yoki chiqish.
  *
- * Blok BOTIQ sirtda (`pane-sunken`) — kartaning o'zida. Ilgari u yana bitta
+ * Blok BOTIQ sirtda (`well`) — kartaning o'zida. Ilgari u yana bitta
  * o'ram ichida turardi va ekranda uchta deyarli bir xil kulrang to'rtburchak
  * paydo bo'lardi (karta → quti → kod bloki). Ikkita sirt yetarli.
  *
  * `flex-1` — kirish ikki qatorli, chiqish bir qatorli bo'lsa ham ikki blok
  * bir xil balandlikda turadi va pastki qirralari tekislanadi.
  */
+/**
+ * Javob qanday tekshirilishi haqidagi eslatma.
+ *
+ * `exact` — odatiy holat, hech narsa yozilmaydi: qo'shimcha matn har bir
+ * masalada takrorlansa, u shovqinga aylanadi va o'qilmay qoladi. Qolgan
+ * uchta usul esa foydalanuvchi BILISHI kerak bo'lgan farqni bildiradi.
+ */
+function CheckerNotice({
+  type,
+  epsilon,
+}: {
+  type?: "exact" | "token" | "float" | "custom";
+  epsilon?: number;
+}) {
+  if (!type || type === "exact") return null;
+
+  const text =
+    type === "custom"
+      ? "Bu masalada bir nechta to'g'ri javob bo'lishi mumkin. Javobingiz maxsus dastur bilan tekshiriladi — namunadagi javobni aynan takrorlash shart emas."
+      : type === "float"
+        ? `Javob haqiqiy son. ${epsilon ? `Xatolik ${epsilon} dan oshmasa` : "Kichik xatolik bo'lsa"} javob qabul qilinadi.`
+        : "Bo'shliq va qator ko'chirish farqi hisobga olinmaydi — muhimi sonlar va so'zlar tartibi.";
+
+  return (
+    <div className="mt-6 flex gap-2.5 rounded-[var(--radius-lg)] border border-[var(--green-line)] bg-[var(--green-wash)] px-4 py-3">
+      <Info className="mt-0.5 size-4 shrink-0 text-[var(--green)]" />
+      <p className="ts-sm min-w-0 text-[var(--text-2)]">{text}</p>
+    </div>
+  );
+}
+
 function SampleBlock({ label, text }: { label: string; text: string }) {
   return (
     <div className="flex min-w-0 flex-col">
       <div className="mb-1.5 flex items-center justify-between gap-2">
-        <p className="text-[12px] font-medium text-[var(--ink-4)]">{label}</p>
+        <p className="text-[12.5px] font-medium text-[var(--text-4)]">{label}</p>
         {text ? <CopyButton text={text} /> : null}
       </div>
       <pre
         className={cn(
-          "pane-sunken flex-1 overflow-x-auto rounded-[var(--r-field)]",
-          "p-3 font-mono text-[12.5px] leading-relaxed text-[var(--ink-2)]",
+          "well flex-1 overflow-x-auto rounded-[var(--radius-sm)]",
+          "p-3 font-mono text-[13px] leading-relaxed text-[var(--text-2)]",
         )}
       >
         {text || "—"}
@@ -221,6 +243,14 @@ export default function ProblemDetailPage() {
     staleTime: 60_000,
   });
 
+  /* Tillar ro'yxati SERVERDAN keladi: yangi til qo'shilganda frontendni
+     tahrirlash shart emas. Javob kelmaguncha zaxira ro'yxat ishlatiladi. */
+  const catalog = judge?.catalog?.length ? judge.catalog : FALLBACK_CATALOG;
+  const LANGUAGES: { value: Language; label: string }[] = catalog.map((item) => ({
+    value: item.key,
+    label: item.label,
+  }));
+
   const languageAvailable = useCallback(
     (value: Language) => judge?.languages?.[value] !== false,
     [judge],
@@ -244,7 +274,7 @@ export default function ProblemDetailPage() {
   useEffect(() => {
     if (!problem) return;
     const saved = typeof window !== "undefined" ? localStorage.getItem(draftKey(slug, language)) : null;
-    setCode(saved ?? (problem[STARTER_KEY[language]] as string) ?? "");
+    setCode(saved ?? starterFor(problem as unknown as Record<string, unknown>, language, catalog));
   }, [problem, slug, language]);
 
   // Qoralamani saqlab boramiz
@@ -292,7 +322,10 @@ export default function ProblemDetailPage() {
         }
       }, POLL_INTERVAL);
     },
-    [queryClient, slug, toast],
+    // `t` — modul darajasidagi barqaror lug'at obyekti (`dictionaries.uz`),
+    // shuning uchun uni bog'liqlikka qo'shish `poll` ni qayta yaratmaydi.
+    // Ilgari u ro'yxatdan tushib qolgandi va lint ogohlantirish berardi.
+    [queryClient, slug, toast, t],
   );
 
   const runMutation = useMutation({
@@ -366,7 +399,7 @@ export default function ProblemDetailPage() {
   const resetCode = () => {
     if (!problem) return;
     localStorage.removeItem(draftKey(slug, language));
-    setCode((problem[STARTER_KEY[language]] as string) ?? "");
+    setCode(starterFor(problem as unknown as Record<string, unknown>, language, catalog));
     toast.info(t.site.problem.codeReset);
   };
 
@@ -423,12 +456,12 @@ export default function ProblemDetailPage() {
         {/* Skelet haqiqiy tartibni takrorlaydi: shart tepada, muharrir pastda */}
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
-            <Block className="h-9 w-72 max-w-full rounded-[var(--r-field)]" />
-            <Block className="h-[26rem] rounded-[var(--r-pane)]" />
+            <Block className="h-9 w-72 max-w-full rounded-[var(--radius-sm)]" />
+            <Block className="h-[26rem] rounded-[var(--radius-lg)]" />
           </div>
           <div className="flex flex-col gap-4">
-            <Block className="h-[28rem] rounded-[var(--r-pane)]" />
-            <Block className="h-14 rounded-[var(--r-pane)]" />
+            <Block className="h-[28rem] rounded-[var(--radius-lg)]" />
+            <Block className="h-14 rounded-[var(--radius-lg)]" />
           </div>
         </div>
       </div>
@@ -438,7 +471,7 @@ export default function ProblemDetailPage() {
   /* --------------------------------------------------------- xato holati */
   if (isError || !problem) {
     return (
-      <Pane tone="solid" className="enter">
+      <Pane tone="solid" className="">
         <Empty
           icon={<FileCode2 className="size-5" />}
           title={t.site.problem.notFound}
@@ -461,13 +494,13 @@ export default function ProblemDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* ------------------------------------------------------- sarlavha */}
-      <header className="enter">
+      <header className="">
         <Breadcrumb items={[{ label: "Masalalar", href: "/problems" }, { label: title }]} />
 
         <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="t-title text-[var(--ink)]">{title}</h1>
+              <h1 className="ts-h1 text-[var(--text)]">{title}</h1>
               <DifficultyMark value={problem.difficulty} label={difficultyLabel} />
               {problem.is_solved ? (
                 <Chip tone="ok" icon={<Check className="size-3.5" strokeWidth={3} />}>
@@ -476,20 +509,20 @@ export default function ProblemDetailPage() {
               ) : null}
             </div>
 
-            <div className="t-meta mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[var(--ink-3)]">
+            <div className="ts-sm mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[var(--text-3)]">
               <span className="inline-flex items-center gap-1.5">
-                <Clock className="size-3.5 text-[var(--ink-4)]" />
-                <span className="t-num">{problem.time_limit_ms} ms</span>
+                <Clock className="size-3.5 text-[var(--text-4)]" />
+                <span className="ts-num">{problem.time_limit_ms} ms</span>
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Cpu className="size-3.5 text-[var(--ink-4)]" />
-                <span className="t-num">{Math.round(problem.memory_limit_kb / 1024)} MB</span>
+                <Cpu className="size-3.5 text-[var(--text-4)]" />
+                <span className="ts-num">{Math.round(problem.memory_limit_kb / 1024)} MB</span>
               </span>
-              <span className="t-num">{problem.points} ball</span>
-              <Chip tone="neutral" className="t-num">
+              <span className="ts-num">{problem.points} ball</span>
+              <Chip tone="neutral" className="ts-num">
                 {Math.round(problem.acceptance_rate)}% {t.site.problem.acceptanceRate}
               </Chip>
-              <Chip tone="neutral" className="t-num">
+              <Chip tone="neutral" className="ts-num">
                 {problem.total_submissions} {t.site.problem.attempts}
               </Chip>
             </div>
@@ -520,9 +553,9 @@ export default function ProblemDetailPage() {
                 key={tag.id}
                 href={`/problems?tag=${tag.slug}`}
                 className={cn(
-                  "rounded-[var(--r-chip)] border border-[var(--edge)] bg-[var(--pane)] px-2.5 py-1",
-                  "text-[11.5px] font-medium text-[var(--ink-3)] focus-ring",
-                  "transition-colors hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+                  "rounded-[var(--radius-xs)] border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1",
+                  "text-[12px] font-medium text-[var(--text-3)] ring-focus",
+                  "transition-colors hover:border-[var(--line-strong)] hover:text-[var(--text)]",
                 )}
               >
                 {tag.name_uz}
@@ -532,7 +565,7 @@ export default function ProblemDetailPage() {
         ) : null}
 
         {/* Sarlavhani ish maydonidan ajratuvchi chiziq — barcha sahifalarda bir xil */}
-        <div aria-hidden className="rule enter-draw mt-5" />
+        <div aria-hidden className="divider enter-draw mt-5" />
       </header>
 
       {/* Mobil: uch bo'lim orasida almashinish — telefonda uzun varaqni
@@ -563,11 +596,11 @@ export default function ProblemDetailPage() {
             "lg:flex",
           )}
         >
-          <div className="fade-edges -mx-1 overflow-x-auto px-1 pb-1">
+          <div className="fade-x -mx-1 overflow-x-auto px-1 pb-1">
             <Segmented size="sm" value={tab} onChange={setTab} items={tabs} />
           </div>
 
-          <Pane tone="solid" inset="lg" className="enter">
+          <Pane tone="solid" inset="lg" className="">
             {tab === "description" ? (
               <>
                 {/* Matn o'qish kengligi bilan cheklanadi (72ch): uzun qatorda
@@ -581,7 +614,7 @@ export default function ProblemDetailPage() {
 
                   {constraints ? (
                     <div className="mt-7">
-                      <p className="t-eyebrow">{t.site.problem.constraints}</p>
+                      <p className="ts-label">{t.site.problem.constraints}</p>
                       <div className="mt-2.5">
                         <Markdown className={PROSE} source={constraints} />
                       </div>
@@ -589,13 +622,22 @@ export default function ProblemDetailPage() {
                   ) : null}
                 </div>
 
+                {/* Javobni tekshirish usuli.
+                    Bu bilim yechim yozish usulini o'zgartiradi: «istalgan
+                    to'g'ri javob» masalasida odam namunadagi javobni aynan
+                    takrorlashga urinib, keraksiz vaqt yo'qotmasin. */}
+                <CheckerNotice
+                  type={problem.checker_type}
+                  epsilon={problem.float_epsilon}
+                />
+
                 {/* Namuna testlar — quti emas, soch chizig'i bilan ajratilgan
                     bo'limlar; kod bloklari yagona botiq sirtda */}
                 {problem.sample_test_cases?.length ? (
                   <div className="mt-8 flex flex-col gap-5">
                     {problem.sample_test_cases.map((sample, index) => (
-                      <div key={index} className="rule pt-4">
-                        <p className="t-eyebrow">
+                      <div key={index} className="divider pt-4">
+                        <p className="ts-label">
                           {t.site.problem.sample} {index + 1}
                         </p>
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -606,7 +648,7 @@ export default function ProblemDetailPage() {
                           />
                         </div>
                         {sample.explanation_uz ? (
-                          <p className="t-meta mt-3 max-w-[72ch] text-[var(--ink-3)]">
+                          <p className="ts-sm mt-3 max-w-[72ch] text-[var(--text-3)]">
                             {sample.explanation_uz}
                           </p>
                         ) : null}
@@ -658,9 +700,9 @@ export default function ProblemDetailPage() {
               "lg:flex",
             )}
           >
-            <Pane tone="solid" inset="none" className="enter overflow-hidden">
+            <Pane tone="solid" inset="none" className="overflow-hidden">
               {/* muharrir asboblar paneli */}
-              <div className="flex flex-wrap items-center gap-2 border-b border-[var(--edge)] p-2.5">
+              <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] p-2.5">
                 <Segmented
                   size="sm"
                   value={language}
@@ -680,7 +722,7 @@ export default function ProblemDetailPage() {
                     onClick={() => setShowCustom((value) => !value)}
                     icon={<Terminal className="size-3.5" />}
                     className={cn(
-                      showCustom && "bg-[var(--brand-wash)] text-[var(--brand-ink)]",
+                      showCustom && "bg-[var(--green-wash)] text-[var(--green-text)]",
                     )}
                   >
                     Maxsus kirish
@@ -701,8 +743,8 @@ export default function ProblemDetailPage() {
               />
 
               {showCustom ? (
-                <div className="enter-pop border-t border-[var(--edge)] bg-[var(--pane-sunken)] p-3.5">
-                  <label htmlFor="custom-input" className="t-eyebrow">
+                <div className="enter-pop border-t border-[var(--line)] bg-[var(--surface-sunk)] p-3.5">
+                  <label htmlFor="custom-input" className="ts-label">
                     {t.site.problem.customInputLabel}
                   </label>
                   <textarea
@@ -712,11 +754,12 @@ export default function ProblemDetailPage() {
                     onChange={(event) => setCustomInput(event.target.value)}
                     placeholder={t.site.problem.customInputPlaceholder}
                     className={cn(
-                      "mt-2 w-full resize-y rounded-[var(--r-field)] border border-[var(--edge)]",
-                      "bg-[var(--pane-solid)] px-3 py-2.5 font-mono text-[12.5px] text-[var(--ink)]",
-                      "placeholder:text-[var(--ink-4)] outline-none",
-                      "transition-[border-color,box-shadow] duration-[var(--t-fast)]",
-                      "focus:border-[var(--brand-edge)] focus:shadow-[0_0_0_var(--focus-w)_var(--focus)]",
+                      "mt-2 w-full resize-y rounded-[var(--radius-sm)] border border-[var(--line)]",
+                      "bg-[var(--surface)] px-3 py-2.5 font-mono text-[13px] text-[var(--text)]",
+                      "placeholder:text-[var(--text-4)]",
+                      "transition-[border-color,box-shadow] duration-[var(--dur-1)]",
+                      // Fokus konturi global — maydon faqat chegarasini o'zgartiradi
+                      "focus:border-[var(--green)]",
                     )}
                   />
                 </div>
@@ -735,11 +778,11 @@ export default function ProblemDetailPage() {
 
             {/* yopishqoq amal paneli — sahifadagi yagona primary juftlik */}
             {authLoading ? null : user ? (
-              <div className="sticky bottom-[calc(var(--tabbar)+12px)] z-30 lg:bottom-4">
+              <div className="sticky bottom-[calc(var(--tabbar-h)+12px)] z-30 lg:bottom-4">
                 <div
                   className={cn(
-                    "pane flex flex-wrap items-center gap-2.5 rounded-[var(--r-pane)]",
-                    "px-3 py-2.5 shadow-[var(--lift-2)]",
+                    "card flex flex-wrap items-center gap-2.5 rounded-[var(--radius-lg)]",
+                    "px-3 py-2.5 shadow-[var(--shadow-sm)]",
                   )}
                 >
                   <Button
@@ -762,14 +805,14 @@ export default function ProblemDetailPage() {
                     {submitting ? t.site.judge.submitting : t.site.judge.submit}
                   </Button>
 
-                  <span className="t-meta ml-auto hidden text-[var(--ink-4)] sm:block">
+                  <span className="ts-sm ml-auto hidden text-[var(--text-4)] sm:block">
                     {t.site.problem.rateLimit}
                   </span>
                 </div>
               </div>
             ) : (
               <Pane inset="sm" className="flex flex-wrap items-center gap-3">
-                <p className="t-body min-w-0 flex-1 text-[var(--ink-2)]">
+                <p className="ts-body min-w-0 flex-1 text-[var(--text-2)]">
                   Yechim yuborish uchun hisobingizga kiring.
                 </p>
                 <LinkButton href="/register" size="sm" variant="primary">
@@ -793,8 +836,8 @@ export default function ProblemDetailPage() {
             )}
           >
             {result || runResult ? (
-              <Pane tone="solid" inset="none" className="enter overflow-hidden">
-                <div className="border-b border-[var(--edge)] p-2.5">
+              <Pane tone="solid" inset="none" className="overflow-hidden">
+                <div className="border-b border-[var(--line)] p-2.5">
                   <Segmented
                     size="sm"
                     value={bottomTab}
@@ -810,7 +853,7 @@ export default function ProblemDetailPage() {
                     runResult ? (
                       <RunResultView data={runResult} />
                     ) : (
-                      <p className="t-meta text-[var(--ink-4)]">
+                      <p className="ts-sm text-[var(--text-4)]">
                         «Ishga tushirish» tugmasi kodni faqat namuna testlarda sinaydi — ball
                         berilmaydi.
                       </p>
@@ -818,7 +861,7 @@ export default function ProblemDetailPage() {
                   ) : result ? (
                     <SubmissionResult result={result} />
                   ) : (
-                    <p className="t-meta text-[var(--ink-4)]">Hali yechim yuborilmagan.</p>
+                    <p className="ts-sm text-[var(--text-4)]">Hali yechim yuborilmagan.</p>
                   )}
                 </div>
               </Pane>
@@ -849,7 +892,7 @@ function RunResultView({ data }: { data: RunResponse }) {
         <Chip
           tone={data.all_passed ? "ok" : "neutral"}
           dot
-          className="t-num"
+          className="ts-num"
         >
           {data.results.some((row) => row.is_custom)
             ? t.site.problem.customInput
@@ -858,14 +901,14 @@ function RunResultView({ data }: { data: RunResponse }) {
       </div>
 
       {data.results.map((row) => (
-        <div key={row.order} className="pane-sunken rounded-[var(--r-pane)] p-4">
+        <div key={row.order} className="well rounded-[var(--radius-lg)] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[12.5px] font-medium text-[var(--ink-2)]">
+            <p className="text-[13px] font-medium text-[var(--text-2)]">
               {row.is_custom ? t.site.problem.customInput : `${t.site.problem.sample} ${row.order}`}
             </p>
             <div className="flex items-center gap-3">
               {row.runtime_ms !== null ? (
-                <span className="t-num text-[11.5px] text-[var(--ink-4)]">
+                <span className="ts-num text-[12px] text-[var(--text-4)]">
                   {formatDuration(row.runtime_ms)}
                 </span>
               ) : null}
@@ -875,34 +918,43 @@ function RunResultView({ data }: { data: RunResponse }) {
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="mb-1 text-[11.5px] text-[var(--ink-4)]">Kirish</p>
-              <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--pane-solid)] p-2.5 font-mono text-[12px] text-[var(--ink-2)]">
+              <p className="mb-1 text-[12px] text-[var(--text-4)]">Kirish</p>
+              <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--surface)] p-2.5 font-mono text-[12.5px] text-[var(--text-2)]">
                 {row.input || "—"}
               </pre>
             </div>
             <div>
-              <p className="mb-1 text-[11.5px] text-[var(--ink-4)]">Sizning chiqishingiz</p>
-              <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--pane-solid)] p-2.5 font-mono text-[12px] text-[var(--ink-2)]">
+              <p className="mb-1 text-[12px] text-[var(--text-4)]">Sizning chiqishingiz</p>
+              <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--surface)] p-2.5 font-mono text-[12.5px] text-[var(--text-2)]">
                 {row.stdout || "—"}
               </pre>
             </div>
             {row.expected_output !== null ? (
               <div className="sm:col-span-2">
-                <p className="mb-1 text-[11.5px] text-[var(--ink-4)]">Kutilgan chiqish</p>
-                <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--pane-solid)] p-2.5 font-mono text-[12px] text-[var(--ink-2)]">
+                <p className="mb-1 text-[12px] text-[var(--text-4)]">Kutilgan chiqish</p>
+                <pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--surface)] p-2.5 font-mono text-[12.5px] text-[var(--text-2)]">
                   {row.expected_output || "—"}
                 </pre>
               </div>
             ) : null}
           </div>
 
+          {/* Maxsus checker izohi. Bir nechta to'g'ri javobi bor masalada
+              «kutilgan chiqish» ustuni chalkashtiradi — sizniki ham to'g'ri
+              bo'lishi mumkin edi. Checker aniq sababni aytadi. */}
+          {row.checker_note ? (
+            <p className="mt-3 rounded-[var(--radius-sm)] border border-[var(--green-line)] bg-[var(--green-wash)] px-3 py-2 text-[13px] text-[var(--text-2)]">
+              {row.checker_note}
+            </p>
+          ) : null}
+
           {row.compile_output ? (
-            <pre className="mt-3 max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--bad-wash)] p-2.5 font-mono text-[11.5px] text-[var(--bad)]">
+            <pre className="mt-3 max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--danger-wash)] p-2.5 font-mono text-[12px] text-[var(--danger)]">
               {row.compile_output}
             </pre>
           ) : null}
           {row.stderr ? (
-            <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--warn-wash)] p-2.5 font-mono text-[11.5px] text-[var(--warn)]">
+            <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--warn-wash)] p-2.5 font-mono text-[12px] text-[var(--warn)]">
               {row.stderr}
             </pre>
           ) : null}
@@ -920,11 +972,11 @@ function SubmissionResult({ result }: { result: PublicSubmission }) {
   const pending = !TERMINAL_STATUSES.has(result.status);
 
   return (
-    <div className={cn(accepted && "-m-1 rounded-[var(--r-pane)] bg-[var(--ok-wash)] p-4")}>
+    <div className={cn(accepted && "-m-1 rounded-[var(--radius-lg)] bg-[var(--ok-wash)] p-4")}>
       <div className="flex flex-wrap items-center gap-3">
         <StatusChip value={result.status} />
         {!pending && result.total_tests > 0 ? (
-          <span className="t-num text-[13.5px] text-[var(--ink-3)]">
+          <span className="ts-num text-[14.5px] text-[var(--text-3)]">
             {result.passed_tests}/{result.total_tests} test
           </span>
         ) : null}
@@ -963,19 +1015,19 @@ function SubmissionResult({ result }: { result: PublicSubmission }) {
 
           {/* xatolik tafsiloti — botiq maydonda */}
           {result.failed_test_index || result.compile_output || result.error_message ? (
-            <div className="pane-sunken mt-5 flex flex-col gap-2 rounded-[var(--r-field)] p-3.5">
+            <div className="well mt-5 flex flex-col gap-2 rounded-[var(--radius-sm)] p-3.5">
               {result.failed_test_index ? (
-                <p className="t-num text-[13px] font-medium text-[var(--bad)]">
+                <p className="ts-num text-[14px] font-medium text-[var(--danger)]">
                   {result.failed_test_index}-testda xato
                 </p>
               ) : null}
               {result.compile_output ? (
-                <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--bad-wash)] p-3 font-mono text-[12px] text-[var(--bad)]">
+                <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--danger-wash)] p-3 font-mono text-[12.5px] text-[var(--danger)]">
                   {result.compile_output}
                 </pre>
               ) : null}
               {result.error_message ? (
-                <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--r-ctl)] bg-[var(--pane-solid)] p-3 font-mono text-[12px] text-[var(--ink-2)]">
+                <pre className="max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] bg-[var(--surface)] p-3 font-mono text-[12.5px] text-[var(--text-2)]">
                   {result.error_message}
                 </pre>
               ) : null}
@@ -992,14 +1044,14 @@ function SubmissionResult({ result }: { result: PublicSubmission }) {
             </div>
           ) : null}
 
-          <p className="t-meta mt-4 flex items-center gap-1.5 text-[var(--ink-4)]">
+          <p className="ts-sm mt-4 flex items-center gap-1.5 text-[var(--text-4)]">
             <AlertTriangle className="size-3" />
             {t.site.problem.hiddenNote}
           </p>
         </>
       ) : (
-        <div className="t-meta mt-3 flex items-center gap-2 text-[var(--ink-3)]">
-          <Loader2 className="size-3.5 animate-spin text-[var(--brand)]" />
+        <div className="ts-sm mt-3 flex items-center gap-2 text-[var(--text-3)]">
+          <Loader2 className="size-3.5 animate-spin text-[var(--green)]" />
           Yechimingiz navbatda — natija bir necha soniyada tayyor bo&apos;ladi.
         </div>
       )}
@@ -1020,7 +1072,7 @@ function MySubmissions({ rows }: { rows: PublicSubmissionRow[] }) {
 
   if (!rows.length) {
     return (
-      <p className="t-meta py-6 text-center text-[var(--ink-4)]">
+      <p className="ts-sm py-6 text-center text-[var(--text-4)]">
         Bu masala bo&apos;yicha hali urinish yo&apos;q.
       </p>
     );
@@ -1028,28 +1080,28 @@ function MySubmissions({ rows }: { rows: PublicSubmissionRow[] }) {
 
   return (
     <>
-      <ul className="flex flex-col divide-y divide-[var(--edge-soft)]">
+      <ul className="flex flex-col divide-y divide-[var(--line-soft)]">
         {rows.map((row) => (
           <li key={row.id}>
             <button
               type="button"
               onClick={() => setOpenId(row.id)}
               className={cn(
-                "flex w-full flex-wrap items-center gap-3 rounded-[var(--r-ctl)] px-2 py-3 text-left focus-ring",
-                "transition-colors hover:bg-[var(--pane-hover)]",
+                "flex w-full flex-wrap items-center gap-3 rounded-[var(--radius-sm)] px-2 py-3 text-left ring-focus",
+                "transition-colors hover:bg-[var(--surface-hover)]",
               )}
             >
               <StatusChip value={row.status} />
-              <span className="t-meta text-[var(--ink-3)]">
-                {LANGUAGES.find((item) => item.value === row.language)?.label ?? row.language}
+              <span className="ts-sm text-[var(--text-3)]">
+                {LANGUAGE_LABEL[row.language] ?? row.language}
               </span>
-              <span className="t-num text-[12.5px] text-[var(--ink-4)]">
+              <span className="ts-num text-[13px] text-[var(--text-4)]">
                 {row.total_tests ? `${row.passed_tests}/${row.total_tests}` : "—"}
               </span>
-              <span className="t-num text-[12.5px] text-[var(--ink-4)]">
+              <span className="ts-num text-[13px] text-[var(--text-4)]">
                 {formatDuration(row.runtime_ms)}
               </span>
-              <span className="ml-auto text-[12px] text-[var(--ink-4)]">
+              <span className="ml-auto text-[12.5px] text-[var(--text-4)]">
                 {formatRelative(row.created_at)}
               </span>
             </button>
@@ -1065,23 +1117,23 @@ function MySubmissions({ rows }: { rows: PublicSubmissionRow[] }) {
         size="lg"
       >
         {isLoading || !detail ? (
-          <Block className="h-64 rounded-[var(--r-pane)]" />
+          <Block className="h-64 rounded-[var(--radius-lg)]" />
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <StatusChip value={detail.status} />
-              <span className="t-num t-meta text-[var(--ink-3)]">
+              <span className="ts-num ts-sm text-[var(--text-3)]">
                 {detail.passed_tests}/{detail.total_tests} test
               </span>
-              <span className="t-num t-meta text-[var(--ink-3)]">
+              <span className="ts-num ts-sm text-[var(--text-3)]">
                 {formatDuration(detail.runtime_ms)}
               </span>
-              <span className="t-num t-meta text-[var(--ink-3)]">
+              <span className="ts-num ts-sm text-[var(--text-3)]">
                 {formatBytes(detail.memory_kb)}
               </span>
             </div>
 
-            <div className="overflow-hidden rounded-[var(--r-field)] border border-[var(--edge)]">
+            <div className="overflow-hidden rounded-[var(--radius-sm)] border border-[var(--line)]">
               <CodeEditor
                 value={detail.code}
                 language={detail.language}
@@ -1092,7 +1144,7 @@ function MySubmissions({ rows }: { rows: PublicSubmissionRow[] }) {
             </div>
 
             {detail.error_message ? (
-              <pre className="pane-sunken max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--r-field)] p-3 font-mono text-[12px] text-[var(--ink-2)]">
+              <pre className="well max-h-40 overflow-auto whitespace-pre-wrap rounded-[var(--radius-sm)] p-3 font-mono text-[12.5px] text-[var(--text-2)]">
                 {detail.error_message}
               </pre>
             ) : null}

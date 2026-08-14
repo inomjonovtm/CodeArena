@@ -57,7 +57,7 @@ export function Modal({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
       <div
-        className="enter-veil fixed inset-0 bg-[rgb(10_10_10/0.5)]"
+        className="enter-veil fixed inset-0 bg-[rgb(16_24_20/0.45)]"
         onClick={onClose}
         aria-hidden
       />
@@ -65,7 +65,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "enter-pop relative z-10 my-auto flex w-full flex-col overflow-hidden rounded-[var(--r-pane-lg)] pane-float",
+          "enter-pop relative z-10 my-auto flex w-full flex-col overflow-hidden rounded-[var(--radius-xl)] float",
           SIZES[size],
           className,
         )}
@@ -73,9 +73,9 @@ export function Modal({
         {title || description ? (
           <div className="flex items-start justify-between gap-4 px-6 pb-4 pt-5">
             <div className="min-w-0">
-              {title ? <h2 className="t-section text-[var(--ink)]">{title}</h2> : null}
+              {title ? <h2 className="ts-h2 text-[var(--text)]">{title}</h2> : null}
               {description ? (
-                <p className="t-meta mt-1 text-[var(--ink-3)]">{description}</p>
+                <p className="ts-sm mt-1 text-[var(--text-3)]">{description}</p>
               ) : null}
             </div>
             <Button variant="ghost" size="iconSm" onClick={onClose} aria-label="Yopish" className="-mr-2 -mt-1">
@@ -85,7 +85,7 @@ export function Modal({
         ) : null}
         <div className="max-h-[calc(100vh-14rem)] overflow-y-auto px-6 pb-6">{children}</div>
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t border-[var(--edge)] bg-[var(--pane-sunken)] px-6 py-4">
+          <div className="flex items-center justify-end gap-2 border-t border-[var(--line)] bg-[var(--surface-sunk)] px-6 py-4">
             {footer}
           </div>
         ) : null}
@@ -132,7 +132,7 @@ export function Drawer({
   return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)]"
+        className="enter-veil absolute inset-0 bg-[rgb(16_24_20/0.45)]"
         onClick={onClose}
         aria-hidden
       />
@@ -140,15 +140,15 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "enter relative flex h-full w-full flex-col border-l border-[var(--edge)] bg-[var(--pane-solid)] shadow-[var(--lift-pop)]",
+          " relative flex h-full w-full flex-col border-l border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)]",
           width,
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[var(--edge)] px-6 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--line)] px-6 py-4">
           <div className="min-w-0">
-            {title ? <h2 className="t-section truncate text-[var(--ink)]">{title}</h2> : null}
+            {title ? <h2 className="ts-h2 truncate text-[var(--text)]">{title}</h2> : null}
             {description ? (
-              <p className="t-meta mt-1 text-[var(--ink-3)]">{description}</p>
+              <p className="ts-sm mt-1 text-[var(--text-3)]">{description}</p>
             ) : null}
           </div>
           <Button variant="ghost" size="iconSm" onClick={onClose} aria-label="Yopish" className="-mr-2">
@@ -157,7 +157,7 @@ export function Drawer({
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t border-[var(--edge)] bg-[var(--pane-sunken)] px-6 py-4">
+          <div className="flex items-center justify-end gap-2 border-t border-[var(--line)] bg-[var(--surface-sunk)] px-6 py-4">
             {footer}
           </div>
         ) : null}
@@ -210,7 +210,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <p className="text-sm leading-relaxed text-[var(--ink-3)]">{message}</p>
+      <p className="text-sm leading-relaxed text-[var(--text-3)]">{message}</p>
     </Modal>
   );
 }

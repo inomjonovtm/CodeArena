@@ -16,53 +16,49 @@ export type ButtonVariant =
   | "link";
 export type ButtonSize = "xs" | "sm" | "md" | "lg" | "xl" | "icon" | "iconSm";
 
-/* Qoidalar `kit/primitives.tsx` bilan bir xil:
-   asosiy tugma QORA → hoverda KO'K, chegarali tugma qora chiziq → ko'k. */
+/* Qoidalar `kit/primitives.tsx` bilan bir xil: 10px burchak, uchta
+   og'irlik, bosilganda bir piksel cho'kish. */
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: [
-    "bg-[var(--ink)] font-semibold text-[var(--canvas)] border border-transparent",
-    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)]",
-    "active:bg-[var(--brand-press)]",
+    "bg-[var(--green)] font-medium text-[var(--text-on-green)] border border-transparent",
+    "shadow-[var(--shadow-xs)]",
+    "hover:bg-[var(--green-hover)] active:bg-[var(--green-active)]",
   ].join(" "),
-  // To'yingan ko'k — to'q fondagi va ikkinchi kuchli chaqiriq uchun
   secondary: [
-    "bg-[var(--brand)] font-semibold text-[var(--ink-on-brand)] border border-transparent",
-    "hover:bg-[var(--brand-hover)] active:bg-[var(--brand-press)]",
+    "bg-[var(--green-wash)] font-medium text-[var(--green-text)] border border-[var(--green-line)]",
+    "hover:bg-[var(--green-wash-2)]",
   ].join(" "),
   outline: [
-    "border border-[var(--ink)] bg-transparent font-semibold text-[var(--ink)]",
-    "hover:border-[var(--brand)] hover:text-[var(--brand)]",
-    "active:bg-[var(--brand-wash)]",
+    "border border-[var(--line-strong)] bg-[var(--surface)] font-medium text-[var(--text)]",
+    "hover:bg-[var(--surface-hover)] active:bg-[var(--surface-sunk)]",
   ].join(" "),
-  ghost: "text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
-  /* Qizil yo'q — xavfli amal qora tugma, lekin hoverda ko'kka o'tmaydi. */
+  ghost: "text-[var(--text-2)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
+  /* Qizil yo'q — xavfli amal to'q siyoh tugma. */
   danger: [
-    "bg-[var(--bad)] text-[var(--canvas)] font-semibold border border-transparent",
-    "hover:bg-[var(--ink-2)] active:bg-[var(--bad)]",
+    "bg-[var(--danger)] text-[var(--bg)] font-medium border border-transparent",
+    "hover:bg-[var(--text-2)] active:bg-[var(--danger)]",
   ].join(" "),
   dangerSoft:
-    "bg-[var(--bad-wash)] text-[var(--ink)] font-semibold hover:bg-[var(--ink)] hover:text-[var(--canvas)]",
-  link: "text-[var(--brand)] underline-offset-4 hover:underline p-0 h-auto",
+    "bg-[var(--danger-wash)] text-[var(--text)] font-medium border border-[var(--danger-line)] hover:bg-[var(--surface-sunk)]",
+  link: "text-[var(--green-text)] underline-offset-4 hover:underline p-0 h-auto",
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  xs: "h-8 gap-1 rounded-[8px] px-2.5 text-[12px]",
-  sm: "h-9 gap-1.5 rounded-[var(--r-ctl)] px-3.5 text-[13px]",
-  md: "h-10 gap-2 rounded-[var(--r-ctl)] px-4 text-[14px]",
-  lg: "h-12 gap-2.5 rounded-[var(--r-ctl)] px-7 text-[15px] hover:-translate-y-0.5",
-  xl: "h-14 gap-2.5 rounded-[var(--r-ctl)] px-8 text-[16px] hover:-translate-y-0.5",
-  icon: "size-10 rounded-[var(--r-ctl)]",
-  iconSm: "size-9 rounded-[var(--r-ctl)]",
+  xs: "h-8 gap-1.5 rounded-[var(--radius-sm)] px-2.5 text-[13px]",
+  sm: "h-9 gap-1.5 rounded-[var(--radius-md)] px-3 text-[13px]",
+  md: "h-10 gap-2 rounded-[var(--radius-md)] px-4 text-[14px]",
+  lg: "h-11 gap-2 rounded-[var(--radius-md)] px-5 text-[15px]",
+  xl: "h-12 gap-2.5 rounded-[var(--radius-md)] px-6 text-[15px]",
+  icon: "size-10 rounded-[var(--radius-md)]",
+  iconSm: "size-9 rounded-[var(--radius-md)]",
 };
 
 /** Tugma va havola bir xil ko'rinsin — sinflar bitta joydan chiqadi. */
 const BASE = [
-  "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium focus-ring",
-  "transition-[background-color,border-color,box-shadow,transform,opacity,color]",
-  "duration-[var(--t-base)] ease-[var(--ease-snap)]",
-  // Bosilganda siqilish — bosishni tasdiqlaydi
-  "active:scale-[0.97]",
-  "disabled:pointer-events-none disabled:opacity-40",
+  "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap ring-focus",
+  "transition-[background-color,border-color,color,opacity] duration-[var(--dur-1)] ease-[var(--ease)]",
+  "active:translate-y-px",
+  "disabled:pointer-events-none disabled:opacity-45",
 ].join(" ");
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

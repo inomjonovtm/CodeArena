@@ -71,26 +71,21 @@ function VerifyEmailInner() {
   return (
     <AuthShell
       title="Emailni tasdiqlash"
-      subtitle={
-        state === "success"
-          ? "Hisobingiz to'liq faollashtirildi."
-          : "Xatdagi havola orqali hisobingizni tasdiqlang."
-      }
       error={state === "error" ? message : null}
       footer={
         <Link
           href="/problems"
-          className="focus-ring rounded-[var(--r-ctl)] font-medium text-[var(--brand)] hover:underline"
+          className="ring-focus rounded-[var(--radius-sm)] font-medium text-[var(--green)] hover:underline"
         >
           Masalalarga o&apos;tish
         </Link>
       }
     >
-      <div className="enter mt-6 flex flex-col items-center gap-4 text-center">
+      <div className="mt-6 flex flex-col items-center gap-4 text-center">
         {state === "loading" ? (
           <>
-            <Loader2 className="size-8 animate-spin text-[var(--brand)]" />
-            <p className="t-body text-[var(--ink-3)]">Havola tekshirilmoqda...</p>
+            <Loader2 className="size-8 animate-spin text-[var(--green)]" />
+            <p className="ts-body text-[var(--text-3)]">Havola tekshirilmoqda...</p>
           </>
         ) : null}
 
@@ -99,8 +94,8 @@ function VerifyEmailInner() {
             <span className="flex size-12 items-center justify-center rounded-full border border-[var(--ok)] bg-[var(--ok-wash)] text-[var(--ok)]">
               <CheckCircle2 className="size-7" />
             </span>
-            <p className="text-[15px] font-medium text-[var(--ink)]">{message}</p>
-            <p className="t-meta text-[var(--ink-4)]">
+            <p className="text-[16px] font-medium text-[var(--text)]">{message}</p>
+            <p className="ts-sm text-[var(--text-4)]">
               Bir necha soniyada masalalar sahifasiga o&apos;tasiz.
             </p>
           </>
@@ -108,10 +103,10 @@ function VerifyEmailInner() {
 
         {state === "idle" ? (
           <>
-            <span className="flex size-12 items-center justify-center rounded-full border border-[var(--edge-strong)] bg-[var(--pane-sunken)] text-[var(--ink-4)]">
+            <span className="flex size-12 items-center justify-center rounded-full border border-[var(--line-strong)] bg-[var(--surface-sunk)] text-[var(--text-4)]">
               <MailWarning className="size-7" />
             </span>
-            <p className="t-body max-w-sm text-[var(--ink-3)]">
+            <p className="ts-body max-w-sm text-[var(--text-3)]">
               {user?.is_email_verified
                 ? "Emailingiz allaqachon tasdiqlangan."
                 : "Emailingizga yuborilgan xatdagi tugmani bosing. Xat kelmagan bo'lsa — spam papkasini ham tekshiring."}
@@ -120,7 +115,7 @@ function VerifyEmailInner() {
         ) : null}
 
         {state === "error" ? (
-          <p className="t-meta text-[var(--ink-3)]">
+          <p className="ts-sm text-[var(--text-3)]">
             Havola muddati 48 soat. Muddat tugagan bo&apos;lsa, yangi xat so&apos;rang.
           </p>
         ) : null}
@@ -138,7 +133,7 @@ function VerifyEmailInner() {
             >
               Tasdiqlash xatini qayta yuborish
             </Button>
-            {resent ? <p className="t-meta text-[var(--ink-3)]">{resent}</p> : null}
+            {resent ? <p className="ts-sm text-[var(--text-3)]">{resent}</p> : null}
           </>
         ) : null}
 
@@ -154,7 +149,7 @@ function VerifyEmailInner() {
 
 export default function VerifyEmailPage() {
   return (
-    <Suspense fallback={<div className="aurora-canvas min-h-screen" />}>
+    <Suspense fallback={<div className="bg-[var(--bg)] min-h-screen" />}>
       <VerifyEmailInner />
     </Suspense>
   );

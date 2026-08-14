@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@/components/analytics";
 import { Providers } from "@/components/providers";
 import { themeInitScript } from "@/components/providers/theme-provider";
+import { SITE_URL } from "@/lib/site";
 
 import "./globals.css";
 
@@ -36,6 +37,11 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  /* MUHIM: `metadataBase` siz Next barcha nisbiy meta manzillarini —
+     `og:image`, `canonical`, `manifest` — hal qila olmaydi va ularni
+     `localhost:3000` ga bog'lab qo'yadi. Natijada produksiyada ulashilgan
+     havolada rasm ochilmaydi. Manzil `NEXT_PUBLIC_SITE_URL` dan keladi. */
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "CodeArena",
     template: "%s · CodeArena",
@@ -51,13 +57,26 @@ export const metadata: Metadata = {
     // iOS'da holat paneli sayt foni bilan qo'shilib ketsin
     statusBarStyle: "black-translucent",
   },
+  /* Ijtimoiy karta. Rasmning o'zi `app/opengraph-image.tsx` da chiziladi va
+     har bir bo'lim (masala, musobaqa, profil) uni o'z ma'lumoti bilan
+     qayta belgilaydi. Bu yerda esa kartaning TURI aytiladi: `summary_large_image`
+     bo'lmasa Twitter/X rasmni kichkina kvadrat qilib qo'yadi. */
+  openGraph: {
+    type: "website",
+    siteName: "CodeArena",
+    locale: "uz_UZ",
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: [
     // Kanvas ranglari — brauzer chrome sahifa foniga mos tushadi
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: dark)", color: "#071410" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -80,6 +99,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         {/* Sahifa yuklanishida tema "miltillamasligi" uchun */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* `@media (scripting: none)` ni tushunmaydigan eski brauzerlar
+            uchun zaxira: scroll animatsiyasi kontentni yashirib qo'ymasin. */}
+        <noscript>
+          <style>{`.{opacity:1!important;transform:none!important}`}</style>
+        </noscript>
       </head>
       <body>
         <Providers>{children}</Providers>

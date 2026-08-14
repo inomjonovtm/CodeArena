@@ -38,3 +38,6 @@ Thumbs.db
 # Skriptning o'zi (infra/certbot/entrypoint.sh) repozitoriyda qoladi.
 infra/certbot/conf/
 infra/certbot/www/
+
+# Tarjima katalogi `compile_locale` bilan yasaladi (manba — .po)
+*.mo

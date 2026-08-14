@@ -7,7 +7,7 @@ from apps.core.serializer_fields import RankField
 from apps.core.utils import unique_slug
 from apps.problems.models import Problem
 
-from .models import Contest, ContestParticipant, ContestProblem
+from .models import Contest, ContestParticipant, ContestProblem, ContestStaff
 
 
 def validate_contest_problem(problem: Problem) -> Problem:
@@ -117,6 +117,22 @@ class ContestDetailSerializer(serializers.ModelSerializer):
             "max_participants",
             "rating_k_new",
             "rating_k_experienced",
+            # --- format va kengaytirilgan sozlamalar
+            "scoring",
+            "participation",
+            "team_mode",
+            "allowed_languages",
+            "editorial_uz",
+            "registration_ends_at",
+            "min_rating",
+            "max_rating",
+            "rules_url",
+            "hide_authors",
+            "hide_results",
+            "hide_submissions",
+            "public_scoreboard",
+            "open_registration",
+            "keep_problems_public",
             "plagiarism_checked_at",
             "ratings_applied_at",
             "created_by_username",
@@ -141,6 +157,58 @@ class ContestDetailSerializer(serializers.ModelSerializer):
             attrs["slug"] = unique_slug(Contest, source, instance=self.instance, max_length=120)
         elif attrs.get("slug"):
             attrs["slug"] = unique_slug(Contest, attrs["slug"], instance=self.instance, max_length=120)
+
+        low = attrs.get("min_rating", getattr(self.instance, "min_rating", None))
+        high = attrs.get("max_rating", getattr(self.instance, "max_rating", None))
+        if low is not None and high is not None and high < low:
+            raise serializers.ValidationError(
+                {"max_rating": "Yuqori chegara quyi chegaradan kichik bo'lmasin."}
+            )
+
+        registration_end = attrs.get(
+            "registration_ends_at", getattr(self.instance, "registration_ends_at", None)
+        )
+        if registration_end and end and registration_end > end:
+            raise serializers.ValidationError(
+                {"registration_ends_at": "Ro'yxatdan o'tish musobaqa tugagach yopilmaydi."}
+            )
+        return attrs
+
+
+class ContestStaffSerializer(serializers.ModelSerializer):
+    """Olimpiada mas'uli. Foydalanuvchi username orqali biriktiriladi —
+    UUID ni qidirib o'tirish shart emas."""
+
+    username = serializers.CharField(source="user.username", read_only=True)
+    full_name = serializers.CharField(source="user.full_name", read_only=True, default="")
+    avatar_url = serializers.CharField(source="user.avatar_url", read_only=True, default="")
+    role_label = serializers.CharField(source="get_role_display", read_only=True)
+    can_edit = serializers.BooleanField(read_only=True)
+    added_by_username = serializers.CharField(
+        source="added_by.username", read_only=True, default=None
+    )
+
+    class Meta:
+        model = ContestStaff
+        fields = (
+            "id", "contest", "user", "username", "full_name", "avatar_url",
+            "role", "role_label", "can_edit", "note",
+            "added_by_username", "created_at",
+        )
+        read_only_fields = ("id", "username", "full_name", "avatar_url", "role_label",
+                            "can_edit", "added_by_username", "created_at")
+
+    def validate(self, attrs):
+        contest = attrs.get("contest") or getattr(self.instance, "contest", None)
+        user = attrs.get("user") or getattr(self.instance, "user", None)
+        if contest and user:
+            duplicate = ContestStaff.objects.filter(contest=contest, user=user)
+            if self.instance:
+                duplicate = duplicate.exclude(pk=self.instance.pk)
+            if duplicate.exists():
+                raise serializers.ValidationError(
+                    {"user": "Bu foydalanuvchi allaqachon biriktirilgan."}
+                )
         return attrs
 
     def _sync_problems(self, contest: Contest, rows: list[dict]):
@@ -241,6 +309,16 @@ class PublicContestSerializer(serializers.ModelSerializer):
             "is_virtual_allowed",
             "problem_count",
             "participant_count",
+            # Format — ishtirokchi ro'yxatdan o'tishdan OLDIN bilishi kerak:
+            # qoida (ICPC/IOI), yakka yoki jamoa, qaysi tillar ruxsat etilgan
+            # va reyting chegarasi bormi.
+            "scoring",
+            "participation",
+            "team_mode",
+            "allowed_languages",
+            "min_rating",
+            "max_rating",
+            "rules_url",
         )
 
 
@@ -257,6 +335,8 @@ class PublicContestDetailSerializer(PublicContestSerializer):
             *PublicContestSerializer.Meta.fields,
             "max_participants",
             "ratings_applied_at",
+            "registration_ends_at",
+            "open_registration",
             "my_participation",
             "can_see_problems",
             "server_time",

@@ -65,26 +65,35 @@ export function NavMenu({
           setOpen((previous) => !previous);
         }}
         className={cn(
-          // Qora matn → hoverda ko'k. Faol bo'lim ham ko'k, lekin qalinroq:
-          // rang "qayerdaman"ni, og'irlik esa "shu yerdaman"ni bildiradi.
-          "focus-ring flex h-10 items-center gap-1.5 rounded-[var(--r-ctl)] px-3",
-          "text-[14.5px] whitespace-nowrap",
-          "transition-colors duration-[var(--t-fast)]",
-          active || open
-            ? "font-semibold text-[var(--brand)]"
-            : "font-medium text-[var(--ink)] hover:text-[var(--brand)]",
+          /* Tugma navbar balandligini to'liq egallaydi. Ichida guruh ichidan
+             biror sahifa ochiq bo'lsa, pastida panel qirrasiga tegib turgan
+             2px yashil chiziq yonadi — xuddi tekis havolalardagi kabi. */
+          "ring-focus relative flex h-[var(--nav-h)] shrink-0 items-center gap-1 px-3",
+          "text-[14px] whitespace-nowrap",
+          "transition-colors duration-[var(--dur-1)]",
+          active
+            ? "font-semibold text-[var(--text)]"
+            : open
+              ? "font-medium text-[var(--text)]"
+              : "font-medium text-[var(--text-3)] hover:text-[var(--text)]",
         )}
       >
         {label}
         <ChevronDown
           className={cn(
-            "size-3.5 transition-transform duration-[var(--t-base)]",
-            open ? "rotate-180 text-[var(--brand)]" : "text-[var(--ink-4)]",
+            "size-3.5 transition-transform duration-[var(--dur-2)]",
+            open ? "rotate-180 text-[var(--text-2)]" : "text-[var(--text-4)]",
           )}
         />
+        {active ? (
+          <span
+            aria-hidden
+            className="absolute inset-x-3 bottom-0 h-[2px] rounded-t-full bg-[var(--green)]"
+          />
+        ) : null}
       </button>
 
-      <Popover open={open} onClose={() => setOpen(false)} align="start" className="min-w-64 p-2">
+      <Popover open={open} onClose={() => setOpen(false)} align="start" className="min-w-56">
         <div id={menuId}>
           {visible.map((link) => {
             const isActive = pathname.startsWith(link.href);
@@ -95,18 +104,18 @@ export function NavMenu({
                 onClick={() => setOpen(false)}
                 className={cn(
                   // Ikonka plitkasiz — rangli kvadratchalar ro'yxati menyuni
-                  // "ilovalar panelia"ga aylantiradi va nomlarni bosib ketadi.
-                  "focus-ring flex items-center gap-3 rounded-[8px] px-3 py-2.5",
-                  "text-[14px] transition-colors duration-[var(--t-fast)]",
+                  // "ilovalar paneli"ga aylantiradi va nomlarni bosib ketadi.
+                  "ring-focus flex items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-2",
+                  "text-[13.5px] transition-colors duration-[var(--dur-1)]",
                   isActive
-                    ? "bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]"
-                    : "font-medium text-[var(--ink)] hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
+                    ? "bg-[var(--green-wash)] font-medium text-[var(--green-text)]"
+                    : "font-medium text-[var(--text-2)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                 )}
               >
                 <span
                   className={cn(
                     "flex shrink-0 [&_svg]:size-4",
-                    isActive ? "text-[var(--brand)]" : "text-[var(--ink-4)]",
+                    isActive ? "text-[var(--green)]" : "text-[var(--text-4)]",
                   )}
                 >
                   {link.icon}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from .models import Announcement, AuditLog, PlagiarismPair, SiteSetting
+from .models import Announcement, AuditLog, LegalDocument, PlagiarismPair, SiteSetting
 
 
 class PlagiarismPairListSerializer(serializers.ModelSerializer):
@@ -69,6 +69,22 @@ class SiteSettingSerializer(serializers.ModelSerializer):
             "description", "is_public", "updated_by_username", "updated_at",
         )
         read_only_fields = ("id", "updated_at")
+
+
+class LegalDocumentSerializer(serializers.ModelSerializer):
+    updated_by_username = serializers.CharField(
+        source="updated_by.username", read_only=True, default=None
+    )
+    slug_label = serializers.CharField(source="get_slug_display", read_only=True)
+
+    class Meta:
+        model = LegalDocument
+        fields = (
+            "id", "slug", "slug_label", "title_uz", "summary_uz", "body_md",
+            "version", "effective_from", "is_published",
+            "updated_by_username", "created_at", "updated_at",
+        )
+        read_only_fields = ("id", "slug_label", "created_at", "updated_at")
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):

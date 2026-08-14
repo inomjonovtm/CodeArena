@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Check, ChevronDown, Eye, EyeOff, X } from "lucide-react";
+import { ArrowRight, Check, Eye, EyeOff, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-import { Button } from "@/components/kit";
+import { Button, Select } from "@/components/kit";
 import { useAuth } from "@/components/providers";
 import { AuthField, AuthShell, authInputClass } from "@/components/site/auth-shell";
 import { GoogleButton } from "@/components/site/google-button";
@@ -28,7 +28,17 @@ function passwordRules(password: string, username: string) {
   ];
 }
 
-/** Tizim uslubidagi native select — auth maydonlari bilan bir xil. */
+/**
+ * Ro'yxatdan tanlash — TIZIM `<select>` i EMAS.
+ *
+ * Native `<select>` ochilganda operatsion tizim o'z ro'yxatini chizadi:
+ * boshqa shrift, ko'k tanlov chizig'i, burchaksiz oq quti. Yonidagi
+ * maydonlar myata-yashil bo'lgani uchun u ekranda begona bo'lib turardi
+ * va uni CSS bilan tuzatib bo'lmaydi.
+ *
+ * `Select` esa o'sha dizayn tokenlari bilan chiziladi, ichida qidiruv bor
+ * (viloyat/tuman ro'yxatlari uzun) va klaviatura bilan boshqariladi.
+ */
 function AuthSelect({
   id,
   value,
@@ -37,6 +47,9 @@ function AuthSelect({
   disabled,
   placeholder = "Tanlang...",
 }: {
+  /* `AuthField htmlFor` shu qiymatga ishora qiladi. `Select` tugma
+     chizadi, tugmani esa `<label>` bilan bog'lab bo'lmaydi — shuning
+     uchun `id` o'ramga qo'yiladi, nomi `ariaLabel` orqali beriladi. */
   id?: string;
   value: string;
   onChange: (next: string) => void;
@@ -45,29 +58,17 @@ function AuthSelect({
   placeholder?: string;
 }) {
   return (
-    <div className="relative">
-      <select
-        id={id}
+    <div id={id}>
+      <Select
         value={value}
-        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className={cn(
-          authInputClass,
-          "appearance-none pr-9",
-          !value && "text-[var(--ink-4)]",
-          disabled && "cursor-not-allowed",
-        )}
-      >
-        <option value="" disabled>
-          {placeholder}
-        </option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-[var(--ink-4)]" />
+        options={options}
+        placeholder={placeholder}
+        disabled={disabled}
+        // Sakkiztadan ko'p variant bo'lsa qidiruv qatori chiqadi
+        searchable={options.length > 8}
+        ariaLabel={placeholder}
+      />
     </div>
   );
 }
@@ -187,14 +188,13 @@ export default function RegisterPage() {
     <AuthShell
       wide
       title="Ro'yxatdan o'tish"
-      subtitle="Bir daqiqa — va birinchi masalangizni yechishingiz mumkin."
       error={error}
       footer={
         <>
           Hisobingiz bormi?{" "}
           <Link
             href="/login"
-            className="focus-ring rounded-[var(--r-ctl)] font-medium text-[var(--brand)] hover:underline"
+            className="ring-focus rounded-[var(--radius-sm)] font-medium text-[var(--green)] hover:underline"
           >
             Kirish
           </Link>
@@ -233,18 +233,36 @@ export default function RegisterPage() {
           </AuthField>
         </div>
 
-        <AuthField label="Email" htmlFor="email" required error={fieldErrors.email}>
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            className={authInputClass}
-            placeholder="siz@example.com"
-            value={form.email}
-            onChange={(event) => set("email", event.target.value)}
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <AuthField label="Email" htmlFor="email" required error={fieldErrors.email}>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              className={authInputClass}
+              placeholder="siz@example.com"
+              value={form.email}
+              onChange={(event) => set("email", event.target.value)}
+              required
+            />
+          </AuthField>
+
+          <AuthField
+            label="Ta'lim maskani"
+            htmlFor="education_place"
             required
-          />
-        </AuthField>
+            error={fieldErrors.education_place}
+          >
+            <input
+              id="education_place"
+              className={authInputClass}
+              placeholder="42-son maktab"
+              value={form.education_place}
+              onChange={(event) => set("education_place", event.target.value)}
+              required
+            />
+          </AuthField>
+        </div>
 
         <div className="grid gap-3.5 sm:grid-cols-2">
           <AuthField label="Viloyat" htmlFor="region" required error={fieldErrors.region}>
@@ -269,23 +287,6 @@ export default function RegisterPage() {
           </AuthField>
         </div>
 
-        <AuthField
-          label="Ta'lim maskani"
-          htmlFor="education_place"
-          required
-          error={fieldErrors.education_place}
-          hint="Maktab, litsey, kollej yoki universitet nomini yozing"
-        >
-          <input
-            id="education_place"
-            className={authInputClass}
-            placeholder="masalan: 42-son umumta'lim maktabi"
-            value={form.education_place}
-            onChange={(event) => set("education_place", event.target.value)}
-            required
-          />
-        </AuthField>
-
         <div className="grid gap-3.5 sm:grid-cols-2">
           <AuthField label="Parol" htmlFor="password" required error={fieldErrors.password}>
             <div className="relative">
@@ -303,7 +304,7 @@ export default function RegisterPage() {
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
-                className="focus-ring absolute top-1/2 right-3 -translate-y-1/2 rounded-[var(--r-ctl)] text-[var(--ink-4)] transition-colors hover:text-[var(--ink-2)]"
+                className="ring-focus absolute top-1/2 right-3 -translate-y-1/2 rounded-[var(--radius-sm)] text-[var(--text-4)] transition-colors hover:text-[var(--text-2)]"
               >
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
@@ -337,12 +338,12 @@ export default function RegisterPage() {
                 <span
                   key={index}
                   className={cn(
-                    "h-1.5 flex-1 rounded-full transition-colors duration-[var(--t-base)]",
+                    "h-1.5 flex-1 rounded-full transition-colors duration-[var(--dur-2)]",
                     index < strength
                       ? strength === 3
                         ? "bg-[var(--ok)]"
                         : "bg-[var(--warn)]"
-                      : "bg-[var(--brand-wash-strong)]",
+                      : "bg-[var(--green-wash-2)]",
                   )}
                 />
               ))}
@@ -352,8 +353,8 @@ export default function RegisterPage() {
                 <li
                   key={rule.label}
                   className={cn(
-                    "flex items-center gap-1.5 text-[11.5px]",
-                    rule.ok ? "text-[var(--ok)]" : "text-[var(--ink-4)]",
+                    "flex items-center gap-1.5 text-[12px]",
+                    rule.ok ? "text-[var(--ok)]" : "text-[var(--text-4)]",
                   )}
                 >
                   {rule.ok ? <Check className="size-3" /> : <X className="size-3" />}
@@ -367,15 +368,15 @@ export default function RegisterPage() {
         <label className="flex cursor-pointer items-start gap-2.5">
           <input
             type="checkbox"
-            className="focus-ring mt-0.5 size-4 shrink-0 cursor-pointer rounded accent-[var(--brand)]"
+            className="ring-focus mt-0.5 size-4 shrink-0 cursor-pointer rounded accent-[var(--green)]"
             checked={form.accept_terms}
             onChange={(event) => set("accept_terms", event.target.checked)}
           />
-          <span className="text-[12.5px] leading-relaxed text-[var(--ink-3)]">
+          <span className="text-[13px] leading-relaxed text-[var(--text-3)]">
             <Link
               href="/terms"
               target="_blank"
-              className="text-[var(--brand)] hover:underline"
+              className="text-[var(--green)] hover:underline"
             >
               Foydalanish shartlari
             </Link>{" "}
@@ -383,7 +384,7 @@ export default function RegisterPage() {
             <Link
               href="/privacy"
               target="_blank"
-              className="text-[var(--brand)] hover:underline"
+              className="text-[var(--green)] hover:underline"
             >
               maxfiylik siyosati
             </Link>
@@ -391,7 +392,7 @@ export default function RegisterPage() {
           </span>
         </label>
         {fieldErrors.accept_terms ? (
-          <p className="-mt-2 text-[11.5px] text-[var(--bad)]">{fieldErrors.accept_terms}</p>
+          <p className="-mt-2 text-[12px] text-[var(--danger)]">{fieldErrors.accept_terms}</p>
         ) : null}
 
         <Button

@@ -13,6 +13,7 @@ from apps.core.mixins import AuditLogMixin, BulkActionMixin, write_audit
 from apps.core.permissions import HasResourcePerm, IsStaff
 
 from .models import AdminSession, Role, User
+from .roles import apply_role
 from .serializers import (
     AdjustRatingSerializer,
     AdminUserCreateSerializer,
@@ -124,6 +125,9 @@ class AdminUserViewSet(ExportMixin, AuditLogMixin, BulkActionMixin, viewsets.Mod
     ordering = ["-created_at"]
     audit_label = "user"
     bulk_allowed_actions = ("delete", "ban", "unban", "activate", "deactivate", "verify_email", "set_role")
+    # Bulk huquqi tanlangan amalga mos: bulk-ban `users.ban`, rol almashtirish
+    # `users.role` so'raydi (yakka amallar bilan bir xil).
+    bulk_perm_actions = {"ban": "ban", "unban": "ban", "set_role": "role"}
     export_filename = "codearena-userlar"
     export_columns = [
         ("username", "Username"),
@@ -208,8 +212,11 @@ class AdminUserViewSet(ExportMixin, AuditLogMixin, BulkActionMixin, viewsets.Mod
                             status=status.HTTP_400_BAD_REQUEST)
         old_role = user.role
         user.role = new_role
-        user.is_staff = new_role == Role.ADMIN
-        user.save(update_fields=["role", "is_staff"])
+        user.save(update_fields=["role"])
+        # Django guruhi va `is_staff` rolga ergashadi (`apps.accounts.roles`):
+        # moderator boshqaruv paneliga kira olishi, muallif esa kira
+        # olmasligi kerak.
+        apply_role(user)
         write_audit(request, action_name="user.change_role", obj=user,
                     changes={"role": {"before": old_role, "after": new_role}})
         return Response(AdminUserDetailSerializer(user, context=self.get_serializer_context()).data)
@@ -262,14 +269,22 @@ class AdminUserViewSet(ExportMixin, AuditLogMixin, BulkActionMixin, viewsets.Mod
         return Response(AdminSubmissionListSerializer(rows, many=True).data)
 
     # ------------------------------------------------------------- bulk
+    def get_bulk_queryset(self, ids):
+        # O'zini o'zi bulk orqali o'chirish/bloklashdan himoya — `delete`
+        # amali `handle_bulk_action`ga yetib kelmaydi, shuning uchun chetlash
+        # queryset darajasida turishi shart.
+        return super().get_bulk_queryset(ids).exclude(pk=self.request.user.pk)
+
     def handle_bulk_action(self, request, action_name, queryset, payload):
-        queryset = queryset.exclude(pk=request.user.pk)
         if action_name == "ban":
             reason = payload.get("reason") or "Bulk ban (admin panel)"
             affected = queryset.update(
                 is_banned=True, ban_reason=reason, banned_by=request.user,
                 banned_until=payload.get("until") or None,
             )
+            # Yakka ban'dagi kabi: blok darhol kuchga kirsin, qo'ldagi JWT va
+            # refresh token bilan ishlash davom etmasin.
+            revoke_queryset(AdminSession.objects.filter(user__in=queryset))
             return {"affected": affected}
         if action_name == "unban":
             return {"affected": queryset.update(is_banned=False, ban_reason="", banned_until=None, banned_by=None)}
@@ -285,13 +300,23 @@ class AdminUserViewSet(ExportMixin, AuditLogMixin, BulkActionMixin, viewsets.Mod
                 from rest_framework.exceptions import ValidationError
 
                 raise ValidationError({"role": "Noto'g'ri rol."})
-            return {"affected": queryset.update(role=role, is_staff=role == Role.ADMIN)}
+            # `update()` emas, birma-bir: `apply_role` Django guruhi va
+            # `is_staff`ni rolga moslaydi — yakka `change_role` bilan bir xil.
+            users = list(queryset)
+            for user in users:
+                user.role = role
+                user.save(update_fields=["role"])
+                apply_role(user)
+            return {"affected": len(users)}
         return {"affected": 0}
 
     @action(detail=False, methods=["get"])
     def summary(self, request):
         now = timezone.now()
-        qs = User.objects.all()
+        # Jadval ustidagi kartalar jadvalning o'zi bilan bir xil filtrga
+        # bo'ysunadi — aks holda «bloklanganlar» filtrida ham umumiy son
+        # ko'rinaverardi.
+        qs = self.filter_queryset(self.get_queryset())
         return Response(
             {
                 "total": qs.count(),

@@ -3,8 +3,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  BookOpen,
-  GraduationCap,
   Search,
   Swords,
   Terminal,
@@ -40,7 +38,7 @@ const DIFF_LABEL: Record<Difficulty, string> = {
 };
 
 /* Guruhlar tartibi — natijalar shu ketma-ketlikda chiqadi */
-const TYPE_ORDER: SiteSearchItem["type"][] = ["problem", "course", "lesson", "contest", "user"];
+const TYPE_ORDER: SiteSearchItem["type"][] = ["problem", "contest", "user"];
 
 const TYPE_META: Record<
   SiteSearchItem["type"],
@@ -49,37 +47,27 @@ const TYPE_META: Record<
   problem: {
     label: "Masala",
     icon: <Terminal className="size-4" />,
-    wash: "bg-[var(--brand-wash)] text-[var(--brand)]",
-  },
-  course: {
-    label: "Kurs",
-    icon: <GraduationCap className="size-4" />,
-    wash: "bg-[var(--brand-wash)] text-[var(--brand)]",
-  },
-  lesson: {
-    label: "Mavzu",
-    icon: <BookOpen className="size-4" />,
-    wash: "bg-[var(--pane-sunken)] text-[var(--ink-2)]",
+    wash: "bg-[var(--green-wash)] text-[var(--green)]",
   },
   contest: {
     label: "Musobaqa",
     icon: <Swords className="size-4" />,
-    wash: "bg-[var(--note-wash)] text-[var(--note)]",
+    wash: "bg-[var(--info-wash)] text-[var(--info)]",
   },
   user: {
     label: "Foydalanuvchi",
     icon: <UserIcon className="size-4" />,
-    wash: "bg-[var(--pane-sunken)] text-[var(--ink-3)]",
+    wash: "bg-[var(--surface-sunk)] text-[var(--text-3)]",
   },
 };
 
 /** Natija skeleti — haqiqiy qator tartibini takrorlaydi. */
 function RowsSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="divide-y divide-[var(--edge-soft)]">
+    <div className="divide-y divide-[var(--line-soft)]">
       {Array.from({ length: rows }).map((_, index) => (
         <div key={index} className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
-          <Block className="size-9 shrink-0 rounded-[var(--r-ctl)]" />
+          <Block className="size-9 shrink-0 rounded-[var(--radius-sm)]" />
           <div className="min-w-0 flex-1">
             <Block className="h-3.5 w-2/5" />
             <Block className="mt-2 h-2.5 w-1/4" />
@@ -100,7 +88,7 @@ function Face({ src, name }: { src?: string; name: string }) {
     .join("");
 
   return (
-    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-wash)] text-[12px] font-semibold uppercase text-[var(--brand-ink)]">
+    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--green-wash)] text-[12.5px] font-semibold uppercase text-[var(--green-text)]">
       {src && !failed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" onError={() => setFailed(true)} className="size-full object-cover" />
@@ -178,7 +166,7 @@ function SearchInner() {
   let offset = 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-[var(--page-tight)] flex-col gap-7">
+    <div className="mx-auto flex w-full max-w-[var(--container-narrow)] flex-col gap-7">
       {/* --------------------------------------------- 1. sahifa sarlavhasi */}
       <PageHead
         eyebrow="Buyruq markazi"
@@ -187,9 +175,9 @@ function SearchInner() {
       />
 
       {/* ------------------------------------- 2. qidiruv maydoni va turlar */}
-      <Pane className="enter" inset="md">
+      <Pane className="" inset="md">
         <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-4.5 size-5 -translate-y-1/2 text-[var(--ink-4)]" />
+          <Search className="pointer-events-none absolute top-1/2 left-4.5 size-5 -translate-y-1/2 text-[var(--text-4)]" />
           <input
             autoFocus
             type="search"
@@ -200,7 +188,7 @@ function SearchInner() {
             aria-label="Qidiruv"
             className={cn(
               fieldBase,
-              "h-14 pl-12 text-[15.5px]",
+              "h-14 pl-12 text-[16.5px]",
               draft ? "pr-12" : "pr-4",
               "[&::-webkit-search-cancel-button]:hidden",
             )}
@@ -212,8 +200,8 @@ function SearchInner() {
               aria-label="Tozalash"
               className={cn(
                 "absolute top-1/2 right-3.5 flex size-7 -translate-y-1/2 items-center justify-center",
-                "rounded-[var(--r-chip)] text-[var(--ink-4)] transition-colors",
-                "hover:bg-[var(--pane-hover)] hover:text-[var(--ink-2)] focus-ring",
+                "rounded-[var(--radius-xs)] text-[var(--text-4)] transition-colors",
+                "hover:bg-[var(--surface-hover)] hover:text-[var(--text-2)] ring-focus",
               )}
             >
               <X className="size-4" />
@@ -241,10 +229,10 @@ function SearchInner() {
 
         {/* Klaviatura bilan ishlash eslatmasi */}
         {flat.length ? (
-          <p className="t-meta mt-4 border-t border-[var(--edge)] pt-4 text-[var(--ink-4)]">
-            <kbd className="rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium">↑↓</kbd>{" "}
+          <p className="ts-sm mt-4 border-t border-[var(--line)] pt-4 text-[var(--text-4)]">
+            <kbd className="rounded-[6px] bg-[var(--surface-sunk)] px-1.5 py-0.5 font-sans text-[12px] font-medium">↑↓</kbd>{" "}
             tanlash ·{" "}
-            <kbd className="rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium">Enter</kbd>{" "}
+            <kbd className="rounded-[6px] bg-[var(--surface-sunk)] px-1.5 py-0.5 font-sans text-[12px] font-medium">Enter</kbd>{" "}
             o&apos;tish
           </p>
         ) : null}
@@ -286,7 +274,7 @@ function SearchInner() {
           />
         </Pane>
       ) : (
-        <div className="enter flex flex-col gap-5">
+        <div className="flex flex-col gap-5">
           {groups.map((group) => {
             const start = offset;
             offset += group.rows.length;
@@ -295,12 +283,12 @@ function SearchInner() {
             return (
               <Pane key={group.type} tone="solid" inset="none" className="min-w-0">
                 {/* Guruh sarlavhasi karta ichida — kanvasda yalang'och matn qolmasin */}
-                <div className="flex items-center gap-2 border-b border-[var(--edge)] px-4 py-3 sm:px-5">
-                  <p className="t-eyebrow">{meta.label}</p>
+                <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-3 sm:px-5">
+                  <p className="ts-label">{meta.label}</p>
                   <Count value={group.rows.length} />
                 </div>
 
-                <ul className="enter-stagger divide-y divide-[var(--edge-soft)]">
+                <ul className="divide-y divide-[var(--line-soft)]">
                   {group.rows.map((row, index) => {
                     const flatIndex = start + index;
                     const selected = flatIndex === active;
@@ -310,9 +298,9 @@ function SearchInner() {
                           href={row.url}
                           onMouseMove={() => setActive(flatIndex)}
                           className={cn(
-                            "group flex items-center gap-3.5 px-4 py-3 focus-ring sm:px-5",
-                            "transition-colors duration-[var(--t-fast)]",
-                            selected && "bg-[var(--pane-sunken)]",
+                            "group flex items-center gap-3.5 px-4 py-3 ring-focus sm:px-5",
+                            "transition-colors duration-[var(--dur-1)]",
+                            selected && "bg-[var(--surface-sunk)]",
                           )}
                         >
                           {row.type === "user" ? (
@@ -320,7 +308,7 @@ function SearchInner() {
                           ) : (
                             <span
                               className={cn(
-                                "flex size-9 shrink-0 items-center justify-center rounded-[var(--r-ctl)]",
+                                "flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
                                 meta.wash,
                               )}
                             >
@@ -329,11 +317,11 @@ function SearchInner() {
                           )}
 
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[13.5px] font-medium text-[var(--ink)]">
+                            <span className="block truncate text-[14.5px] font-medium text-[var(--text)]">
                               {row.title}
                             </span>
                             {row.subtitle ? (
-                              <span className="t-meta mt-0.5 block truncate text-[var(--ink-4)]">
+                              <span className="ts-sm mt-0.5 block truncate text-[var(--text-4)]">
                                 {row.subtitle}
                               </span>
                             ) : null}
@@ -348,7 +336,7 @@ function SearchInner() {
                           ) : null}
                           <ArrowRight
                             className={cn(
-                              "size-4 shrink-0 text-[var(--ink-4)] transition-opacity duration-[var(--t-fast)]",
+                              "size-4 shrink-0 text-[var(--text-4)] transition-opacity duration-[var(--dur-1)]",
                               selected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
                             )}
                           />
@@ -371,10 +359,10 @@ export default function SearchPage() {
     <Suspense
       fallback={
         /* Skelet kartalar ritmini takrorlaydi */
-        <div className="mx-auto flex w-full max-w-[var(--page-tight)] flex-col gap-5">
-          <Block className="h-36 rounded-[var(--r-pane)]" />
-          <Block className="h-24 rounded-[var(--r-pane)]" />
-          <Block className="h-64 rounded-[var(--r-pane)]" />
+        <div className="mx-auto flex w-full max-w-[var(--container-narrow)] flex-col gap-5">
+          <Block className="h-36 rounded-[var(--radius-lg)]" />
+          <Block className="h-24 rounded-[var(--radius-lg)]" />
+          <Block className="h-64 rounded-[var(--radius-lg)]" />
         </div>
       }
     >

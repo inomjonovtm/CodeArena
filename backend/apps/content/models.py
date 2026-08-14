@@ -55,6 +55,8 @@ class Discussion(SoftDeleteModel, BaseModel):
 
     class Meta:
         db_table = "discussions"
+        verbose_name = "Muhokama"
+        verbose_name_plural = "Muhokamalar"
         ordering = ["-is_pinned", "-created_at"]
 
     def __str__(self) -> str:
@@ -88,6 +90,8 @@ class Comment(SoftDeleteModel, BaseModel):
 
     class Meta:
         db_table = "comments"
+        verbose_name = "Izoh"
+        verbose_name_plural = "Izohlar"
         ordering = ["created_at"]
         indexes = [models.Index(fields=["problem", "status", "created_at"])]
         constraints = [
@@ -168,6 +172,8 @@ class ContentReport(TimeStampedModel):
 
     class Meta:
         db_table = "content_reports"
+        verbose_name = "Shikoyat"
+        verbose_name_plural = "Shikoyatlar"
         ordering = ["is_resolved", "-created_at"]
 
     def __str__(self) -> str:
@@ -212,6 +218,8 @@ class ContactMessage(TimeStampedModel):
 
     class Meta:
         db_table = "contact_messages"
+        verbose_name = "Murojaat"
+        verbose_name_plural = "Murojaatlar"
         ordering = ["is_resolved", "-created_at"]
         indexes = [models.Index(fields=["is_resolved", "-created_at"])]
 

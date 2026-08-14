@@ -14,7 +14,7 @@ export interface SelectOption {
   description?: string;
 }
 
-type ListboxVariant = "form" | "filter" | "compact";
+type ListboxVariant = "form" | "filter" | "compact" | "studio";
 
 interface ListboxProps {
   value: string;
@@ -164,26 +164,42 @@ export function Listbox({
   const triggerClass =
     variant === "filter"
       ? cn(
-          "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-[var(--r-ctl)] border px-3.5 text-[13px] font-medium focus-ring",
-          "transition-[background-color,border-color,color] duration-[var(--t-fast)]",
+          "inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] border px-4 text-[14px] font-medium ring-focus",
+          "transition-[background-color,border-color,color] duration-[var(--dur-1)]",
           hasValue
-            ? "border-[var(--brand-edge)] bg-[var(--brand-wash)] text-[var(--brand-ink)]"
-            : "border-[var(--edge)] bg-[var(--pane-sunken)] text-[var(--ink-2)] hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+            ? "border-[var(--green-line)] bg-[var(--green-wash)] text-[var(--green-text)]"
+            : "border-[var(--line)] bg-[var(--surface-sunk)] text-[var(--text-2)] hover:border-[var(--line-strong)] hover:text-[var(--text)]",
         )
       : variant === "compact"
         ? cn(
-            "inline-flex h-8 w-full items-center justify-between gap-1.5 rounded-[var(--r-ctl)] border border-[var(--edge)]",
-            "bg-[var(--pane-sunken)] px-2.5 text-xs text-[var(--ink)] focus-ring",
-            "transition-colors duration-[var(--t-fast)] hover:border-[var(--edge)]",
+            "inline-flex h-10 w-full items-center justify-between gap-1.5 rounded-[var(--radius-sm)] border border-[var(--line)]",
+            "bg-[var(--surface-sunk)] px-2.5 text-xs text-[var(--text)] ring-focus",
+            "transition-colors duration-[var(--dur-1)] hover:border-[var(--line)]",
           )
-        : cn(
-            "flex h-9 w-full items-center justify-between gap-2 rounded-[var(--r-field)] border px-3.5 text-[13.5px] focus-ring",
-            "bg-[var(--pane-sunken)] text-[var(--ink)]",
-            "transition-[background-color,border-color,box-shadow] duration-[var(--t-fast)]",
-            invalid ? "border-[var(--bad)]" : "border-[var(--edge)] hover:border-[var(--edge)]",
-            open &&
-              "border-[var(--brand-edge)] bg-[var(--pane-solid)] shadow-[0_0_0_var(--focus-w)_var(--focus)]",
-          );
+        : variant === "studio"
+          ? cn(
+              // Studio zichroq: maydonlari 44px va yorlig'i kichik.
+              // Ranglar `.studio` ichida allaqachon qayta belgilangan,
+              // shuning uchun bu yerda faqat o'lcham farq qiladi.
+              "flex h-11 w-full items-center justify-between gap-2 rounded-[var(--radius-sm)] border px-3 text-[14.5px] ring-focus",
+              "bg-[var(--surface-sunk)] text-[var(--text)]",
+              "transition-[background-color,border-color] duration-[var(--dur-1)]",
+              invalid ? "border-[var(--danger)]" : "border-[var(--line)]",
+              open && "border-[var(--green-line)]",
+            )
+          : cn(
+              // SAYT MAYDONI bilan AYNAN bir xil: 52px balandlik, 17px matn,
+              // oq-myata sirt (`kit/form.tsx` dagi `fieldBase`). Ilgari bu
+              // yerda 44px va botiq sirt bor edi — dropdown yonidagi oddiy
+              // maydondan past va boshqa rangda ko'rinardi.
+              "flex h-[52px] w-full items-center justify-between gap-2 rounded-[var(--radius-sm)] border px-5 text-[16px] ring-focus",
+              "bg-[var(--surface)] text-[var(--text)]",
+              "transition-[background-color,border-color] duration-[var(--dur-1)]",
+              invalid
+                ? "border-[var(--danger)]"
+                : "border-[var(--line)] hover:border-[var(--line-strong)]",
+              open && "border-[var(--green)]",
+            );
 
   return (
     <div className={cn(variant === "filter" ? "inline-block" : "w-full", className)}>
@@ -201,7 +217,7 @@ export function Listbox({
         onKeyDown={onKeyDown}
         className={cn(triggerClass, disabled && "cursor-not-allowed opacity-55")}
       >
-        <span className={cn("truncate", !hasValue && variant !== "filter" && "text-[var(--ink-4)]")}>
+        <span className={cn("truncate", !hasValue && variant !== "filter" && "text-[var(--text-4)]")}>
           {selected?.label ?? placeholder}
         </span>
         <span className="flex shrink-0 items-center gap-1">
@@ -214,14 +230,14 @@ export function Listbox({
                 event.stopPropagation();
                 onSelect("");
               }}
-              className="rounded-[var(--r-chip)] p-0.5 opacity-60 transition-opacity hover:opacity-100"
+              className="rounded-[var(--radius-xs)] p-0.5 opacity-60 transition-opacity hover:opacity-100"
             >
               <X className="size-3.5" />
             </span>
           ) : null}
           <ChevronDown
             className={cn(
-              "size-4 text-[var(--ink-4)] transition-transform duration-[var(--t-base)] ease-[var(--ease-snap)]",
+              "size-4 text-[var(--text-4)] transition-transform duration-[var(--dur-2)] ease-[var(--ease)]",
               open && "rotate-180",
             )}
           />
@@ -239,9 +255,9 @@ export function Listbox({
         className="max-w-[22rem]"
       >
         {showSearch ? (
-          <div className="shrink-0 border-b border-[var(--edge)] p-2">
+          <div className="shrink-0 border-b border-[var(--line)] p-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--ink-4)]" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--text-4)]" />
               <input
                 ref={searchRef}
                 value={query}
@@ -250,9 +266,9 @@ export function Listbox({
                 placeholder="Qidirish..."
                 aria-label="Variantlar ichidan qidirish"
                 className={cn(
-                  "h-8 w-full rounded-[var(--r-ctl)] border border-[var(--edge)] bg-[var(--pane-sunken)] pl-8 pr-2",
-                  "text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]",
-                  "transition-colors duration-[var(--t-fast)] focus:border-[var(--brand-edge)] focus:bg-[var(--pane-solid)]",
+                  "h-10 w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] pl-8 pr-2",
+                  "text-[14px] text-[var(--text)] outline-none placeholder:text-[var(--text-4)]",
+                  "transition-colors duration-[var(--dur-1)] focus:border-[var(--green-line)] focus:bg-[var(--surface)]",
                 )}
               />
             </div>
@@ -264,10 +280,10 @@ export function Listbox({
           id={listId}
           role="listbox"
           aria-label={ariaLabel ?? placeholder}
-          className="scrollbar-thin min-h-0 flex-1 overflow-y-auto p-1.5"
+          className="scroll-thin min-h-0 flex-1 overflow-y-auto p-1.5"
         >
           {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-xs text-[var(--ink-4)]">Natija topilmadi</p>
+            <p className="px-3 py-4 text-center text-xs text-[var(--text-4)]">Natija topilmadi</p>
           ) : (
             filtered.map((option, index) => {
               const isActive = option.value === value;
@@ -284,19 +300,19 @@ export function Listbox({
                   onMouseEnter={() => setHighlight(index)}
                   onClick={() => commit(option)}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-[var(--r-ctl)] px-2.5 py-2 text-left text-[13px]",
-                    "transition-colors duration-[var(--t-fast)]",
-                    isActive ? "font-medium text-[var(--brand-ink)]" : "text-[var(--ink-2)]",
-                    isHighlighted && !option.disabled && "bg-[var(--pane-sunken)]",
-                    isActive && "bg-[var(--brand-wash)]",
+                    "flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-3 py-2.5 text-left text-[15px]",
+                    "transition-colors duration-[var(--dur-1)]",
+                    isActive ? "font-medium text-[var(--green-text)]" : "text-[var(--text-2)]",
+                    isHighlighted && !option.disabled && "bg-[var(--surface-sunk)]",
+                    isActive && "bg-[var(--green-wash)]",
                     option.disabled && "cursor-not-allowed opacity-50",
                   )}
                 >
-                  <Check className={cn("size-4 shrink-0 text-[var(--brand)]", !isActive && "invisible")} />
+                  <Check className={cn("size-4 shrink-0 text-[var(--green)]", !isActive && "invisible")} />
                   <span className="min-w-0">
                     <span className="block truncate">{option.label}</span>
                     {option.description ? (
-                      <span className="block truncate text-[11px] text-[var(--ink-4)]">
+                      <span className="block truncate text-[12px] text-[var(--text-4)]">
                         {option.description}
                       </span>
                     ) : null}
@@ -322,6 +338,8 @@ export interface SelectProps {
   invalid?: boolean;
   searchable?: boolean;
   compact?: boolean;
+  /** Studio uchun zichroq ko'rinish. */
+  studio?: boolean;
   className?: string;
   ariaLabel?: string;
   children?: React.ReactNode;
@@ -336,13 +354,14 @@ export function Select({
   invalid,
   searchable,
   compact,
+  studio,
   className,
   ariaLabel,
 }: SelectProps) {
   const merged = placeholder ? [{ value: "", label: placeholder }, ...options] : options;
   return (
     <Listbox
-      variant={compact ? "compact" : "form"}
+      variant={compact ? "compact" : studio ? "studio" : "form"}
       value={String(value ?? "")}
       onSelect={(next) => onChange?.({ target: { value: next } })}
       options={merged}
@@ -393,7 +412,7 @@ export function FilterSelect({
   if (!label) return control;
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
-      <span className="t-eyebrow">{label}</span>
+      <span className="ts-label">{label}</span>
       {control}
     </div>
   );

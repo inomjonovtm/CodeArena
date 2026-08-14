@@ -34,10 +34,10 @@ export function RankBadge({
   if (!rank) return null;
 
   const padding = {
-    xs: "h-5 gap-1 px-1.5 text-[10.5px]",
-    sm: "h-6 gap-1.5 px-2 text-[11.5px]",
-    md: "h-7 gap-1.5 px-2.5 text-[12.5px]",
-    lg: "h-9 gap-2 px-3.5 text-[14px]",
+    xs: "h-5 gap-1 px-1.5 text-[12px]",
+    sm: "h-6 gap-1.5 px-2 text-[12px]",
+    md: "h-7 gap-1.5 px-2.5 text-[13px]",
+    lg: "h-9 gap-2 px-3.5 text-[15px]",
   }[size];
 
   return (
@@ -45,9 +45,9 @@ export function RankBadge({
       title={`${rankName(rank)} · ${formatNumber(rank.min_rating)}+`}
       style={rankChipStyle(rank)}
       className={cn(
-        "inline-flex shrink-0 items-center rounded-[var(--r-chip)] font-semibold",
+        "inline-flex shrink-0 items-center rounded-[var(--radius-xs)] font-semibold",
         padding,
-        isElite(rank) && "animate-rank-glow",
+        isElite(rank) && "",
         className,
       )}
     >
@@ -110,7 +110,7 @@ export function RankGlyph({ rank, size = 14 }: { rank: RankInfo; size?: number }
  * Rank halqali avatar — sayt sahifalari uchun yagona avatar.
  *
  * Halqa rangi rankdan keladi; eng yuqori ranklarda halqa sekin aylanadi
- * (`animate-rank-spin`), rasm esa teskari aylanib tik turadi.
+ * (``), rasm esa teskari aylanib tik turadi.
  */
 export function RankAvatar({
   src,
@@ -135,7 +135,7 @@ export function RankAvatar({
       style={{ width: inner, height: inner, fontSize: Math.max(10, inner * 0.36) }}
       className={cn(
         "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full",
-        "bg-[var(--brand-wash-strong)] font-semibold uppercase text-[var(--brand-ink)]",
+        "bg-[var(--green-wash-2)] font-semibold uppercase text-[var(--green-text)]",
         !rank && className,
       )}
     >
@@ -161,7 +161,7 @@ export function RankAvatar({
       style={{ width: size, height: size, ...ringStyle(rank, size) }}
       className={cn(
         "inline-flex shrink-0 items-center justify-center rounded-full",
-        isElite(rank) && "animate-rank-spin",
+        isElite(rank) && "",
         className,
       )}
     >
@@ -179,17 +179,17 @@ export function RankProgress({ rank, rating }: { rank: RankInfo; rating: number 
         <span
           style={rankChipStyle(rank)}
           className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-[var(--r-ctl)]",
-            isElite(rank) && "animate-rank-glow",
+            "flex size-11 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+            isElite(rank) && "",
           )}
         >
           <RankGlyph rank={rank} size={24} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15px] font-semibold" style={{ color: rank.color }}>
+          <p className="truncate text-[16px] font-semibold" style={{ color: rank.color }}>
             {rankName(rank)}
           </p>
-          <p className="t-meta text-[var(--ink-3)]">
+          <p className="ts-sm text-[var(--text-3)]">
             {rank.is_max
               ? `Eng yuqori rank · reyting ${formatNumber(rating)}`
               : `Reyting ${formatNumber(rating)} · ${rank.next_name_uz} gacha ${formatNumber(rank.to_next)}`}
@@ -197,17 +197,17 @@ export function RankProgress({ rank, rating }: { rank: RankInfo; rating: number 
         </div>
       </div>
 
-      <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--pane-sunken)]">
+      <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-sunk)]">
         {/* To'ldirma bir tekis rang — gradient chiziq bezak bo'lib qolardi */}
         <div
-          className="h-full rounded-full transition-[width] duration-[var(--t-slow)] ease-[var(--ease-soft)]"
+          className="h-full rounded-full transition-[width] duration-[var(--dur-2)] ease-[var(--ease)]"
           style={{
             width: `${rank.progress}%`,
             backgroundColor: rank.color,
           }}
         />
       </div>
-      <div className="t-num mt-1 flex justify-between text-[11px] text-[var(--ink-4)]">
+      <div className="ts-num mt-1 flex justify-between text-[12px] text-[var(--text-4)]">
         <span>{formatNumber(rank.min_rating)}</span>
         <span>{rank.next_rating ? formatNumber(rank.next_rating) : "∞"}</span>
       </div>
@@ -238,22 +238,22 @@ export function RankLadder({ className }: { className?: string }) {
   const currentTier = user?.rank?.tier;
 
   return (
-    <div className={cn("pane rounded-[var(--r-pane)] p-4 sm:p-5", className)}>
+    <div className={cn("card rounded-[var(--radius-lg)] p-4 sm:p-5", className)}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="focus-ring flex w-full items-center justify-between gap-3 rounded-[var(--r-ctl)] text-left"
+        className="ring-focus flex w-full items-center justify-between gap-3 rounded-[var(--radius-sm)] text-left"
       >
         <div className="min-w-0">
-          <p className="text-[14px] font-semibold text-[var(--ink)]">Ranklar zinasi</p>
-          <p className="t-meta mt-0.5 text-[var(--ink-3)]">
+          <p className="text-[15px] font-semibold text-[var(--text)]">Ranklar zinasi</p>
+          <p className="ts-sm mt-0.5 text-[var(--text-3)]">
             Reyting o&apos;sgani sari rank ko&apos;tariladi — avatar ramkasi ham o&apos;zgaradi
           </p>
         </div>
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 text-[var(--ink-4)] transition-transform duration-[var(--t-base)]",
+            "size-4 shrink-0 text-[var(--text-4)] transition-transform duration-[var(--dur-2)]",
             open && "rotate-180",
           )}
         />
@@ -265,7 +265,7 @@ export function RankLadder({ className }: { className?: string }) {
           {(data?.groups ?? []).map((group) => (
             <span
               key={group.key}
-              className="inline-flex items-center gap-1.5 rounded-[var(--r-chip)] border border-[var(--edge)] bg-[var(--pane-solid)] px-2.5 py-1 text-[12px] font-medium text-[var(--ink-2)]"
+              className="inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-[12.5px] font-medium text-[var(--text-2)]"
             >
               <span className="size-2.5 rounded-full" style={{ backgroundColor: group.color }} />
               {group.name_uz}
@@ -273,39 +273,39 @@ export function RankLadder({ className }: { className?: string }) {
           ))}
         </div>
       ) : (
-        <ul className="enter-stagger mt-4 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-4 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((row) => {
             const active = row.tier === currentTier;
             return (
               <li
                 key={row.code}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-[var(--r-field)] border px-3 py-2 transition-colors",
+                  "flex items-center gap-2.5 rounded-[var(--radius-sm)] border px-3 py-2 transition-colors",
                   active
-                    ? "edge-brand border-[var(--brand-edge)] bg-[var(--brand-wash)]"
-                    : "border-[var(--edge)] bg-[var(--pane-solid)]",
+                    ? "edge-green border-[var(--green-line)] bg-[var(--green-wash)]"
+                    : "border-[var(--line)] bg-[var(--surface)]",
                 )}
               >
                 <span
                   style={rankChipStyle(row as unknown as RankInfo)}
-                  className="flex size-7 shrink-0 items-center justify-center rounded-[var(--r-ctl)]"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)]"
                 >
                   <RankGlyph rank={row as unknown as RankInfo} size={15} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span
-                    className="block truncate text-[13px] font-medium"
+                    className="block truncate text-[14px] font-medium"
                     style={{ color: row.color }}
                   >
                     {row.name_uz}
                   </span>
-                  <span className="t-num block text-[11.5px] text-[var(--ink-4)]">
+                  <span className="ts-num block text-[12px] text-[var(--text-4)]">
                     {formatNumber(row.min_rating)}
                     {row.max_rating ? `–${formatNumber(row.max_rating)}` : "+"}
                   </span>
                 </span>
                 {active ? (
-                  <span className="shrink-0 text-[11px] font-semibold text-[var(--brand-ink)]">siz</span>
+                  <span className="shrink-0 text-[12px] font-semibold text-[var(--green-text)]">siz</span>
                 ) : null}
               </li>
             );

@@ -75,7 +75,7 @@ function PlayerAvatar({
   const face = (
     <span
       style={{ width: rank ? "100%" : size, height: rank ? "100%" : size, fontSize: Math.max(10, size * 0.34) }}
-      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)] uppercase"
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--green-wash)] font-semibold text-[var(--green-text)] uppercase"
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -224,12 +224,12 @@ export default function ContestDetailPage() {
           <Block className="h-3 w-40" />
           <Block className="mt-4 h-8 w-2/3" />
           <div className="mt-5 flex gap-3">
-            <Block className="h-6 w-24 rounded-[var(--r-chip)]" />
-            <Block className="h-6 w-32 rounded-[var(--r-chip)]" />
+            <Block className="h-6 w-24 rounded-[var(--radius-xs)]" />
+            <Block className="h-6 w-32 rounded-[var(--radius-xs)]" />
           </div>
         </Pane>
         <Pane inset="sm">
-          <Block className="h-9 w-72 rounded-[var(--r-field)]" />
+          <Block className="h-9 w-72 rounded-[var(--radius-sm)]" />
         </Pane>
         <Pane inset="lg">
           <Block className="h-56" />
@@ -278,21 +278,21 @@ export default function ContestDetailPage() {
                   parol bilan
                 </Chip>
               ) : null}
-              <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-3)]">
-                <Clock className="size-3.5 text-[var(--ink-4)]" />
-                {formatDate(contest.start_time)} · <span className="t-num">{contest.duration_minutes}</span> daqiqa
+              <span className="ts-sm inline-flex items-center gap-1.5 text-[var(--text-3)]">
+                <Clock className="size-3.5 text-[var(--text-4)]" />
+                {formatDate(contest.start_time)} · <span className="ts-num">{contest.duration_minutes}</span> daqiqa
               </span>
-              <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-3)]">
-                <Users className="size-3.5 text-[var(--ink-4)]" />
-                <span className="t-num">{contest.participant_count}</span>
+              <span className="ts-sm inline-flex items-center gap-1.5 text-[var(--text-3)]">
+                <Users className="size-3.5 text-[var(--text-4)]" />
+                <span className="ts-num">{contest.participant_count}</span>
                 {contest.max_participants ? (
-                  <span className="t-num">/ {contest.max_participants}</span>
+                  <span className="ts-num">/ {contest.max_participants}</span>
                 ) : null}{" "}
                 ishtirokchi
               </span>
-              <span className="t-meta inline-flex items-center gap-1.5 text-[var(--ink-3)]">
-                <Trophy className="size-3.5 text-[var(--ink-4)]" />
-                <span className="t-num">{contest.problem_count}</span> masala
+              <span className="ts-sm inline-flex items-center gap-1.5 text-[var(--text-3)]">
+                <Trophy className="size-3.5 text-[var(--text-4)]" />
+                <span className="ts-num">{contest.problem_count}</span> masala
               </span>
             </>
           }
@@ -329,14 +329,14 @@ export default function ContestDetailPage() {
                       icon={<LogOut className="size-3.5" />}
                       onClick={() => leaveMutation.mutate()}
                       disabled={leaveMutation.isPending}
-                      className="text-[var(--ink-4)] hover:text-[var(--bad)]"
+                      className="text-[var(--text-4)] hover:text-[var(--danger)]"
                     >
                       Ro&apos;yxatdan chiqish
                     </Button>
                   ) : null}
                 </div>
               ) : isFinished && !contest.is_virtual_allowed ? (
-                <span className="t-meta text-[var(--ink-4)]">Musobaqa yakunlangan</span>
+                <span className="ts-sm text-[var(--text-4)]">Musobaqa yakunlangan</span>
               ) : (
                 <Button
                   variant="primary"
@@ -354,7 +354,7 @@ export default function ContestDetailPage() {
 
       {/* ------------------------------------------------- o'z natijam kartasi */}
       {participation ? (
-        <Pane inset="lg" className="enter">
+        <Pane inset="lg" className="">
           {/* Statistika karta panjarasi emas — ochiq ustunlar */}
           <div className="grid grid-cols-2 gap-x-6 gap-y-7 lg:grid-cols-4">
             <Stat label="O'rin" value={participation.rank ? `#${participation.rank}` : "—"} />
@@ -423,21 +423,21 @@ export default function ContestDetailPage() {
       {/* ---------------------------------------------------- tab kontenti */}
       <div className="flex flex-col gap-5">
         {tab === "overview" ? (
-          <div className="enter flex flex-col gap-5">
+          <div className="flex flex-col gap-5">
             {/* Uzun matn o'z kartasida — o'qish maydoni tinch bo'lsin */}
             <Pane inset="lg">
               {contest.description_uz?.trim() ? (
                 <Markdown source={contest.description_uz} />
               ) : (
-                <p className="t-body text-[var(--ink-3)]">Bu musobaqa uchun tavsif kiritilmagan.</p>
+                <p className="ts-body text-[var(--text-3)]">Bu musobaqa uchun tavsif kiritilmagan.</p>
               )}
             </Pane>
 
             {/* Qoidalar va vaqt — bitta kartada, ikki ustun */}
             <Pane inset="lg" className="grid gap-8 sm:grid-cols-2">
               <div>
-                <p className="t-eyebrow">Qoidalar</p>
-                <ul className="t-body mt-3 flex flex-col gap-2 text-[var(--ink-2)]">
+                <p className="ts-label">Qoidalar</p>
+                <ul className="ts-body mt-3 flex flex-col gap-2 text-[var(--text-2)]">
                   <li>• Har bir masala uchun belgilangan ball beriladi.</li>
                   <li>• Noto&apos;g&apos;ri urinish uchun 10 daqiqa jarima qo&apos;shiladi.</li>
                   <li>• Bir xil ballda jarimasi kamroq ishtirokchi yuqori turadi.</li>
@@ -445,26 +445,81 @@ export default function ContestDetailPage() {
                 </ul>
               </div>
               <div>
-                <p className="t-eyebrow">Vaqt</p>
-                <dl className="t-body mt-3 flex flex-col gap-2">
+                <p className="ts-label">Vaqt</p>
+                <dl className="ts-body mt-3 flex flex-col gap-2">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--ink-4)]">Boshlanishi</dt>
-                    <dd className="t-num text-[var(--ink-2)]">{formatDate(contest.start_time)}</dd>
+                    <dt className="text-[var(--text-4)]">Boshlanishi</dt>
+                    <dd className="ts-num text-[var(--text-2)]">{formatDate(contest.start_time)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--ink-4)]">Tugashi</dt>
-                    <dd className="t-num text-[var(--ink-2)]">{formatDate(contest.end_time)}</dd>
+                    <dt className="text-[var(--text-4)]">Tugashi</dt>
+                    <dd className="ts-num text-[var(--text-2)]">{formatDate(contest.end_time)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--ink-4)]">Davomiyligi</dt>
-                    <dd className="t-num text-[var(--ink-2)]">{contest.duration_minutes} daqiqa</dd>
+                    <dt className="text-[var(--text-4)]">Davomiyligi</dt>
+                    <dd className="ts-num text-[var(--text-2)]">{contest.duration_minutes} daqiqa</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-[var(--ink-4)]">Reyting</dt>
-                    <dd className="text-[var(--ink-2)]">
+                    <dt className="text-[var(--text-4)]">Reyting</dt>
+                    <dd className="text-[var(--text-2)]">
                       {contest.is_rated ? "hisoblanadi" : "hisoblanmaydi"}
                     </dd>
                   </div>
+                </dl>
+              </div>
+
+              {/* Format — ishtirokchi ro'yxatdan o'tishdan OLDIN bilishi
+                  kerak bo'lgan narsalar: qanday baholanadi, yakkami yoki
+                  jamoami, qaysi tilda yozish mumkin va reyting chegarasi bormi. */}
+              <div className="sm:col-span-2">
+                <p className="ts-label">Format</p>
+                <dl className="ts-body mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-[var(--text-4)]">Qoidalar</dt>
+                    <dd className="text-[var(--text-2)]">
+                      {contest.scoring === "ioi"
+                        ? "IOI — har masaladan qisman ball"
+                        : "ICPC — yechilgan soni va jarima"}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-[var(--text-4)]">Ishtirok</dt>
+                    <dd className="text-[var(--text-2)]">
+                      {contest.team_mode === "team" ? "Jamoa" : "Yakka"}
+                      {contest.participation === "window" ? " · o'z vaqtida" : ""}
+                    </dd>
+                  </div>
+                  {contest.allowed_languages?.length ? (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-[var(--text-4)]">Tillar</dt>
+                      <dd className="text-[var(--text-2)]">
+                        {contest.allowed_languages.join(", ")}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {contest.min_rating !== null || contest.max_rating !== null ? (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-[var(--text-4)]">Reyting sharti</dt>
+                      <dd className="ts-num text-[var(--text-2)]">
+                        {contest.min_rating ?? "—"} … {contest.max_rating ?? "—"}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {contest.rules_url ? (
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-[var(--text-4)]">Qoidalar sahifasi</dt>
+                      <dd>
+                        <a
+                          href={contest.rules_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[var(--green)] hover:underline"
+                        >
+                          ochish
+                        </a>
+                      </dd>
+                    </div>
+                  ) : null}
                 </dl>
               </div>
             </Pane>
@@ -500,7 +555,7 @@ export default function ContestDetailPage() {
               Sahifani yangilang yoki birozdan so&apos;ng qayta urinib ko&apos;ring.
             </Alert>
           ) : (
-            <Pane inset="none" className="enter overflow-hidden">
+            <Pane inset="none" className="overflow-hidden">
               {/* Progress kartaning ichida — alohida suzib yurmasin */}
               {joined ? (
                 <div className="px-5 pt-5 pb-4 sm:px-6">
@@ -516,8 +571,8 @@ export default function ContestDetailPage() {
 
               <ul
                 className={cn(
-                  "enter-stagger divide-y divide-[var(--edge-soft)]",
-                  joined && "border-t border-[var(--edge)]",
+                  " divide-y divide-[var(--line-soft)]",
+                  joined && "border-t border-[var(--line)]",
                 )}
               >
                 {(problemsData?.problems ?? []).map((row) => (
@@ -525,29 +580,29 @@ export default function ContestDetailPage() {
                     <Link
                       href={`/contests/${slug}/problems/${row.problem_slug}`}
                       className={cn(
-                        "flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 focus-ring sm:px-6",
-                        "transition-colors duration-[var(--t-fast)] hover:bg-[var(--pane-hover)]",
-                        row.is_solved && "edge-brand",
+                        "flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 ring-focus sm:px-6",
+                        "transition-colors duration-[var(--dur-1)] hover:bg-[var(--surface-hover)]",
+                        row.is_solved && "edge-green",
                       )}
                     >
                       <span
                         className={cn(
-                          "flex size-9 shrink-0 items-center justify-center rounded-[var(--r-ctl)]",
-                          "text-[13.5px] font-semibold",
+                          "flex size-9 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+                          "text-[14.5px] font-semibold",
                           row.is_solved
                             ? "bg-[var(--ok-wash)] text-[var(--ok)]"
-                            : "bg-[var(--brand-wash)] text-[var(--brand-ink)]",
+                            : "bg-[var(--green-wash)] text-[var(--green-text)]",
                         )}
                       >
                         {row.label}
                       </span>
 
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[14px] font-medium text-[var(--ink)]">
+                        <span className="block truncate text-[15px] font-medium text-[var(--text)]">
                           {row.title_uz}
                         </span>
-                        <span className="t-meta mt-0.5 flex items-center gap-3 text-[var(--ink-4)]">
-                          <span className="t-num">{row.points} ball</span>
+                        <span className="ts-sm mt-0.5 flex items-center gap-3 text-[var(--text-4)]">
+                          <span className="ts-num">{row.points} ball</span>
                           {row.is_solved ? (
                             <span className="inline-flex items-center gap-1 text-[var(--ok)]">
                               <Check className="size-3" strokeWidth={3} />
@@ -588,15 +643,15 @@ export default function ContestDetailPage() {
               />
             </Pane>
           ) : (
-            <Pane inset="none" className="enter overflow-hidden">
-              <div className="t-eyebrow grid grid-cols-[3.25rem_minmax(0,1fr)_auto_auto_auto] items-center gap-4 border-b border-[var(--edge)] px-5 py-3.5 sm:px-6">
+            <Pane inset="none" className="overflow-hidden">
+              <div className="ts-label grid grid-cols-[3.25rem_minmax(0,1fr)_auto_auto_auto] items-center gap-4 border-b border-[var(--line)] px-5 py-3.5 sm:px-6">
                 <span>#</span>
                 <span>Ishtirokchi</span>
                 <span className="text-right">Yechdi</span>
                 <span className="text-right">Jarima</span>
                 <span className="text-right">Ball</span>
               </div>
-              <ul className="divide-y divide-[var(--edge-soft)]">
+              <ul className="divide-y divide-[var(--line-soft)]">
                 {(board?.results ?? []).map((row) => (
                   <StandingRow
                     key={row.id}
@@ -606,7 +661,7 @@ export default function ContestDetailPage() {
                 ))}
               </ul>
               {isRunning ? (
-                <p className="flex items-center justify-center gap-2 border-t border-[var(--edge)] bg-[var(--pane-sunken)] px-5 py-2.5 text-center text-[11.5px] text-[var(--ink-4)]">
+                <p className="flex items-center justify-center gap-2 border-t border-[var(--line)] bg-[var(--surface-sunk)] px-5 py-2.5 text-center text-[12px] text-[var(--text-4)]">
                   {isLive ? (
                     <>
                       <LiveDot tone="ok" />
@@ -667,39 +722,39 @@ function StandingRow({ row, isMe }: { row: ContestParticipantRow; isMe: boolean 
     <li
       className={cn(
         "grid grid-cols-[3.25rem_minmax(0,1fr)_auto_auto_auto] items-center gap-4 px-5 py-3 sm:px-6",
-        isMe && "edge-brand bg-[var(--brand-wash)]",
+        isMe && "edge-green bg-[var(--green-wash)]",
       )}
     >
       {/* O'rin — dastlabki uchlik yuvindili doira oladi */}
       {row.rank && row.rank <= 3 ? (
-        <span className="t-num flex size-7 items-center justify-center rounded-full bg-[var(--brand-wash-strong)] text-[13px] font-semibold text-[var(--brand-ink)]">
+        <span className="ts-num flex size-7 items-center justify-center rounded-full bg-[var(--green-wash-2)] text-[14px] font-semibold text-[var(--green-text)]">
           {row.rank}
         </span>
       ) : (
-        <span className="t-num text-[13px] font-medium text-[var(--ink-3)]">{row.rank ?? "—"}</span>
+        <span className="ts-num text-[14px] font-medium text-[var(--text-3)]">{row.rank ?? "—"}</span>
       )}
 
       <Link
         href={`/u/${row.username}`}
-        className="flex min-w-0 items-center gap-3 rounded-[var(--r-ctl)] focus-ring"
+        className="flex min-w-0 items-center gap-3 rounded-[var(--radius-sm)] ring-focus"
       >
         <PlayerAvatar src={row.avatar_url} name={row.full_name || row.username} rank={row.user_rank} size={32} />
         <span className="min-w-0">
-          <span className="block truncate text-[13.5px] font-medium text-[var(--ink)] transition-colors hover:text-[var(--brand)]">
+          <span className="block truncate text-[14.5px] font-medium text-[var(--text)] transition-colors hover:text-[var(--green)]">
             {row.username}
             {isMe ? (
-              <span className="ml-1.5 text-[11px] font-semibold text-[var(--brand)]">siz</span>
+              <span className="ml-1.5 text-[12px] font-semibold text-[var(--green)]">siz</span>
             ) : null}
           </span>
           {row.is_virtual ? (
-            <span className="t-eyebrow block text-[10px] text-[var(--ink-4)]">virtual</span>
+            <span className="ts-label block text-[11px] text-[var(--text-4)]">virtual</span>
           ) : null}
         </span>
       </Link>
 
-      <span className="t-num text-right text-[13px] text-[var(--ink-2)]">{row.solved_count}</span>
-      <span className="t-num text-right text-[13px] text-[var(--ink-4)]">{row.penalty}</span>
-      <span className="t-num text-right text-[14.5px] font-semibold text-[var(--brand-ink)]">
+      <span className="ts-num text-right text-[14px] text-[var(--text-2)]">{row.solved_count}</span>
+      <span className="ts-num text-right text-[14px] text-[var(--text-4)]">{row.penalty}</span>
+      <span className="ts-num text-right text-[15.5px] font-semibold text-[var(--green-text)]">
         {row.score}
       </span>
     </li>

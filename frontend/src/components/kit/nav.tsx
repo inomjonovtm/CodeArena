@@ -11,7 +11,7 @@ import { Count } from "./primitives";
 /* ==========================================================================
    Segment boshqaruvi
    --------------------------------------------------------------------------
-   Botiq trek ichida suzuvchi oq "tugma". Tugma tanlangan elementga siljiydi —
+   Kapsula trek ichida suzuvchi YASHIL "tugma". U tanlangan elementga siljiydi —
    pozitsiya o'lchov orqali aniqlanadi, shuning uchun elementlar turli
    kenglikda bo'lishi mumkin (masalan "Umumiy" va "Ishtirokchilar").
 
@@ -67,15 +67,15 @@ export function Segmented<T extends string>({
   }, [measure]);
 
   const height = size === "sm" ? "h-7" : "h-8";
-  const pad = size === "sm" ? "px-2.5 text-[12.5px]" : "px-3 text-[13px]";
+  const pad = size === "sm" ? "px-2.5 text-[13px]" : "px-3 text-[13px]";
 
   return (
     <div
       ref={trackRef}
       role="tablist"
       className={cn(
-        "relative inline-flex items-center gap-0.5 rounded-[var(--r-field)] p-1",
-        "border border-[var(--edge)] bg-[var(--pane-sunken)]",
+        "relative inline-flex items-center gap-0.5 rounded-[var(--radius-sm)] p-1",
+        "border border-[var(--line)] bg-[var(--surface-sunk)]",
         full && "flex w-full",
         className,
       )}
@@ -84,9 +84,9 @@ export function Segmented<T extends string>({
         <span
           aria-hidden
           className={cn(
-            "absolute top-1 bottom-1 rounded-[6px] bg-[var(--pane-solid)]",
-            "shadow-[var(--lift-1),0_0_0_1px_var(--edge)]",
-            "transition-[left,width] duration-[var(--t-base)] ease-[var(--ease-snap)]",
+            "absolute top-1 bottom-1 rounded-[var(--radius-xs)] bg-[var(--surface)]",
+            "border border-[var(--line)] shadow-[var(--shadow-xs)]",
+            "transition-[left,width] duration-[var(--dur-2)] ease-[var(--ease)]",
           )}
           style={{ left: thumb.left, width: thumb.width }}
         />
@@ -107,22 +107,27 @@ export function Segmented<T extends string>({
             disabled={item.disabled}
             onClick={() => onChange(item.value)}
             className={cn(
-              "relative z-1 inline-flex items-center justify-center gap-1.5 rounded-[6px]",
-              "whitespace-nowrap focus-ring",
-              "transition-colors duration-[var(--t-fast)]",
+              "relative z-1 inline-flex items-center justify-center gap-2 rounded-[var(--radius-xs)]",
+              "whitespace-nowrap ring-focus",
+              "transition-colors duration-[var(--dur-1)]",
               "disabled:pointer-events-none disabled:opacity-40",
               height,
               pad,
               full && "flex-1",
               active
-                ? "font-semibold text-[var(--ink)]"
-                : "font-medium text-[var(--ink-3)] hover:text-[var(--ink-2)]",
+                ? "font-medium text-[var(--text)]"
+                : "font-medium text-[var(--text-3)] hover:text-[var(--text)]",
             )}
           >
             {item.icon}
             {item.label}
             {typeof item.count === "number" ? (
-              <Count value={item.count} className={cn(active && "bg-[var(--brand-wash)] text-[var(--brand-ink)]")} />
+              <Count
+                value={item.count}
+                className={cn(
+                  active && "bg-[var(--green-wash)] text-[var(--green-text)]",
+                )}
+              />
             ) : null}
           </button>
         );
@@ -138,7 +143,7 @@ export function Segmented<T extends string>({
    yuvindisini oladi.
 
    Qator sig'masa, chekkalarda siljitish tugmalari chiqadi. Ular shart:
-   scrollbar yashirilgan (`no-scrollbar`) va sichqonchada gorizontal siljish
+   scrollbar yashirilgan (`scroll-hidden`) va sichqonchada gorizontal siljish
    uchun alohida qurilma kerak — tugmalarsiz sig'magan teglarga (masalan
    "Matematika", "Stek") umuman yetib bo'lmasdi.
    ========================================================================== */
@@ -194,14 +199,14 @@ export function ChipRail<T extends string>({
       aria-label={side === "left" ? "Chapga siljitish" : "O'ngga siljitish"}
       onClick={() => scrollBy(side === "left" ? -1 : 1)}
       className={cn(
-        "absolute top-1/2 z-1 flex size-6 -translate-y-1/2 items-center justify-center focus-ring",
-        "rounded-full border border-[var(--edge)] bg-[var(--pane-solid)] text-[var(--ink-3)]",
-        "shadow-[var(--lift-2)] transition-colors duration-[var(--t-fast)]",
-        "hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+        "absolute top-1/2 z-1 flex size-9 -translate-y-1/2 items-center justify-center ring-focus",
+        "rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)] text-[var(--text-3)]",
+        "shadow-[var(--shadow-sm)] transition-colors duration-[var(--dur-1)]",
+        "hover:border-[var(--line-strong)] hover:text-[var(--text)]",
         side === "left" ? "left-0" : "right-0",
       )}
     >
-      {side === "left" ? <ChevronLeft className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+      {side === "left" ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
     </button>
   );
 
@@ -211,10 +216,10 @@ export function ChipRail<T extends string>({
         ref={scrollerRef}
         onScroll={measure}
         className={cn(
-          "no-scrollbar -mx-1 overflow-x-auto px-1 py-0.5",
+          "scroll-hidden -mx-1 overflow-x-auto px-1 py-0.5",
           // Chekka so'nishi faqat yashiringan tomonda — aks holda birinchi
           // chip doim yarim xira ko'rinadi
-          edges.left && edges.right ? "fade-edges" : null,
+          edges.left && edges.right ? "fade-x" : null,
         )}
       >
         <div className="flex items-center gap-1.5">
@@ -227,17 +232,17 @@ export function ChipRail<T extends string>({
                 aria-pressed={active}
                 onClick={() => toggle(item.value)}
                 className={cn(
-                  "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-[var(--r-chip)] border px-3",
-                  "text-[12.5px] whitespace-nowrap focus-ring",
-                  "transition-[background-color,border-color,color] duration-[var(--t-fast)]",
+                  "inline-flex h-10 shrink-0 items-center gap-2 rounded-[var(--radius-md)] border px-4",
+                  "text-[14px] whitespace-nowrap ring-focus",
+                  "transition-[background-color,border-color,color] duration-[var(--dur-1)]",
                   active
-                    ? "border-[var(--brand)] bg-[var(--brand-wash)] font-semibold text-[var(--brand-ink)]"
-                    : "border-[var(--edge)] bg-[var(--pane)] font-medium text-[var(--ink-3)] hover:border-[var(--edge-strong)] hover:text-[var(--ink)]",
+                    ? "border-[var(--green)] bg-[var(--green-wash)] font-semibold text-[var(--green-text)]"
+                    : "border-[var(--line)] bg-[var(--surface)] font-medium text-[var(--text-3)] hover:border-[var(--line-strong)] hover:text-[var(--text)]",
                 )}
               >
                 {item.label}
                 {typeof item.count === "number" ? (
-                  <span className="t-num text-[10.5px] opacity-55">{item.count}</span>
+                  <span className="ts-num text-[12px] opacity-55">{item.count}</span>
                 ) : null}
               </button>
             );
@@ -262,7 +267,7 @@ export function Breadcrumb({
   className?: string;
 }) {
   return (
-    <nav aria-label="Yo'l" className={cn("flex items-center gap-0.5 text-[12px]", className)}>
+    <nav aria-label="Yo'l" className={cn("flex items-center gap-1 text-[14.5px]", className)}>
       {items.map((item, index) => {
         const last = index === items.length - 1;
         return (
@@ -270,16 +275,16 @@ export function Breadcrumb({
             {item.href && !last ? (
               <Link
                 href={item.href}
-                className="rounded-[5px] px-1 py-0.5 text-[var(--ink-4)] transition-colors hover:text-[var(--ink-2)] focus-ring"
+                className="rounded-[5px] px-1 py-0.5 text-[var(--text-4)] transition-colors hover:text-[var(--text-2)] ring-focus"
               >
                 {item.label}
               </Link>
             ) : (
-              <span className={cn("px-1 py-0.5", last ? "font-medium text-[var(--ink-2)]" : "text-[var(--ink-4)]")}>
+              <span className={cn("px-1 py-0.5", last ? "font-medium text-[var(--text-2)]" : "text-[var(--text-4)]")}>
                 {item.label}
               </span>
             )}
-            {!last ? <span className="text-[var(--ink-4)] opacity-45">/</span> : null}
+            {!last ? <span className="text-[var(--text-4)] opacity-45">/</span> : null}
           </span>
         );
       })}
@@ -321,43 +326,43 @@ export function Pagination({
 
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-3", className)}>
-      <p className="t-meta text-[var(--ink-4)]">
+      <p className="ts-sm text-[var(--text-4)]">
         {from && to && total ? (
           <>
-            <span className="t-num text-[var(--ink-2)]">
+            <span className="ts-num text-[var(--text-2)]">
               {from}–{to}
             </span>{" "}
-            / jami <span className="t-num">{total}</span>
+            / jami <span className="ts-num">{total}</span>
           </>
         ) : (
           <>
-            <span className="t-num text-[var(--ink-2)]">{page}</span> / {pageCount} sahifa
+            <span className="ts-num text-[var(--text-2)]">{page}</span> / {pageCount} sahifa
           </>
         )}
       </p>
 
       {/* Uch element bitta guruh: o'qlar va hisoblagich yonma-yon, oradagi
           chegaralar birlashadi — bitta boshqaruv bo'lagi kabi ko'rinadi. */}
-      <div className="flex items-center overflow-hidden rounded-[var(--r-ctl)] border border-[var(--edge)] bg-[var(--pane)]">
+      <div className="flex items-center overflow-hidden rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface)]">
         <button
           type="button"
           onClick={() => step(-1)}
           disabled={page <= 1}
           aria-label="Oldingi sahifa"
           className={cn(
-            "flex size-8 items-center justify-center focus-ring",
-            "text-[var(--ink-2)] transition-colors",
-            "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+            "flex size-9 items-center justify-center ring-focus",
+            "text-[var(--text-2)] transition-colors",
+            "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
             "disabled:pointer-events-none disabled:opacity-30",
           )}
         >
           <ChevronLeft className="size-4" />
         </button>
 
-        <div className="flex h-8 items-center gap-1.5 border-x border-[var(--edge)] px-3">
-          <span className="t-num text-[12px] font-semibold text-[var(--ink)]">{page}</span>
-          <span className="text-[11px] text-[var(--ink-4)]">/</span>
-          <span className="t-num text-[12px] text-[var(--ink-3)]">{pageCount}</span>
+        <div className="flex h-11 items-center gap-2 border-x border-[var(--line)] px-4">
+          <span className="ts-num text-[12.5px] font-semibold text-[var(--text)]">{page}</span>
+          <span className="text-[12px] text-[var(--text-4)]">/</span>
+          <span className="ts-num text-[12.5px] text-[var(--text-3)]">{pageCount}</span>
         </div>
 
         <button
@@ -366,9 +371,9 @@ export function Pagination({
           disabled={page >= pageCount}
           aria-label="Keyingi sahifa"
           className={cn(
-            "flex size-8 items-center justify-center focus-ring",
-            "text-[var(--ink-2)] transition-colors",
-            "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+            "flex size-8 items-center justify-center ring-focus",
+            "text-[var(--text-2)] transition-colors",
+            "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
             "disabled:pointer-events-none disabled:opacity-30",
           )}
         >

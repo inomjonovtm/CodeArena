@@ -43,6 +43,12 @@ class AdminDiscussionViewSet(
     ordering = ["-created_at"]
     audit_label = "discussion"
     bulk_allowed_actions = ("delete", "hide", "show", "lock", "unlock", "pin", "unpin")
+    # Moderatsiya amallari — yakka `moderate` huquqi bilan bir xil kod.
+    bulk_perm_actions = {
+        "hide": "moderate", "show": "moderate",
+        "lock": "moderate", "unlock": "moderate",
+        "pin": "moderate", "unpin": "moderate",
+    }
 
     def get_queryset(self):
         return (
@@ -53,8 +59,7 @@ class AdminDiscussionViewSet(
         )
 
     def perform_update(self, serializer):
-        serializer.save(moderated_by=self.request.user)
-        return super().perform_update(serializer)
+        return super().perform_update(serializer, moderated_by=self.request.user)
 
     def handle_bulk_action(self, request, action_name, queryset, payload):
         mapping = {
@@ -72,7 +77,13 @@ class AdminDiscussionViewSet(
     @action(detail=True, methods=["get"])
     def comments(self, request, pk=None):
         discussion = self.get_object()
-        rows = discussion.comments.select_related("author").order_by("created_at")
+        # `problem` ham serializerda ishlatiladi — usiz har bir izoh alohida
+        # so'rov ochardi (N+1). Ro'yxat 500 tada chegaralanadi: bitta
+        # muhokamada bundan ko'p izoh — allaqachon boshqa muammo.
+        rows = (
+            discussion.comments.select_related("author", "problem")
+            .order_by("created_at")[:500]
+        )
         return Response(CommentSerializer(rows, many=True).data)
 
 
@@ -89,6 +100,7 @@ class AdminCommentViewSet(
     ordering = ["-created_at"]
     audit_label = "comment"
     bulk_allowed_actions = ("delete", "hide", "show")
+    bulk_perm_actions = {"hide": "moderate", "show": "moderate"}
 
     def get_queryset(self):
         return super().get_queryset().select_related("author", "discussion", "problem")
@@ -113,6 +125,7 @@ class AdminContentReportViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelVi
     ordering = ["is_resolved", "-created_at"]
     audit_label = "content_report"
     bulk_allowed_actions = ("delete", "resolve")
+    bulk_perm_actions = {"resolve": "moderate"}
 
     def get_queryset(self):
         return super().get_queryset().select_related("reporter", "discussion", "comment")
@@ -159,6 +172,7 @@ class AdminContactMessageViewSet(
     ordering = ["is_resolved", "-created_at"]
     audit_label = "contact_message"
     bulk_allowed_actions = ("delete", "mark_read", "resolve", "unresolve")
+    bulk_perm_actions = {"mark_read": "moderate", "resolve": "moderate", "unresolve": "moderate"}
     export_filename = "codearena-xabarlar"
     export_columns = [
         ("created_at", "Vaqt"),
@@ -174,10 +188,13 @@ class AdminContactMessageViewSet(
         return self.export_csv(request)
 
     def retrieve(self, request, *args, **kwargs):
-        """Ochilgan xabar avtomatik "o'qilgan" deb belgilanadi."""
-        response = super().retrieve(request, *args, **kwargs)
+        """Ochilgan xabar avtomatik "o'qilgan" deb belgilanadi.
+
+        Belgilash javob TAYYORLANISHIDAN OLDIN bajariladi — aks holda mijoz
+        birinchi ochishda doim `is_read: false` ko'rardi.
+        """
         ContactMessage.objects.filter(pk=kwargs.get("pk"), is_read=False).update(is_read=True)
-        return response
+        return super().retrieve(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"])
     def reply(self, request, pk=None):

@@ -26,6 +26,8 @@ class Group(SoftDeleteModel, BaseModel):
 
     class Meta:
         db_table = "groups_custom"
+        verbose_name = "Guruh"
+        verbose_name_plural = "Guruhlar"
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
@@ -42,6 +44,8 @@ class GroupMember(TimeStampedModel):
 
     class Meta:
         db_table = "group_members"
+        verbose_name = "Guruh a'zosi"
+        verbose_name_plural = "Guruh a'zolari"
         unique_together = [("group", "user")]
         ordering = ["-joined_at"]
 

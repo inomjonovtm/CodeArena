@@ -226,6 +226,7 @@ class PublicContestViewSet(viewsets.ReadOnlyModelViewSet):
                 "constraints_en": problem.constraints_en,
                 "time_limit_ms": problem.time_limit_ms,
                 "memory_limit_kb": problem.memory_limit_kb,
+                "starter_code": problem.starter_code,
                 "starter_code_python": problem.starter_code_python,
                 "starter_code_javascript": problem.starter_code_javascript,
                 "starter_code_cpp": problem.starter_code_cpp,

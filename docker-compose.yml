@@ -37,7 +37,8 @@ services:
     environment:
       POSTGRES_HOST: postgres
       REDIS_URL: redis://redis:6379/0
-      JUDGE0_URL: http://judge0-server:2358
+      RUNNER_URL: http://runner:2400
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -46,8 +47,11 @@ services:
       - static_data:/app/staticfiles
     command: >
       sh -c "python manage.py migrate --noinput &&
+             python manage.py compile_locale &&
+             python manage.py sync_roles &&
              python manage.py collectstatic --noinput &&
              gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    networks: [default, exec]
     expose:
       - "8000"
 
@@ -58,10 +62,12 @@ services:
     environment:
       POSTGRES_HOST: postgres
       REDIS_URL: redis://redis:6379/0
-      JUDGE0_URL: http://judge0-server:2358
+      RUNNER_URL: http://runner:2400
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
     depends_on:
       - backend
       - redis
+    networks: [default, exec]
     command: celery -A config worker -l info --concurrency=4
 
   celery-beat:
@@ -90,46 +96,34 @@ services:
     expose:
       - "3000"
 
-  # -------------------------------------------------- Judge0 (kod bajarish)
-  judge0-server:
-    image: judge0/judge0:1.13.1
-    restart: unless-stopped
-    privileged: true
-    volumes:
-      - ./infra/judge0.conf:/judge0.conf:ro
-    depends_on:
-      - judge0-db
-      - judge0-redis
-    expose:
-      - "2358"
-
-  judge0-workers:
-    image: judge0/judge0:1.13.1
-    restart: unless-stopped
-    privileged: true
-    command: ["./scripts/workers"]
-    volumes:
-      - ./infra/judge0.conf:/judge0.conf:ro
-    depends_on:
-      - judge0-db
-      - judge0-redis
-
-  judge0-db:
-    image: postgres:16-alpine
+  # --------------------------------------------- kod bajarish (izolyatsiya)
+  # Ishonchsiz foydalanuvchi kodi FAQAT shu konteynerda bajariladi. Unda na
+  # sayt kodi, na baza paroli, na maxfiy kalit bor. `exec` tarmog'i `internal`
+  # bo'lgani uchun undan internetga ham, bazaga ham chiqib bo'lmaydi.
+  runner:
+    build: ./infra/runner
     restart: unless-stopped
     environment:
-      POSTGRES_DB: judge0
-      POSTGRES_USER: judge0
-      POSTGRES_PASSWORD: ${JUDGE0_DB_PASSWORD:-judge0}
-    volumes:
-      - judge0_db:/var/lib/postgresql/data
-
-  judge0-redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    command: redis-server --requirepass ${JUDGE0_REDIS_PASSWORD:-judge0}
-    volumes:
-      - judge0_redis:/data
+      RUNNER_TOKEN: ${RUNNER_TOKEN:-}
+      RUNNER_CONCURRENCY: ${RUNNER_CONCURRENCY:-4}
+    networks:
+      - exec
+    read_only: true
+    tmpfs:
+      # Kompilyatsiya va ijro shu yerda ketadi; `exec` — kompilyatsiya
+      # natijasini ishga tushirish uchun zarur.
+      - /tmp:rw,exec,size=512m,mode=1777
+    cap_drop: [ALL]
+    # `unshare` uchun kerak: har bir bajarilish o'z tarmoq/PID fazasida
+    # ishlaydi. Bu `privileged` DAN ANCHA tor huquq.
+    cap_add: [SYS_ADMIN]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    mem_limit: ${RUNNER_MEM_LIMIT:-2g}
+    cpus: ${RUNNER_CPUS:-2}
+    expose:
+      - "2400"
 
   # ------------------------------------------------------------------ nginx
   nginx:
@@ -172,5 +166,13 @@ volumes:
   redis_data:
   media_data:
   static_data:
-  judge0_db:
-  judge0_redis:
+
+networks:
+  # Odatiy tarmoq: sayt, baza, kesh, nginx.
+  default:
+  # Kod bajarish tarmog'i — `internal: true`, ya'ni undan TASHQARIGA
+  # (internetga) yo'l yo'q. Faqat backend/celery va runner shu tarmoqda;
+  # postgres va redis bu yerda YO'Q, shuning uchun ishonchsiz kod bajarilgan
+  # konteyner bazani umuman ko'rmaydi.
+  exec:
+    internal: true

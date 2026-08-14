@@ -2,25 +2,23 @@
 
 import { cn } from "@/lib/utils";
 
-import { Eyebrow } from "./primitives";
-
 /* ==========================================================================
-   Sirtlar
+   SIRTLAR VA SAHIFA TUZILISHI
    --------------------------------------------------------------------------
    Karta MA'LUMOT uchun: ro'yxat, jadval, forma, panel. Sarlavha, statistika
-   va bo'lim nomi kartada EMAS — ular kanvasda, chiziq va bo'shliq bilan
-   ajraladi. Hamma narsani qutilash sahifani bir xil og'irlikdagi to'rtburchak
-   panjaraga aylantiradi va ko'zga "qayerdan boshlash"ni ko'rsatmaydi.
+   va bo'lim nomi kartada EMAS — ular qog'ozda, bo'shliq bilan ajraladi.
+   Hamma narsani qutilash sahifani bir xil og'irlikdagi to'rtburchak
+   panjaraga aylantiradi.
 
-   Karta ichida karta BO'LMASIN — ichki maydon kerak bo'lsa `sunken`.
+   Karta ichida karta BO'LMASIN — ichki maydon kerak bo'lsa `well`.
    ========================================================================== */
 
 type PaneTone = "card" | "solid" | "sunken" | "bare";
 
 const TONES: Record<PaneTone, string> = {
-  card: "pane",
-  solid: "pane-solid",
-  sunken: "pane-sunken",
+  card: "card",
+  solid: "card",
+  sunken: "well",
   bare: "",
 };
 
@@ -38,15 +36,14 @@ export function Pane({
   inset?: "none" | "sm" | "md" | "lg";
 }) {
   const pad =
-    inset === "none" ? "" : inset === "sm" ? "p-4" : inset === "lg" ? "p-8" : "p-6";
+    inset === "none" ? "" : inset === "sm" ? "p-4" : inset === "lg" ? "p-7" : "p-5 sm:p-6";
 
   return (
     <div
       className={cn(
-        "rounded-[var(--r-pane)]",
-        TONES[tone],
+        "rounded-[var(--radius-lg)]",
+        interactive ? "card-link cursor-pointer" : TONES[tone],
         pad,
-        interactive && "pane-interactive cursor-pointer",
         className,
       )}
       {...rest}
@@ -57,9 +54,8 @@ export function Pane({
 }
 
 /**
- * Panel sarlavhasi — chap tomonda nom, o'ngda amallar.
- * Sarlavha ostida chegara YO'Q: ajratgich panelni ikkiga bo'lib, uni
- * og'irlashtiradi. O'rniga bo'shliq ishlatiladi.
+ * Panel sarlavhasi — chapda nom, o'ngda amallar.
+ * Ostida chegara yo'q: ajratgich panelni ikkiga bo'lib og'irlashtiradi.
  */
 export function PaneHead({
   eyebrow,
@@ -77,9 +73,9 @@ export function PaneHead({
   return (
     <div className={cn("flex items-start justify-between gap-4", className)}>
       <div className="min-w-0">
-        {eyebrow ? <p className="t-eyebrow mb-2.5">{eyebrow}</p> : null}
-        <h2 className="t-section text-[var(--ink)]">{title}</h2>
-        {hint ? <p className="t-meta mt-1.5 text-[var(--ink-3)]">{hint}</p> : null}
+        {eyebrow ? <p className="ts-label mb-2">{eyebrow}</p> : null}
+        <h2 className="ts-h3 text-[var(--text)]">{title}</h2>
+        {hint ? <p className="ts-sm mt-1.5 text-[var(--text-3)]">{hint}</p> : null}
       </div>
       {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
     </div>
@@ -87,16 +83,22 @@ export function PaneHead({
 }
 
 /**
- * Sahifa sarlavhasi — KANVASDA, o'ramsiz.
+ * SAHIFA SARLAVHASI — sarlavha va amallar BITTA qatorda, meta esa
+ * chegarali STAT-CHIPLAR qatorida.
  *
- * Sarlavhani kartaga solish eng keng tarqalgan xato: u sarlavhani sahifadagi
- * boshqa bloklar bilan bir xil og'irlikka tushiradi va "bu sahifa nima
- * haqida" degan savolga javob bermay qoladi. Bu yerda sarlavha bevosita
- * qog'ozda turadi, ostidagi soch chizig'i esa kontent boshlanishini bildiradi.
+ *     KATALOG                                      ← yorliq (ixtiyoriy)
+ *     Masalalar                    [Saralash] [+]  ← sarlavha + amallar
+ *     Qiyinlik bo'yicha tanlang va yeching.        ← izoh
+ *     ┌──────────────┐ ┌──────────────┐            ← meta-chiplar
+ *     │ 248 ta masala │ │ 12 yechilgan │
+ *     └──────────────┘ └──────────────┘
+ *
+ * Ilgari meta oddiy matn qatori edi va sarlavha ostida "erib" ketardi.
+ * Chip esa har bir ko'rsatkichga o'z ramkasini beradi — ko'z ularni
+ * sanab chiqa oladi.
  */
 export function PageHead({
   eyebrow,
-  index,
   title,
   lead,
   meta,
@@ -104,7 +106,7 @@ export function PageHead({
   className,
 }: {
   eyebrow?: React.ReactNode;
-  /** Bo'lim tartib raqami — yorliq oldida `01 /` ko'rinishida */
+  /** Saqlangan, lekin ishlatilmaydi — bo'lim raqami tizimdan chiqarildi */
   index?: number;
   title: React.ReactNode;
   lead?: React.ReactNode;
@@ -113,34 +115,52 @@ export function PageHead({
   className?: string;
 }) {
   return (
-    <header className={cn("enter", className)}>
-      <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-        <div className="min-w-0 max-w-2xl">
-          {eyebrow ? <Eyebrow index={index} className="mb-4">{eyebrow}</Eyebrow> : null}
-          <h1 className="t-title text-[var(--ink)]">{title}</h1>
-          {lead ? <p className="t-body mt-4 text-[var(--ink-3)]">{lead}</p> : null}
-        </div>
+    /* Sahifa boshi — OCH YASHIL PANEL. Sayt bo'ylab yagona imzo: har bir
+       sahifa shu tint maydondan boshlanadi, kontent esa ostida oq qog'ozda
+       davom etadi. Panel ichidagi meta-chiplar OQ — tint ustida aniq
+       o'qiladi. */
+    <header
+      className={cn(
+        "min-w-0 rounded-[var(--radius-xl)] border border-[var(--line)] bg-[var(--bg-tint)]",
+        "px-5 py-5 sm:px-6 sm:py-6",
+        className,
+      )}
+    >
+      {eyebrow ? <p className="ts-label mb-1.5 text-[var(--green-text)]">{eyebrow}</p> : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <h1 className="ts-h1 min-w-0 max-w-[26ch] text-[var(--text)]">{title}</h1>
         {actions ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
         ) : null}
       </div>
 
-      {/* Meta qatori — sahifa raqamlari. Ustidagi chiziq sarlavhani
-          kontentdan ajratadi, lekin uni o'ramaydi. */}
+      {lead ? <p className="ts-sm mt-2 max-w-[68ch] text-[var(--text-3)]">{lead}</p> : null}
+
+      {/* Meta — har bir ko'rsatkich o'z chegarali OQ chipida */}
       {meta ? (
-        <div className="rule mt-8 flex flex-wrap items-center gap-x-6 gap-y-3 pt-5">{meta}</div>
-      ) : (
-        <div aria-hidden className="rule enter-draw mt-8" />
-      )}
+        <div
+          className={cn(
+            "mt-4 flex flex-wrap items-center gap-2",
+            "[&>*]:flex [&>*]:items-center [&>*]:gap-1.5",
+            "[&>*]:rounded-[var(--radius-sm)] [&>*]:border [&>*]:border-[var(--line)]",
+            "[&>*]:bg-[var(--surface)] [&>*]:px-2.5 [&>*]:py-1.5 [&>*]:text-[13px]",
+          )}
+        >
+          {meta}
+        </div>
+      ) : null}
     </header>
   );
 }
 
 /**
- * Statistika — raqam ustunlik qiladi, yorliq ustida jimgina turadi.
- * Raqam monoshriftda: ustunlar tik turadi va ro'yxat "o'lchangan" ko'rinadi.
- * Karta ichida emas — to'rtta karta to'rtta chegara demak, bu esa sahifani
- * panjaraga aylantiradi.
+ * STATISTIKA PLITKASI.
+ *
+ * Ilgari raqamlar ochiq qog'ozda, chegarasiz lentada turardi. Yangi
+ * tartibda har bir ko'rsatkich O'Z KARTASIDA: yorliq tepada (kichik,
+ * tinch), raqam ostida. Kartalar teng bo'yli, panjara ularni o'zi
+ * tekislaydi.
  */
 export function Stat({
   label,
@@ -158,37 +178,33 @@ export function Stat({
   className?: string;
 }) {
   const color =
-    tone === "brand"
-      ? "var(--brand)"
-      : tone === "ok"
-        ? "var(--ok)"
-        : tone === "warn"
-          ? "var(--warn)"
-          : tone === "bad"
-            ? "var(--bad)"
-            : tone === "flare"
-              ? "var(--flare)"
-              : "var(--ink)";
+    tone === "brand" || tone === "ok"
+      ? "var(--green-text)"
+      : tone === "warn"
+        ? "var(--warn)"
+        : "var(--text)";
 
   return (
-    <div className={cn("min-w-0", className)}>
+    <div
+      className={cn(
+        "min-w-0 rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-4",
+        "shadow-[var(--shadow-xs)]",
+        className,
+      )}
+    >
       <div className="flex items-center gap-1.5">
-        {icon ? <span className="text-[var(--ink-4)]">{icon}</span> : null}
-        <p className="t-eyebrow truncate">{label}</p>
+        {icon ? <span className="text-[var(--text-4)]">{icon}</span> : null}
+        <p className="ts-label truncate">{label}</p>
       </div>
-      <p className="t-metric mt-2.5" style={{ color }}>
+      <p className="ts-metric mt-2.5" style={{ color }}>
         {value}
       </p>
-      {sub ? <p className="t-meta mt-2 text-[var(--ink-4)]">{sub}</p> : null}
+      {sub ? <p className="ts-xs mt-1.5 text-[var(--text-4)]">{sub}</p> : null}
     </div>
   );
 }
 
-/**
- * Statistika qatori — kanvasda turgan lenta, kartalar panjarasi emas.
- * Ustunlar orasidagi ingichka chiziq `gap-px` orqali chiziladi: katak foni
- * kanvas rangida, oradagi bo'shliq esa chegara rangida ko'rinadi.
- */
+/** Statistika panjarasi — teng bo'yli plitkalar. */
 export function StatRow({
   children,
   className,
@@ -197,20 +213,13 @@ export function StatRow({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "grid gap-px overflow-hidden bg-[var(--edge)]",
-        "border-y border-[var(--edge)]",
-        "sm:grid-cols-2 lg:grid-cols-4",
-        className,
-      )}
-    >
+    <div className={cn("grid gap-3 sm:grid-cols-2 lg:grid-cols-4", className)}>
       {children}
     </div>
   );
 }
 
-/** `StatRow` ichidagi katak — fon ajratgich chiziqlarini ochib beradi. */
+/** `StatRow` ichidagi katak — o'rami yo'q, faqat kenglik cheklovi. */
 export function StatCell({
   children,
   className,
@@ -218,22 +227,20 @@ export function StatCell({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div className={cn("bg-[var(--canvas)] px-6 py-7", className)}>{children}</div>
-  );
+  return <div className={cn("min-w-0", className)}>{children}</div>;
 }
 
 /**
  * Bo'lim — sahifadagi mantiqiy blok.
  *
- * Sarlavha ostidagi soch chizig'i kontent kengligi bo'ylab yuguradi: bu
- * gazeta va texnik hujjatlardagi eng qadimgi ajratgich va u qutidan ancha
- * arzon — bitta piksel, ammo ierarxiya aniq.
+ * Sarlavha ostida ingichka chiziq turadi: u bo'limni "ochadi" va kontent
+ * bilan sarlavha orasidagi masofani belgilaydi. Ilgari chiziq sarlavha
+ * USTIDA va YASHIL edi — sahifada beshta bo'lim bo'lsa, beshta yashil
+ * chiziq paydo bo'lib, "yashil = harakat" qoidasi buzilardi.
  */
 export function Section({
   title,
   eyebrow,
-  index,
   hint,
   action,
   children,
@@ -251,15 +258,21 @@ export function Section({
 
   return (
     <section className={cn("min-w-0", className)}>
-      {/* Sarlavhasiz ham `hint`/`action` ko'rinishi kerak — aks holda
-          faqat izoh beruvchi bo'limlar jimgina yo'qolib qolardi. */}
       {hasHead ? (
-        <div className="mb-7 flex items-end justify-between gap-4 border-b border-[var(--edge)] pb-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <div className="min-w-0">
-            {eyebrow ? <Eyebrow index={index} className="mb-2.5">{eyebrow}</Eyebrow> : null}
-            {title ? <h2 className="t-section text-[var(--ink)]">{title}</h2> : null}
+            {eyebrow ? <p className="ts-label mb-1">{eyebrow}</p> : null}
+            {title ? (
+              <h2 className="ts-h3 flex items-center gap-2.5 text-[var(--text)]">
+                {/* Bo'lim belgisi — kichik yashil to'rtburchak. Pastki chiziq
+                    o'rniga: chiziq bo'limni kontentdan uzardi, belgi esa
+                    sarlavhaning o'ziga "yoqilgan" holat beradi. */}
+                <span aria-hidden className="h-4 w-1 shrink-0 rounded-full bg-[var(--green)]" />
+                {title}
+              </h2>
+            ) : null}
             {hint ? (
-              <p className={cn("t-meta text-[var(--ink-3)]", title && "mt-1.5")}>{hint}</p>
+              <p className={cn("ts-sm text-[var(--text-3)]", title && "mt-1 pl-3.5")}>{hint}</p>
             ) : null}
           </div>
           {action ? <div className="shrink-0">{action}</div> : null}
@@ -272,7 +285,7 @@ export function Section({
 
 /**
  * Ikki ustunli sahifa tartibi — asosiy kontent va yordamchi ustun.
- * Yordamchi ustun kengligi qat'iy (316px): u ma'lumot ko'rsatadi, kontent
+ * Yordamchi ustun kengligi qat'iy (320px): u ma'lumot ko'rsatadi, kontent
  * bilan joy talashmaydi. Tor ekranda pastga tushadi.
  */
 export function SplitLayout({
@@ -288,10 +301,12 @@ export function SplitLayout({
   className?: string;
 }) {
   return (
-    <div className={cn("grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12", className)}>
+    <div
+      className={cn("grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12", className)}
+    >
       <div className={cn("min-w-0", asideFirst && "order-2 lg:order-1")}>{children}</div>
       <aside className={cn("min-w-0", asideFirst && "order-1 lg:order-2")}>
-        <div className="lg:sticky lg:top-[calc(var(--bar)+24px)]">{aside}</div>
+        <div className="lg:sticky lg:top-[calc(var(--nav-h)+24px)]">{aside}</div>
       </aside>
     </div>
   );

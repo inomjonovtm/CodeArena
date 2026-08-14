@@ -39,16 +39,21 @@ class AdminGroupViewSet(
             .annotate(live_member_count=Count("members", distinct=True))
         )
 
+    # Ikkala ro'yxat ham 1000 tada chegaralanadi: guruh — sinf yoki jamoa
+    # o'lchamidagi tuzilma, bundan katta javob esa panelni ham, serverni ham
+    # qiynaydi. To'liq ro'yxat `group-members/` sahifalangan endpointida bor.
     @action(detail=True, methods=["get"])
     def members(self, request, pk=None):
         group = self.get_object()
-        rows = group.members.select_related("user").order_by("-user__total_points")
+        rows = group.members.select_related("user").order_by("-user__total_points")[:1000]
         return Response(GroupMemberSerializer(rows, many=True).data)
 
     @action(detail=True, methods=["get"])
     def leaderboard(self, request, pk=None):
         group = self.get_object()
-        rows = group.members.select_related("user").order_by("-user__total_points", "-user__rating")
+        rows = group.members.select_related("user").order_by(
+            "-user__total_points", "-user__rating"
+        )[:1000]
         data = GroupMemberSerializer(rows, many=True).data
         for index, row in enumerate(data, start=1):
             row["position"] = index

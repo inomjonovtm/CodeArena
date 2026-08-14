@@ -1,6 +1,6 @@
 """Judge backend'lari uchun umumiy natija shakli.
 
-Judge0 ham, lokal runner ham shu dataclass'ni qaytaradi — shuning uchun
+Runner xizmati ham, lokal ijro ham shu dataclass'ni qaytaradi — shuning uchun
 `tasks.py` va `views.py` qaysi backend ishlaganini bilishi shart emas.
 """
 from __future__ import annotations

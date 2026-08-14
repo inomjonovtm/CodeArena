@@ -163,29 +163,29 @@ export function RichEditor({
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       className={cn(
-        "focus-ring flex size-8 shrink-0 items-center justify-center rounded-[var(--r-ctl)]",
-        "text-[var(--ink-3)] transition-colors duration-[var(--t-fast)]",
-        "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+        "ring-focus flex size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)]",
+        "text-[var(--text-3)] transition-colors duration-[var(--dur-1)]",
+        "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
       )}
     >
       {children}
     </button>
   );
 
-  const Divider = () => <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-[var(--edge)]" />;
+  const Divider = () => <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-[var(--line)]" />;
 
   const shell = (
     <div
       className={cn(
         // Oq karta: uzun matn shu sirtda eng yaxshi o'qiladi
-        "pane-solid overflow-hidden rounded-[var(--r-pane)]",
-        "transition-[border-color,box-shadow] duration-[var(--t-fast)]",
-        "focus-within:border-[var(--brand-edge)] focus-within:shadow-[0_0_0_var(--focus-w)_var(--focus)]",
-        fullscreen ? "flex h-full flex-col shadow-[var(--lift-pop)]" : className,
+        "card overflow-hidden rounded-[var(--radius-lg)]",
+        "transition-[border-color,box-shadow] duration-[var(--dur-1)]",
+        "focus-within:border-[var(--green-line)] focus-within:shadow-[0_0_0_var(--focus-w)_var(--focus-ring)]",
+        fullscreen ? "flex h-full flex-col shadow-[var(--shadow-lg)]" : className,
       )}
     >
       {/* ------------------------------------------------------- toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-[var(--edge)] bg-[var(--pane-sunken)] px-2 py-1.5">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-[var(--line)] bg-[var(--surface-sunk)] px-2 py-1.5">
         <ToolButton title="Qalin (Ctrl+B)" onClick={() => wrap("**")}>
           <Bold className="size-4" />
         </ToolButton>
@@ -236,11 +236,11 @@ export function RichEditor({
         </ToolButton>
 
         <div className="ml-auto flex items-center gap-2">
-          <span className="t-num hidden whitespace-nowrap text-[11px] text-[var(--ink-4)] sm:block">
+          <span className="ts-num hidden whitespace-nowrap text-[12px] text-[var(--text-4)] sm:block">
             {words} so&apos;z
           </span>
           {/* Yozish / Ko'rish — botiq trek ichida oq tugma */}
-          <div className="flex items-center gap-0.5 rounded-[var(--r-ctl)] border border-[var(--edge)] bg-[var(--pane-sunken)] p-0.5">
+          <div className="flex items-center gap-0.5 rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] p-0.5">
             {(
               [
                 { key: "write" as const, label: "Yozish", icon: PencilLine },
@@ -253,11 +253,11 @@ export function RichEditor({
                 onClick={() => setMode(tab.key)}
                 aria-pressed={mode === tab.key}
                 className={cn(
-                  "focus-ring flex items-center gap-1 rounded-[6px] px-2.5 py-1",
-                  "text-[11.5px] font-medium transition-colors duration-[var(--t-fast)]",
+                  "ring-focus flex items-center gap-1 rounded-[6px] px-2.5 py-1",
+                  "text-[12px] font-medium transition-colors duration-[var(--dur-1)]",
                   mode === tab.key
-                    ? "bg-[var(--pane-solid)] text-[var(--ink)] shadow-[var(--lift-1),0_0_0_1px_var(--edge-soft)]"
-                    : "text-[var(--ink-3)] hover:text-[var(--ink)]",
+                    ? "bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-xs),0_0_0_1px_var(--line-soft)]"
+                    : "text-[var(--text-3)] hover:text-[var(--text)]",
                 )}
               >
                 <tab.icon className="size-3" />
@@ -284,15 +284,15 @@ export function RichEditor({
           placeholder={placeholder}
           rows={fullscreen ? undefined : minRows}
           className={cn(
-            "w-full resize-y bg-[var(--pane-solid)] px-4 py-3 font-mono text-[13px] leading-relaxed",
-            "text-[var(--ink)] outline-none placeholder:text-[var(--ink-4)]",
+            "w-full resize-y bg-[var(--surface)] px-4 py-3 font-mono text-[14px] leading-relaxed",
+            "text-[var(--text)] outline-none placeholder:text-[var(--text-4)]",
             fullscreen && "flex-1 resize-none",
           )}
         />
       ) : (
         <div
           className={cn(
-            "scrollbar-thin overflow-y-auto px-5 py-4",
+            "scroll-thin overflow-y-auto px-5 py-4",
             fullscreen ? "flex-1" : "max-h-[32rem]",
           )}
           style={fullscreen ? undefined : { minHeight: `${minRows * 1.4}rem` }}
@@ -300,7 +300,7 @@ export function RichEditor({
           {value.trim() ? (
             <Markdown source={value} />
           ) : (
-            <p className="t-body text-[var(--ink-4)]">Ko&apos;rish uchun avval matn yozing...</p>
+            <p className="ts-body text-[var(--text-4)]">Ko&apos;rish uchun avval matn yozing...</p>
           )}
         </div>
       )}
@@ -314,7 +314,7 @@ export function RichEditor({
 
     Ilgari muharrir joyida turib `position: fixed` olardi. `fixed` esa
     `transform`/`filter` qo'llangan ota-element ichida oynaga emas, O'SHA
-    elementga nisbatan hisoblanadi — sahifadagi `.enter` animatsiyasi aynan
+    elementga nisbatan hisoblanadi — sahifadagi `.` animatsiyasi aynan
     `transform` beradi. Natijada "to'liq ekran" karta ichida qamalib qolar,
     yuqori qismi esa yopishqoq navigatsiya panelining ostiga kirib ketardi.
 
@@ -326,12 +326,12 @@ export function RichEditor({
       {/* Joyida bo'sh o'rin qoladi — forma "sakrab" qisqarib ketmaydi */}
       <div
         aria-hidden
-        className={cn("pane-sunken rounded-[var(--r-pane)]", className)}
+        className={cn("well rounded-[var(--radius-lg)]", className)}
         style={{ minHeight: `${minRows * 1.5}rem` }}
       />
       {mounted
         ? createPortal(
-            <div className="fixed inset-0 z-[95] flex flex-col bg-[var(--canvas)] p-3 sm:p-5">
+            <div className="fixed inset-0 z-[95] flex flex-col bg-[var(--bg)] p-3 sm:p-5">
               {shell}
             </div>,
             document.body,

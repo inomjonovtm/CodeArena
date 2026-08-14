@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, ChevronRight, Clock, History, Lock, Trophy, Users } from "lucide-react";
+import { ArrowRight, Clock, ListChecks, Lock, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -9,6 +9,7 @@ import { useAuth } from "@/components/providers";
 import {
   Alert,
   Block,
+  Button,
   Chip,
   Empty,
   LinkButton,
@@ -16,283 +17,240 @@ import {
   PageHead,
   Pagination,
   Pane,
-  PaneHead,
   Segmented,
 } from "@/components/kit";
 import { Countdown } from "@/components/site/contest-bar";
 import { publicApi } from "@/lib/public-api";
 import type { PublicContest } from "@/lib/types";
-import { cn, formatDate, formatDateShort } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+
+/* ==========================================================================
+   MUSOBAQALAR — uch guruh, uch xil og'irlik
+   --------------------------------------------------------------------------
+   Sahifa endi bitta yaxlit jadval EMAS: musobaqalar vaqt holatiga qarab
+   UCH GURUHGA bo'linadi va har biri o'z shaklida chiziladi, chunki har
+   birida foydalanuvchidan kutiladigan amal boshqa:
+
+     DAVOM ETMOQDA — yashil yuvindili karta, sanoq va "kirish" tugmasi.
+                     Amal: hoziroq qatnashish.
+     KUTILMOQDA    — sana plitkali qatorlar ro'yxati. Amal: ro'yxatdan
+                     o'tish va kunni belgilab qo'yish.
+     TUGAGAN       — ixcham jadval. Amal: natijalarni ko'rish. Bu arxiv,
+                     shuning uchun eng zich shakl.
+
+   Tepadagi segment almashtirgich guruhlardan birini yolg'iz qoldiradi —
+   filtr tanlangan tab EMAS, ko'rinish rejimi.
+   ========================================================================== */
 
 type Filter = "" | "running" | "scheduled" | "finished";
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "", label: "Barchasi" },
-  { value: "running", label: "Davom etmoqda" },
+  { value: "running", label: "Jonli" },
   { value: "scheduled", label: "Kutilmoqda" },
   { value: "finished", label: "Tugagan" },
 ];
 
-/** Soat-daqiqa — chapdagi sana relsi uchun. */
-const timeOf = (value: string) => {
+const MONTHS_SHORT = [
+  "yan", "fev", "mar", "apr", "may", "iyn",
+  "iyl", "avg", "sen", "okt", "noy", "dek",
+];
+
+const PAGE_SIZE = 10;
+
+function timeOf(value: string) {
   const date = new Date(value);
   return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-};
+}
+
+/** Meta qatori: davomiylik · masala · ishtirokchi. */
+function ContestMeta({ contest, className }: { contest: PublicContest; className?: string }) {
+  return (
+    <span className={cn("flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[var(--text-3)]", className)}>
+      <span className="inline-flex items-center gap-1.5">
+        <Clock className="size-3.5 text-[var(--text-4)]" />
+        <span className="ts-num">{contest.duration_minutes}</span> daqiqa
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <ListChecks className="size-3.5 text-[var(--text-4)]" />
+        <span className="ts-num">{contest.problem_count}</span> masala
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <Users className="size-3.5 text-[var(--text-4)]" />
+        <span className="ts-num">{contest.participant_count}</span>
+      </span>
+      {contest.is_rated ? <Chip tone="brand">reytingli</Chip> : null}
+    </span>
+  );
+}
 
 /* --------------------------------------------------------------------------
-   Hozir davom etmoqda — o'z kartasi. Birinchisi sahifadagi YAGONA to'yingan
-   ko'k blok bo'ladi; qolgani oddiy oq karta, chap qirrasida brend chizig'i.
-   Aks holda sahifada ikkita "asosiy" chaqiriq paydo bo'lardi.
+   JONLI musobaqa — yashil yuvindili karta. Sahifadagi yagona rangli blok.
    -------------------------------------------------------------------------- */
-function RunningPane({ contest, hero }: { contest: PublicContest; hero?: boolean }) {
+function LiveCard({ contest }: { contest: PublicContest }) {
   return (
-    <div
-      className={cn(
-        "rounded-[var(--r-pane-lg)] p-7",
-        hero ? "pane-brand" : "pane edge-brand",
-      )}
-    >
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-6">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2.5">
-            {hero ? (
-              /* Ko'k blokda jonli nuqta oq bo'ladi — yashil nuqta bu yerda so'nadi */
-              <span className="relative flex size-2 shrink-0" aria-hidden>
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-[var(--ink-on-brand)] opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-[var(--ink-on-brand)]" />
-              </span>
-            ) : (
-              <LiveDot tone="ok" />
-            )}
-            <span className={cn("t-eyebrow", hero ? "text-[var(--brand-wash)]" : "text-[var(--ok)]")}>
-              Hozir davom etmoqda
-            </span>
-          </div>
-          <h3 className={cn("t-title mt-3", hero ? "text-[var(--ink-on-brand)]" : "text-[var(--ink)]")}>
-            <Link
-              href={`/contests/${contest.slug}`}
-              className={cn(
-                "rounded-[6px] transition-colors focus-ring",
-                hero ? "hover:text-[var(--brand-wash)]" : "hover:text-[var(--brand)]",
-              )}
-            >
-              {contest.title_uz}
-            </Link>
-          </h3>
-          {contest.description_uz ? (
-            <p
-              className={cn(
-                "t-body mt-2.5 line-clamp-2 max-w-xl",
-                hero ? "text-[var(--brand-wash)]" : "text-[var(--ink-3)]",
-              )}
-            >
-              {contest.description_uz}
-            </p>
-          ) : null}
-          <div
-            className={cn(
-              "mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px]",
-              hero ? "text-[var(--brand-wash)]" : "text-[var(--ink-3)]",
-            )}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Users className={cn("size-3.5", !hero && "text-[var(--ink-4)]")} />
-              <span className="t-num">{contest.participant_count}</span> ishtirokchi
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Trophy className={cn("size-3.5", !hero && "text-[var(--ink-4)]")} />
-              <span className="t-num">{contest.problem_count}</span> masala
-            </span>
-            {contest.is_rated ? (
-              hero ? (
-                <span className="rounded-[var(--r-chip)] bg-[var(--ink-on-brand)] px-2.5 py-1 text-[12px] font-medium text-[var(--brand-ink)]">
-                  reytingli
-                </span>
-              ) : (
-                <Chip tone="brand">reytingli</Chip>
-              )
-            ) : null}
-          </div>
-        </div>
+    <div className="wash flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[var(--radius-lg)] p-5">
+      <div className="min-w-0 flex-1">
+        <p className="ts-label flex items-center gap-2 text-[var(--green-text)]">
+          <LiveDot />
+          Hozir davom etmoqda
+        </p>
+        <h2 className="ts-h3 mt-2 text-[var(--text)]">
+          <Link href={`/contests/${contest.slug}`} className="ring-focus rounded-[4px]">
+            {contest.title_uz}
+          </Link>
+        </h2>
+        <ContestMeta contest={contest} className="mt-2" />
+      </div>
 
-        <div className="flex shrink-0 flex-col items-start gap-4 sm:items-end">
-          <div>
-            <p className={cn("t-eyebrow", hero && "text-[var(--brand-wash)]")}>Tugashiga</p>
-            <Countdown
-              target={contest.end_time}
-              className={cn(
-                "mt-1.5 block text-[30px] leading-none font-bold",
-                hero ? "text-[var(--ink-on-brand)]" : "text-[var(--ink)]",
-              )}
-            />
-          </div>
-          <LinkButton
-            href={`/contests/${contest.slug}`}
-            variant="primary"
-            iconAfter={<ChevronRight className="size-4" />}
-            className={cn(
-              hero &&
-                "bg-[var(--ink-on-brand)] text-[var(--brand-ink)] shadow-none hover:bg-[var(--brand-wash)] active:bg-[var(--brand-wash-strong)]",
-            )}
-          >
-            Musobaqaga kirish
-          </LinkButton>
+      <div className="flex shrink-0 items-center gap-5">
+        <div className="text-right">
+          <p className="ts-label">Tugashiga</p>
+          <Countdown
+            target={contest.end_time}
+            className="ts-num mt-0.5 block text-[22px] leading-none font-semibold text-[var(--green-text)]"
+          />
         </div>
+        <LinkButton
+          href={`/contests/${contest.slug}`}
+          variant="primary"
+          size="md"
+          iconAfter={<ArrowRight className="size-4" />}
+        >
+          Kirish
+        </LinkButton>
       </div>
     </div>
   );
 }
 
 /* --------------------------------------------------------------------------
-   Yaqinlashayotgan — o'z kartasida vaqt chizig'i: chapda sana relsi,
-   o'ngda kontent. Karta ichida karta yo'q, faqat nozik chiziq va nuqtalar.
+   KUTILAYOTGAN musobaqa — sana plitkasi + nom + amal.
    -------------------------------------------------------------------------- */
-function UpcomingTimeline({ rows }: { rows: PublicContest[] }) {
+function UpcomingRow({ contest, last }: { contest: PublicContest; last: boolean }) {
+  const date = new Date(contest.start_time);
+
   return (
-    <Pane inset="lg">
-      <PaneHead title="Yaqinlashayotgan" hint="Boshlanish vaqti bo'yicha" />
+    <li
+      className={cn(
+        "flex flex-wrap items-center gap-x-5 gap-y-3 px-4 py-4",
+        !last && "border-b border-[var(--line-soft)]",
+      )}
+    >
+      {/* Sana plitkasi — kalendar varag'i kabi */}
+      <span className="flex size-12 shrink-0 flex-col items-center justify-center rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)]">
+        <span className="ts-num text-[16px] leading-none font-semibold text-[var(--text)]">
+          {date.getDate()}
+        </span>
+        <span className="mt-0.5 text-[10px] font-medium tracking-[0.04em] text-[var(--text-4)] uppercase">
+          {MONTHS_SHORT[date.getMonth()]}
+        </span>
+      </span>
 
-      <ol className="enter-stagger mt-6">
-        {rows.map((contest, index) => {
-          const last = index === rows.length - 1;
-          return (
-            <li key={contest.id} className="flex gap-4 sm:gap-6">
-              {/* Sana relsi */}
-              <div className="w-20 shrink-0 pt-0.5 text-right sm:w-24">
-                <p className="t-num text-[14.5px] font-semibold text-[var(--ink)]">
-                  {formatDateShort(contest.start_time)}
-                </p>
-                <p className="t-num mt-0.5 text-[12.5px] text-[var(--ink-4)]">
-                  {timeOf(contest.start_time)}
-                </p>
-              </div>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/contests/${contest.slug}`}
+          className="ring-focus rounded-[4px] text-[15px] font-medium text-[var(--text)] transition-colors hover:text-[var(--green-text)]"
+        >
+          {contest.title_uz}
+        </Link>
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="ts-num text-[13px] text-[var(--text-3)]">
+            {timeOf(contest.start_time)} da boshlanadi
+          </span>
+          <ContestMeta contest={contest} />
+        </div>
+      </div>
 
-              {/* Nuqta va chiziq */}
-              <div aria-hidden className="flex flex-col items-center">
-                <span className="mt-1.5 size-2.5 shrink-0 rounded-full border-2 border-[var(--brand)] bg-[var(--pane-solid)]" />
-                {!last ? <span className="mt-1 w-px flex-1 bg-[var(--edge)]" /> : null}
-              </div>
-
-              {/* Kontent */}
-              <div className={cn("min-w-0 flex-1", !last && "pb-8")}>
-                <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-                  <div className="min-w-0">
-                    <Link
-                      href={`/contests/${contest.slug}`}
-                      className="rounded-[6px] text-[15px] font-semibold text-[var(--ink)] transition-colors hover:text-[var(--brand)] focus-ring"
-                    >
-                      {contest.title_uz}
-                    </Link>
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12.5px] text-[var(--ink-3)]">
-                      <span className="inline-flex items-center gap-1.5">
-                        <Clock className="size-3.5 text-[var(--ink-4)]" />
-                        <span className="t-num">{contest.duration_minutes}</span> daqiqa
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Trophy className="size-3.5 text-[var(--ink-4)]" />
-                        <span className="t-num">{contest.problem_count}</span> masala
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <Users className="size-3.5 text-[var(--ink-4)]" />
-                        <span className="t-num">{contest.participant_count}</span>
-                      </span>
-                      {contest.is_rated ? <Chip tone="brand">reytingli</Chip> : null}
-                    </div>
-                  </div>
-                  <LinkButton href={`/contests/${contest.slug}`} size="sm">
-                    Ro&apos;yxatdan o&apos;tish
-                  </LinkButton>
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-    </Pane>
+      <LinkButton href={`/contests/${contest.slug}`} variant="quiet" size="sm">
+        Ro&apos;yxatdan o&apos;tish
+      </LinkButton>
+    </li>
   );
 }
 
 /* --------------------------------------------------------------------------
-   O'tgan musobaqalar — o'z kartasi: tepada sarlavha, ostida zich ro'yxat.
+   TUGAGAN musobaqalar — ixcham jadval (arxiv).
    -------------------------------------------------------------------------- */
-function PastList({ rows }: { rows: PublicContest[] }) {
+function PastTable({ contests }: { contests: PublicContest[] }) {
   return (
-    <Pane inset="none" className="overflow-hidden">
-      <div className="px-5 pt-5 pb-4 sm:px-7 sm:pt-6">
-        <PaneHead title="O'tgan musobaqalar" hint="Natijalar va virtual qatnashish" />
-      </div>
-
-      <ul className="divide-y divide-[var(--edge-soft)] border-t border-[var(--edge)]">
-        {rows.map((contest) => (
-          <li key={contest.id}>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5 transition-colors hover:bg-[var(--pane-hover)] sm:px-7">
-              <div className="min-w-0 flex-1">
-                <Link
-                  href={`/contests/${contest.slug}`}
-                  className="rounded-[6px] text-[14px] font-medium text-[var(--ink)] transition-colors hover:text-[var(--brand)] focus-ring"
-                >
-                  {contest.title_uz}
-                </Link>
-                <p className="t-meta mt-0.5 flex flex-wrap items-center gap-x-3 text-[var(--ink-4)]">
-                  <span className="inline-flex items-center gap-1">
-                    <CalendarDays className="size-3.5" />
-                    {formatDate(contest.start_time, false)}
-                  </span>
-                  <span className="t-num">{contest.participant_count} ishtirokchi</span>
-                  {contest.is_virtual_allowed ? (
-                    <span className="inline-flex items-center gap-1">
-                      <History className="size-3.5" />
-                      virtual mumkin
-                    </span>
+    <div className="table-scroll px-2">
+      <table className="grid-table">
+        <thead>
+          <tr>
+            <th className="w-24" scope="col">Sana</th>
+            <th scope="col">Musobaqa</th>
+            <th className="col-num w-24" scope="col">Masala</th>
+            <th className="col-num w-28" scope="col">Ishtirokchi</th>
+            <th className="w-32 text-right" scope="col">
+              <span className="sr-only">Natijalar</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {contests.map((contest) => {
+            const date = new Date(contest.start_time);
+            return (
+              <tr key={contest.id}>
+                <td className="ts-num w-24 text-[13px] whitespace-nowrap text-[var(--text-4)]">
+                  {date.getDate()} {MONTHS_SHORT[date.getMonth()]}
+                </td>
+                <td>
+                  <Link
+                    href={`/contests/${contest.slug}`}
+                    className="ring-focus rounded-[4px] text-[14px] font-medium text-[var(--text-2)] transition-colors hover:text-[var(--green-text)]"
+                  >
+                    {contest.title_uz}
+                  </Link>
+                  {contest.is_rated ? (
+                    <Chip tone="neutral" className="ml-2">reytingli</Chip>
                   ) : null}
-                </p>
-              </div>
-              <LinkButton
-                href={`/contests/${contest.slug}?tab=standings`}
-                variant="ghost"
-                size="sm"
-                icon={<Trophy className="size-3.5" />}
-              >
-                Natijalar
-              </LinkButton>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </Pane>
+                </td>
+                <td className="col-num w-24 text-[13px] text-[var(--text-3)]">
+                  {contest.problem_count}
+                </td>
+                <td className="col-num w-28 text-[13px] text-[var(--text-3)]">
+                  {contest.participant_count}
+                </td>
+                <td className="w-32 text-right">
+                  <LinkButton
+                    href={`/contests/${contest.slug}?tab=standings`}
+                    variant="ghost"
+                    size="sm"
+                    icon={<Trophy className="size-3.5" />}
+                  >
+                    Natijalar
+                  </LinkButton>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
-/** Skelet — haqiqiy tartibni (kartalar ketma-ketligi) takrorlaydi. */
+/** Skelet — guruhlangan tartibni takrorlaydi. */
 function ContestsSkeleton() {
   return (
     <div className="flex flex-col gap-5">
-      <div className="pane rounded-[var(--r-pane-lg)] p-7">
-        <Block className="h-3 w-36" />
-        <Block className="mt-4 h-5 w-2/3" />
-        <Block className="mt-3 h-3 w-1/2" />
-        <Block className="mt-6 h-9 w-44 rounded-[var(--r-ctl)]" />
-      </div>
-
-      <Pane inset="lg">
-        <Block className="h-4 w-40" />
-        <div className="mt-6 flex flex-col gap-8">
-          {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="flex gap-6">
-              <Block className="h-10 w-24 shrink-0" />
-              <div className="min-w-0 flex-1">
-                <Block className="h-4 w-1/3" />
-                <Block className="mt-2.5 h-3 w-1/2" />
-              </div>
+      <Block className="h-28 rounded-[var(--radius-lg)]" />
+      <Pane inset="none">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="flex items-center gap-4 px-4 py-4">
+            <Block className="size-12 rounded-[var(--radius-sm)]" />
+            <div className="min-w-0 flex-1">
+              <Block className="h-4 w-1/3" />
+              <Block className="mt-2 h-3 w-1/2" />
             </div>
-          ))}
-        </div>
+            <Block className="h-9 w-32 rounded-[var(--radius-md)]" />
+          </div>
+        ))}
       </Pane>
     </div>
   );
 }
-
-const PAGE_SIZE = 10;
 
 export default function ContestsPage() {
   const { user } = useAuth();
@@ -318,10 +276,9 @@ export default function ContestsPage() {
 
   const rows = data?.results ?? [];
 
-  // Zamon bo'yicha uch guruh: jonli, yaqinlashayotgan, o'tgan
-  const runningRows = rows.filter((row) => row.computed_status === "running");
-  const upcomingRows = rows.filter((row) => row.computed_status === "scheduled");
-  const pastRows = rows.filter(
+  const running = rows.filter((row) => row.computed_status === "running");
+  const upcoming = rows.filter((row) => row.computed_status === "scheduled");
+  const past = rows.filter(
     (row) => row.computed_status !== "running" && row.computed_status !== "scheduled",
   );
 
@@ -331,69 +288,60 @@ export default function ContestsPage() {
   };
 
   return (
-    /* Har bir blok alohida kartada; ular orasida bir tekis 20px bo'shliq */
-    <div className="flex flex-col gap-7">
-      {/* ------------------------------------------------- sarlavha kartasi */}
+    <div className="flex flex-col gap-5">
       <PageHead
-        eyebrow="Arena"
         title="Musobaqalar"
         lead="Belgilangan vaqtda boshlanadigan bellashuvlar. Natijalar reytingingizga ta'sir qiladi."
+        actions={
+          <Segmented value={filter} items={FILTERS} onChange={changeFilter} size="sm" />
+        }
+        meta={
+          <span className="text-[var(--text-3)]">
+            Jami{" "}
+            <span className="ts-num font-semibold text-[var(--text)]">{data?.count ?? "—"}</span>{" "}
+            musobaqa
+          </span>
+        }
       />
 
-      {/* ----------------------------------------------- mening natijalarim */}
+      {/* ------------------------------------------- mening natijalarim */}
       {user && mine?.length ? (
-        <Pane inset="lg" className="enter">
-          <PaneHead title="Mening natijalarim" />
-          <div className="fade-edges -mx-1 mt-5 overflow-x-auto px-1 pb-1">
-            <ul className="flex gap-2.5">
-              {mine.slice(0, 8).map((row) => (
-                <li key={row.contest_slug} className="shrink-0">
-                  {/* Karta ichida karta emas — botiq kafel */}
-                  <Link
-                    href={`/contests/${row.contest_slug}`}
-                    className={cn(
-                      "pane-sunken focus-ring flex w-56 flex-col gap-1.5 rounded-[var(--r-field)] p-3.5",
-                      "transition-colors duration-[var(--t-fast)] hover:border-[var(--brand-edge)]",
-                    )}
-                  >
-                    <span className="truncate text-[13.5px] font-medium text-[var(--ink)]">
-                      {row.title_uz}
-                    </span>
-                    <span className="t-num flex items-center gap-2 text-[12.5px] text-[var(--ink-3)]">
-                      {row.rank ? `#${row.rank}` : "—"} · {row.score} ball
-                      {row.rating_change ? (
-                        <span
-                          className={cn(
-                            "font-semibold",
-                            row.rating_change > 0 ? "text-[var(--ok)]" : "text-[var(--bad)]",
-                          )}
-                        >
-                          {row.rating_change > 0 ? "+" : ""}
-                          {row.rating_change}
-                        </span>
-                      ) : null}
-                      {row.is_virtual ? <Chip tone="neutral">virtual</Chip> : null}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Pane>
+        <div className="scroll-hidden fade-x -mx-1 overflow-x-auto px-1">
+          <ul className="flex gap-2.5">
+            {mine.slice(0, 8).map((row) => (
+              <li key={row.contest_slug} className="shrink-0">
+                <Link
+                  href={`/contests/${row.contest_slug}`}
+                  className="card-link ring-focus flex w-56 flex-col gap-1 p-3.5"
+                >
+                  <span className="truncate text-[13px] font-medium text-[var(--text)]">
+                    {row.title_uz}
+                  </span>
+                  <span className="ts-num flex items-center gap-2 text-[12px] text-[var(--text-3)]">
+                    {row.rank ? `#${row.rank}` : "—"} · {row.score} ball
+                    {row.rating_change ? (
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          row.rating_change > 0
+                            ? "text-[var(--green-text)]"
+                            : "text-[var(--text)]",
+                        )}
+                      >
+                        {row.rating_change > 0 ? "+" : ""}
+                        {row.rating_change}
+                      </span>
+                    ) : null}
+                    {row.is_virtual ? <Chip tone="neutral">virtual</Chip> : null}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
 
-      {/* -------------------------------------------------- filtr kartasi */}
-      <Pane inset="sm">
-        <div className="-mx-1 overflow-x-auto px-1 py-0.5">
-          <Segmented
-            value={filter}
-            onChange={changeFilter}
-            items={FILTERS.map((item) => ({ value: item.value, label: item.label }))}
-          />
-        </div>
-      </Pane>
-
-      {/* ---------------------------------------------------------- kontent */}
+      {/* ------------------------------------------------------ kontent */}
       {isLoading ? (
         <ContestsSkeleton />
       ) : isError ? (
@@ -401,54 +349,66 @@ export default function ContestsPage() {
           tone="bad"
           title="Musobaqalarni yuklab bo'lmadi"
           action={
-            <button
-              type="button"
-              onClick={() => void refetch()}
-              className="rounded-[var(--r-ctl)] px-2.5 py-1.5 text-[12.5px] font-semibold text-[var(--bad)] transition-colors hover:bg-[var(--bad-wash)] focus-ring"
-            >
+            <Button size="sm" onClick={() => void refetch()}>
               Qayta urinish
-            </button>
+            </Button>
           }
         >
           Tarmoqda uzilish bo&apos;ldi. Qayta urinib ko&apos;ring.
         </Alert>
       ) : rows.length === 0 ? (
-        <Pane tone="solid" inset="none" className="overflow-hidden">
-          <Empty
-            icon={<Trophy className="size-5" />}
-            title="Musobaqa topilmadi"
-            description={
-              filter ? "Boshqa holatni tanlab ko'ring." : "Hozircha e'lon qilingan musobaqa yo'q."
-            }
-          />
-        </Pane>
+        <Empty
+          icon={<Trophy className="size-6" />}
+          title="Musobaqa topilmadi"
+          description={
+            filter ? "Boshqa holatni tanlab ko'ring." : "Hozircha e'lon qilingan musobaqa yo'q."
+          }
+        />
       ) : (
         <>
-          {runningRows.length ? (
-            <div className="enter flex flex-col gap-5">
-              {runningRows.map((contest, index) => (
-                <RunningPane key={contest.id} contest={contest} hero={index === 0} />
-              ))}
-            </div>
+          {running.map((contest) => (
+            <LiveCard key={contest.id} contest={contest} />
+          ))}
+
+          {upcoming.length ? (
+            <section>
+              <p className="ts-label mb-2">Kutilmoqda</p>
+              <Pane inset="none">
+                <ul>
+                  {upcoming.map((contest, index) => (
+                    <UpcomingRow
+                      key={contest.id}
+                      contest={contest}
+                      last={index === upcoming.length - 1}
+                    />
+                  ))}
+                </ul>
+              </Pane>
+            </section>
           ) : null}
 
-          {upcomingRows.length ? <UpcomingTimeline rows={upcomingRows} /> : null}
-
-          {pastRows.length ? <PastList rows={pastRows} /> : null}
+          {past.length ? (
+            <section>
+              <p className="ts-label mb-2">Tugagan</p>
+              <Pane inset="none" className="overflow-hidden pt-3">
+                <PastTable contests={past} />
+              </Pane>
+            </section>
+          ) : null}
         </>
       )}
 
-      {/* ------------------------------------------------- mehmon eslatmasi */}
       {!user ? (
         <Alert
           tone="info"
           action={
-            <LinkButton href="/login" size="sm" variant="brand-soft" icon={<Lock className="size-3.5" />}>
+            <LinkButton href="/login" size="sm" icon={<Lock className="size-4" />}>
               Kirish
             </LinkButton>
           }
         >
-          Musobaqada qatnashish uchun hisobingizga kiring — natijalar reytingingizga qo&apos;shiladi.
+          Musobaqada qatnashish uchun hisobingizga kiring — natijalar reytingingizga
+          qo&apos;shiladi.
         </Alert>
       ) : null}
 
@@ -459,7 +419,6 @@ export default function ContestsPage() {
           total={data.count}
           pageSize={PAGE_SIZE}
           onPage={setPage}
-          className="px-1"
         />
       ) : null}
     </div>

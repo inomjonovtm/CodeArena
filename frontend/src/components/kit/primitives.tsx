@@ -7,98 +7,89 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 /* ==========================================================================
-   Tugma
+   TUGMA
    --------------------------------------------------------------------------
-   Ikkita qoida butun tizimni ushlab turadi:
+   Shakl: 10px burchakli to'rtburchak. Kapsula tizimda YO'Q — u interfeysga
+   "o'yinchoq" ohang beradi va yonidagi kirish maydoni (8px) bilan bir
+   oilada turmaydi.
 
-     1. ASOSIY (primary) — QORA fon, oq matn. Hoverda fon KO'KGA o'tadi.
-     2. IKKINCHI DARAJALI (quiet) — shaffof fon, qora chegara va matn.
-        Hoverda chegara ham, matn ham ko'kka o'tadi.
+   Uchta og'irlik, undan ortig'i kerak emas:
 
-   Ya'ni ko'k tugmaning tinch holati EMAS, balki javobi: sichqoncha kelganda
-   element "yonadi". Shu tufayli sahifada ko'k faqat foydalanuvchi qaragan
-   joyda paydo bo'ladi va e'tibor tarqalmaydi.
+     primary  — to'yingan yashil, oq matn. Ekranda BITTA bo'ladi.
+     quiet    — oq yuza, bir piksel chiziq. Ikkinchi darajali amal.
+     ghost    — fonsiz, faqat matn. Uchinchi daraja va ikonka tugmalari.
 
-   Burchak 10px, o'tish 250ms — rang hech qachon to'satdan almashmaydi.
-   Bosilganda tugma 0.97 ga siqiladi: bu jismoniy "bosildi" tuyg'usi.
-
-   Yirik o'lchamlar (`lg`, `xl`) hoverda 2px yuqoriga siljiydi — ular
-   marketing CTA'lari. Zich interfeysdagi kichik tugmalar siljimaydi: jadval
-   ichida sakraydigan tugmalar qatorni "titratadi".
+   Javob QANDAY beriladi: hoverda fon bir pog'ona o'zgaradi (120ms),
+   bosilganda tugma 1px pastga cho'kadi. Masshtab, siljish, porlash va
+   soya "sakrashi" YO'Q — bular jadval ichida qatorni titratadi.
    ========================================================================== */
 
 type Variant = "primary" | "quiet" | "ghost" | "danger" | "brand" | "brand-soft" | "ink";
 type Size = "sm" | "md" | "lg" | "xl";
 
+/* Balandliklar 36-48px. Eski shkala 40-64px edi: interfeys tugmasi
+   sahifadagi eng katta element bo'lib qolgandi. */
 const SIZES: Record<Size, string> = {
-  sm: "h-9 gap-1.5 px-3.5 text-[13px]",
+  sm: "h-9 gap-1.5 px-3 text-[13px]",
   md: "h-10 gap-2 px-4 text-[14px]",
-  // 14px/28px — dizayn tizimidagi CTA o'lchami
-  lg: "h-12 gap-2.5 px-7 text-[15px] hover:-translate-y-0.5",
-  xl: "h-14 gap-2.5 px-8 text-[16px] hover:-translate-y-0.5",
+  lg: "h-11 gap-2 px-5 text-[15px]",
+  xl: "h-12 gap-2.5 px-6 text-[15px]",
 };
 
 const ICON_SIZES: Record<Size, string> = {
   sm: "size-9",
   md: "size-10",
-  lg: "size-12",
-  xl: "size-14",
+  lg: "size-11",
+  xl: "size-12",
 };
 
 const VARIANTS: Record<Variant, string> = {
-  // 1-qoida: qora → ko'k
   primary: [
-    "bg-[var(--ink)] text-[var(--canvas)] font-semibold border border-transparent",
-    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)]",
-    "active:bg-[var(--brand-press)]",
+    "bg-[var(--green)] text-[var(--text-on-green)] font-medium border border-transparent",
+    "shadow-[var(--shadow-xs)]",
+    "hover:bg-[var(--green-hover)] active:bg-[var(--green-active)]",
   ].join(" "),
-  // 2-qoida: shaffof + qora chegara → ko'k chegara va ko'k matn
   quiet: [
-    "bg-transparent text-[var(--ink)] border border-[var(--ink)] font-semibold",
-    "hover:border-[var(--brand)] hover:text-[var(--brand)]",
-    "active:bg-[var(--brand-wash)]",
+    "bg-[var(--surface)] text-[var(--text)] border border-[var(--line-strong)] font-medium",
+    "hover:bg-[var(--surface-hover)] hover:border-[var(--line-strong)]",
+    "active:bg-[var(--surface-sunk)]",
   ].join(" "),
   ghost: [
-    "text-[var(--ink-2)] border border-transparent",
-    "hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
-    "active:bg-[var(--canvas-deep)]",
+    "bg-transparent text-[var(--text-2)] border border-transparent",
+    "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
+    "active:bg-[var(--surface-sunk)]",
   ].join(" "),
-  /* To'q fondagi CTA — to'yingan ko'k, hoverda bir pog'ona ochroq.
-     Kalkulyator/interaktiv bo'lim va hero ustidagi asosiy chaqiriq. */
+  /* `brand` — `primary` bilan bir xil. Yashil blok ichida (`on-green`)
+     tokenlar ag'darilgani uchun u avtomatik OQ tugmaga aylanadi. */
   brand: [
-    "bg-[var(--brand)] text-[var(--ink-on-brand)] font-semibold border border-transparent",
-    "hover:bg-[var(--brand-hover)]",
-    "active:bg-[var(--brand-press)]",
+    "bg-[var(--green)] text-[var(--text-on-green)] font-medium border border-transparent",
+    "shadow-[var(--shadow-xs)]",
+    "hover:bg-[var(--green-hover)] active:bg-[var(--green-active)]",
   ].join(" "),
   "brand-soft": [
-    "bg-[var(--brand-wash)] text-[var(--brand-ink)] border border-[var(--brand-edge)] font-semibold",
-    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)] hover:border-transparent",
+    "bg-[var(--green-wash)] text-[var(--green-text)] border border-[var(--green-line)] font-medium",
+    "hover:bg-[var(--green-wash-2)]",
   ].join(" "),
-  /* Xavfli amal. Palitrada qizil YO'Q, shuning uchun farq RANG bilan emas
-     xulq bilan beriladi: bu yagona qora tugma bo'lib, hoverda ko'kka
-     O'TMAYDI — quyuqroq bo'ladi. Ma'noni esa har doim yorliq va tasdiq
+  /* Xavfli amal. Palitrada qizil YO'Q — farq rang bilan emas, OG'IRLIK
+     bilan beriladi: bu yagona to'q siyoh tugma. Ma'noni yorliq va tasdiq
      oynasining matni tashiydi. */
   danger: [
-    "bg-[var(--bad)] text-[var(--canvas)] font-semibold border border-transparent",
-    "hover:bg-[var(--ink-2)] active:bg-[var(--bad)]",
+    "bg-[var(--danger)] text-[var(--bg)] font-medium border border-transparent",
+    "hover:bg-[var(--text-2)] active:bg-[var(--danger)]",
   ].join(" "),
-  // `ink` — `primary` bilan bir xil qoida (eski chaqiruvlar uchun nom)
   ink: [
-    "bg-[var(--ink)] text-[var(--canvas)] font-semibold border border-transparent",
-    "hover:bg-[var(--brand)] hover:text-[var(--ink-on-brand)]",
-    "active:bg-[var(--brand-press)]",
+    "bg-[var(--text)] text-[var(--bg)] font-medium border border-transparent",
+    "hover:bg-[var(--text-2)] active:bg-[var(--text)]",
   ].join(" "),
 };
 
 const BASE = [
-  "relative inline-flex items-center justify-center rounded-[var(--r-ctl)]",
-  "font-medium whitespace-nowrap select-none focus-ring",
-  // Barcha xususiyatlar bitta ohangda — rang to'satdan sakramaydi
-  "transition-[background-color,border-color,box-shadow,transform,color,opacity]",
-  "duration-[var(--t-base)] ease-[var(--ease-snap)]",
-  // Bosilganda siqilish — "bosildi" tuyg'usini beradi
-  "active:scale-[0.97]",
-  "disabled:pointer-events-none disabled:opacity-40",
+  "inline-flex shrink-0 items-center justify-center rounded-[var(--radius-md)]",
+  "whitespace-nowrap select-none ring-focus",
+  "transition-[background-color,border-color,color,opacity] duration-[var(--dur-1)] ease-[var(--ease)]",
+  // Yagona mikro-interaksiya: bosilganda bir piksel cho'kish
+  "active:translate-y-px",
+  "disabled:pointer-events-none disabled:opacity-45",
 ].join(" ");
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -178,37 +169,58 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
 });
 
 /* ==========================================================================
-   Chip — ixcham yorliq
+   CHIP — ixcham yorliq
    --------------------------------------------------------------------------
-   Fon o'rniga rang "yuvindisi" (wash) + o'sha rangdan ishlangan soch halqasi.
-   To'yingan fon ro'yxatda o'nlab marta takrorlanganda sahifani shovqinga
-   to'ldiradi; halqa esa chipni sirtdan ajratadi, lekin og'irlik qo'shmaydi.
+   6px burchak, haqiqiy chegara, 12px matn. Ilgari chip kapsula edi va
+   halqasi `box-shadow` bilan chizilardi — ro'yxatda o'nlab kapsula yonma-yon
+   turganda sahifa "tabletkalarga" to'lardi. Endi u sokin yorliq: ma'noni
+   MATNI tashiydi, shakli emas.
    ========================================================================== */
 
 type Tone = "neutral" | "brand" | "ok" | "warn" | "bad" | "note" | "flare";
 
-const TONES: Record<Tone, { wash: string; ink: string; dot: string; base: string }> = {
+const TONES: Record<Tone, { wash: string; ink: string; line: string; dot: string }> = {
   neutral: {
-    wash: "bg-[var(--pane-sunken)]",
-    ink: "text-[var(--ink-2)]",
-    dot: "bg-[var(--ink-4)]",
-    base: "var(--ink-4)",
+    wash: "bg-[var(--surface-sunk)]",
+    ink: "text-[var(--text-3)]",
+    line: "border-[var(--line)]",
+    dot: "bg-[var(--text-4)]",
   },
   brand: {
-    wash: "bg-[var(--brand-wash)]",
-    ink: "text-[var(--brand-ink)]",
-    dot: "bg-[var(--brand)]",
-    base: "var(--brand)",
+    wash: "bg-[var(--green-wash)]",
+    ink: "text-[var(--green-text)]",
+    line: "border-[var(--green-line)]",
+    dot: "bg-[var(--green)]",
   },
-  ok: { wash: "bg-[var(--ok-wash)]", ink: "text-[var(--ok)]", dot: "bg-[var(--ok)]", base: "var(--ok)" },
-  warn: { wash: "bg-[var(--warn-wash)]", ink: "text-[var(--warn)]", dot: "bg-[var(--warn)]", base: "var(--warn)" },
-  bad: { wash: "bg-[var(--bad-wash)]", ink: "text-[var(--bad)]", dot: "bg-[var(--bad)]", base: "var(--bad)" },
-  note: { wash: "bg-[var(--note-wash)]", ink: "text-[var(--note)]", dot: "bg-[var(--note)]", base: "var(--note)" },
+  ok: {
+    wash: "bg-[var(--ok-wash)]",
+    ink: "text-[var(--ok)]",
+    line: "border-[var(--ok-line)]",
+    dot: "bg-[var(--ok)]",
+  },
+  warn: {
+    wash: "bg-[var(--warn-wash)]",
+    ink: "text-[var(--warn)]",
+    line: "border-[var(--warn-line)]",
+    dot: "bg-[var(--warn)]",
+  },
+  bad: {
+    wash: "bg-[var(--danger-wash)]",
+    ink: "text-[var(--danger)]",
+    line: "border-[var(--danger-line)]",
+    dot: "bg-[var(--danger)]",
+  },
+  note: {
+    wash: "bg-[var(--info-wash)]",
+    ink: "text-[var(--info)]",
+    line: "border-[var(--info-line)]",
+    dot: "bg-[var(--info)]",
+  },
   flare: {
-    wash: "bg-[var(--flare-wash)]",
-    ink: "text-[var(--flare)]",
-    dot: "bg-[var(--flare)]",
-    base: "var(--flare)",
+    wash: "bg-[var(--surface-sunk)]",
+    ink: "text-[var(--text-2)]",
+    line: "border-[var(--line)]",
+    dot: "bg-[var(--text)]",
   },
 };
 
@@ -220,7 +232,7 @@ export function Chip({
   children,
 }: {
   tone?: Tone;
-  /** Chap tomonda rangli nuqta — status uchun */
+  /** Chap tomonda holat nuqtasi */
   dot?: boolean;
   icon?: React.ReactNode;
   className?: string;
@@ -230,13 +242,13 @@ export function Chip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-[var(--r-chip)] px-2.5 py-[3px]",
-        "text-[12px] font-medium whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-[var(--radius-xs)] border px-2 py-[3px]",
+        "text-[12px] leading-[1.35] font-medium whitespace-nowrap",
         t.wash,
         t.ink,
+        t.line,
         className,
       )}
-      style={{ boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${t.base} 20%, transparent)` }}
     >
       {dot ? <span className={cn("size-1.5 shrink-0 rounded-full", t.dot)} /> : null}
       {icon}
@@ -250,8 +262,8 @@ export function Count({ value, className }: { value: number | string; className?
   return (
     <span
       className={cn(
-        "t-num inline-flex min-w-5 items-center justify-center rounded-[var(--r-chip)]",
-        "bg-[var(--canvas-deep)] px-1.5 py-0.5 text-[10.5px] font-semibold text-[var(--ink-3)]",
+        "ts-num inline-flex min-w-5 items-center justify-center rounded-[var(--radius-xs)]",
+        "bg-[var(--surface-sunk)] px-1.5 py-0.5 text-[11px] font-semibold text-[var(--text-3)]",
         className,
       )}
     >
@@ -260,27 +272,22 @@ export function Count({ value, className }: { value: number | string; className?
   );
 }
 
-/** Jonli holat nuqtasi — pulsatsiya bilan. */
+/** Jonli holat nuqtasi. Halqa "otilishi" (ping) o'rniga sokin so'nish:
+    u ko'z chetida turadi, lekin e'tiborni tortib olmaydi. */
 export function LiveDot({ tone = "ok", className }: { tone?: Tone; className?: string }) {
   const t = TONES[tone];
   return (
-    <span className={cn("relative flex size-2 shrink-0", className)}>
-      <span className={cn("absolute inline-flex size-full animate-ping rounded-full opacity-60", t.dot)} />
-      <span className={cn("relative inline-flex size-2 rounded-full", t.dot)} />
-    </span>
+    <span className={cn("pulse-soft flex size-2 shrink-0 rounded-full", t.dot, className)} />
   );
 }
 
-/**
- * Klaviatura klavishasi — buyruq paneli va yorliqlar uchun.
- * Monoshrift + soch chizig'i: haqiqiy klavishaga o'xshaydi, emoji emas.
- */
+/** Klaviatura klavishasi — buyruq paneli va yorliqlar uchun. */
 export function KeyHint({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <kbd
       className={cn(
-        "inline-flex h-5 min-w-5 items-center justify-center rounded-[5px] px-1.5",
-        "border border-[var(--edge)] bg-[var(--pane)] font-sans text-[11px] font-medium text-[var(--ink-3)]",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-[var(--radius-xs)] px-1.5",
+        "border border-[var(--line)] bg-[var(--surface-sunk)] font-sans text-[11px] font-medium text-[var(--text-4)]",
         className,
       )}
     >
@@ -290,7 +297,7 @@ export function KeyHint({ children, className }: { children: React.ReactNode; cl
 }
 
 /* ==========================================================================
-   Ajratgichlar
+   AJRATGICHLAR
    ========================================================================== */
 
 export function Divider({
@@ -304,7 +311,7 @@ export function Divider({
     <span
       aria-hidden
       className={cn(
-        "block shrink-0 bg-[var(--edge)]",
+        "block shrink-0 bg-[var(--line)]",
         vertical ? "h-full w-px" : "h-px w-full",
         className,
       )}
@@ -312,28 +319,25 @@ export function Divider({
   );
 }
 
-/**
- * Matnli ajratgich — ro'yxatni bo'limlarga bo'ladi.
- * Chiziq matndan keyin davom etadi, oldin emas: ko'z chapdan o'qiy boshlaydi.
- */
+/** Matnli ajratgich — ro'yxatni bo'limlarga bo'ladi. */
 export function DividerLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="t-eyebrow shrink-0">{children}</span>
+      <span className="ts-label shrink-0">{children}</span>
       <Divider />
     </div>
   );
 }
 
 /**
- * Bo'lim yorlig'i.
+ * Bo'lim yorlig'i — kichik, katta harflarda, tinch kulrang.
  *
- * `index` berilsa, oldiga tartib raqami qo'yiladi (`01 / KATALOG`). Bu bitta
- * detal sahifaga "hujjat" ohangini beradi: bo'limlar sanab o'tilgan, ya'ni
- * kimdir ularni ataylab tartibga solgan.
+ * `index` parametri saqlangan (chaqiruvlar ko'p), lekin endi hech qanday
+ * bezak chizmaydi: oldin raqam yashil rangda va yonida yashil chiziqcha
+ * bilan chizilardi — bu "hujjat" ohangi yangi tizimning tinchligiga
+ * to'g'ri kelmaydi.
  */
 export function Eyebrow({
-  index,
   children,
   className,
 }: {
@@ -341,29 +345,15 @@ export function Eyebrow({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <p className={cn("t-eyebrow flex items-center gap-2", className)}>
-      {typeof index === "number" ? (
-        <>
-          <span className="text-[var(--brand)]">{String(index).padStart(2, "0")}</span>
-          <span aria-hidden className="h-px w-4 bg-[var(--edge-strong)]" />
-        </>
-      ) : null}
-      {children}
-    </p>
-  );
+  return <p className={cn("ts-label", className)}>{children}</p>;
 }
 
 /* ==========================================================================
-   Qiyinlik belgisi — uch pog'onali ustun
+   QIYINLIK BELGISI
    --------------------------------------------------------------------------
-   Palitrada yashil/sariq/qizil yo'q, shuning uchun daraja RANG bilan emas
-   ikki signal bilan beriladi: nechta ustun to'lgani (shakl) va ustunlar
-   qanchalik quyuq ekani (ton). Bu yondashuv rang ko'rmaydigan foydalanuvchi
-   uchun ham baravar ishlaydi.
-
-   Yorliq matni doim `--ink-2`: eng och ton (`--easy`) 12px matnda oq fonda
-   AA kontrast bermaydi, ustun belgisi uchun esa yetarli.
+   Daraja ikki signal bilan beriladi: nechta ustun to'lgani (SHAKL) va
+   ustunlar qanchalik quyuq yashil ekani (TON). Rang ko'rmaydigan
+   foydalanuvchi uchun ham baravar ishlaydi.
    ========================================================================== */
 export function DifficultyMark({
   value,
@@ -385,16 +375,16 @@ export function DifficultyMark({
         {[0, 1, 2].map((index) => (
           <span
             key={index}
-            className="w-[3px] rounded-[1px] transition-colors"
+            className="w-[3px] rounded-[1px]"
             style={{
               height: `${5 + index * 3}px`,
-              backgroundColor: index < level ? color : "var(--edge-strong)",
+              backgroundColor: index < level ? color : "var(--line-strong)",
             }}
           />
         ))}
       </span>
       {showLabel ? (
-        <span className="text-[13px] font-medium text-[var(--ink-2)]">{label ?? value}</span>
+        <span className="text-[13px] text-[var(--text-2)]">{label ?? value}</span>
       ) : null}
     </span>
   );

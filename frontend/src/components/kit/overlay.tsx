@@ -112,10 +112,10 @@ export function Modal({
 
   return createPortal(
     <div className="fixed inset-0 z-100 flex items-end justify-center sm:items-center sm:p-6">
-      {/* Parda iliq siyoh rangida — sovuq ko'kish qatlam iliq qog'oz ustida
+      {/* Parda chuqur zumrad rangida — sovuq kulrang qatlam oq qog'oz ustida
           "boshqa mahsulotdan" ko'rinardi. */}
       <div
-        className="enter-veil absolute inset-0 bg-[rgb(10_10_10/0.5)] backdrop-blur-[2px]"
+        className="enter-veil absolute inset-0 bg-[rgb(16_24_20/0.45)] backdrop-blur-[3px]"
         onClick={persistent ? undefined : onClose}
       />
 
@@ -128,43 +128,43 @@ export function Modal({
         className={cn(
           "relative flex w-full flex-col outline-none",
           "max-h-[92dvh] sm:max-h-[85dvh]",
-          "rounded-t-[var(--r-pane-lg)] sm:rounded-[var(--r-pane)]",
-          "border border-[var(--edge)] bg-[var(--pane-solid)] shadow-[var(--lift-pop)]",
+          "rounded-t-[var(--radius-xl)] sm:rounded-[var(--radius-lg)]",
+          "border border-[var(--line)] bg-[var(--surface)] shadow-[var(--shadow-lg)]",
           "enter-sheet sm:enter-pop",
           WIDTHS[size],
         )}
       >
         {/* Mobil tutqich */}
         <div className="flex justify-center pt-2.5 pb-1 sm:hidden">
-          <span className="h-1 w-9 rounded-full bg-[var(--edge-strong)]" />
+          <span className="h-1.5 w-12 rounded-full bg-[var(--line-strong)]" />
         </div>
 
         {title || description ? (
-          <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 sm:pt-6">
+          <div className="flex items-start justify-between gap-5 px-8 pt-7 pb-5 sm:pt-8">
             <div className="min-w-0">
               {title ? (
-                <h2 id={titleId} className="t-section text-[var(--ink)]">
+                <h2 id={titleId} className="ts-h2 text-[var(--text)]">
                   {title}
                 </h2>
               ) : null}
               {description ? (
-                <p className="t-meta mt-1.5 text-[var(--ink-3)]">{description}</p>
+                <p className="ts-sm mt-1.5 text-[var(--text-3)]">{description}</p>
               ) : null}
             </div>
             <IconButton label="Yopish" size="sm" onClick={onClose} data-close className="-mt-1 -mr-2">
-              <X className="size-4" />
+              <X className="size-5" />
             </IconButton>
           </div>
         ) : null}
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-8">{children}</div>
 
         {footer ? (
           <div
             className={cn(
-              "flex items-center justify-end gap-2 border-t border-[var(--edge)]",
-              "bg-[var(--pane-sunken)] px-6 py-3.5",
-              "rounded-b-[var(--r-pane)] pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-3.5",
+              "flex items-center justify-end gap-2 border-t border-[var(--line)]",
+              "bg-[var(--surface-sunk)] px-8 py-5",
+              "rounded-b-[var(--radius-lg)] pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:pb-5",
             )}
           >
             {footer}
@@ -221,9 +221,9 @@ export function Tooltip({
           role="tooltip"
           className={cn(
             "enter-pop pointer-events-none absolute left-1/2 z-90 -translate-x-1/2",
-            "rounded-[var(--r-ctl)] border border-[var(--edge)] bg-[var(--pane-solid)]",
-            "px-2.5 py-1.5 text-[12px] font-medium whitespace-nowrap text-[var(--ink)]",
-            "shadow-[var(--lift-2)]",
+            "rounded-[10px] border border-[var(--line)] bg-[var(--surface)]",
+            "px-3 py-2 text-[13px] font-medium whitespace-nowrap text-[var(--text)]",
+            "shadow-[var(--shadow-sm)]",
             side === "top" ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]",
           )}
         >
@@ -286,8 +286,8 @@ export function Popover({
         // Ochilish: fade + pastga siljish (`enter-pop`, 200ms) — dizayn
         // tizimidagi ochiluvchi menyu qoidasi.
         "enter-pop absolute top-[calc(100%+10px)] z-80 min-w-56",
-        "rounded-[var(--r-pane)] border border-[var(--edge)] bg-[var(--pane-solid)] p-1.5",
-        "shadow-[var(--lift-pop)]",
+        "rounded-[var(--radius-lg)] border border-[var(--line)] bg-[var(--surface)] p-2",
+        "shadow-[var(--shadow-lg)]",
         align === "end" ? "right-0" : "left-0",
         className,
       )}
@@ -298,8 +298,8 @@ export function Popover({
 }
 
 const MENU_ROW = [
-  "flex w-full items-center gap-3 rounded-[8px] px-3 py-2.5 text-left",
-  "text-[14px] font-medium transition-colors duration-[var(--t-fast)] focus-ring",
+  "flex w-full items-center gap-3 rounded-[14px] px-3.5 py-3 text-left",
+  "text-[15px] font-medium transition-colors duration-[var(--dur-1)] ring-focus",
 ].join(" ");
 
 /** Menyudagi havola — `MenuItem` bilan bir xil ko'rinish, lekin `<a>`. */
@@ -308,26 +308,45 @@ export function MenuLink({
   icon,
   onClick,
   className,
+  external,
   children,
 }: {
   href: string;
   icon?: React.ReactNode;
   onClick?: () => void;
   className?: string;
+  /**
+   * Next router bilan emas, to'liq sahifa yuklash bilan ochiladi.
+   * Sayt ichidagi, lekin Next'ga tegishli BO'LMAGAN manzillar uchun
+   * (masalan Django admin `/admin/`) — router ularni topa olmaydi va
+   * 404 ko'rsatib qo'yadi.
+   */
+  external?: boolean;
   children: React.ReactNode;
 }) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className={cn(
-        MENU_ROW,
-        "text-[var(--ink)] hover:bg-[var(--pane-hover)] hover:text-[var(--brand)]",
-        className,
-      )}
-    >
+  const body = (
+    <>
       {icon ? <span className="shrink-0 opacity-70">{icon}</span> : null}
       <span className="min-w-0 flex-1 truncate">{children}</span>
+    </>
+  );
+  const classes = cn(
+    MENU_ROW,
+    "text-[var(--text)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
+    className,
+  );
+
+  if (external) {
+    return (
+      <a href={href} onClick={onClick} className={classes}>
+        {body}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} onClick={onClick} className={classes}>
+      {body}
     </Link>
   );
 }
@@ -351,8 +370,8 @@ export function MenuItem({
       className={cn(
         MENU_ROW,
         tone === "bad"
-          ? "text-[var(--bad)] hover:bg-[var(--bad-wash)]"
-          : "text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+          ? "text-[var(--danger)] hover:bg-[var(--danger-wash)]"
+          : "text-[var(--text-2)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
         className,
       )}
       {...rest}
@@ -360,7 +379,7 @@ export function MenuItem({
       {icon ? <span className="shrink-0 opacity-70">{icon}</span> : null}
       <span className="min-w-0 flex-1 truncate">{children}</span>
       {shortcut ? (
-        <kbd className="rounded-[5px] border border-[var(--edge)] px-1.5 py-0.5 font-sans text-[11px] font-medium text-[var(--ink-3)]">
+        <kbd className="rounded-[5px] border border-[var(--line)] px-1.5 py-0.5 font-sans text-[12px] font-medium text-[var(--text-3)]">
           {shortcut}
         </kbd>
       ) : null}

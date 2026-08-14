@@ -156,7 +156,7 @@ export function Popover({
       }}
       className={cn(
         // Suzuvchi qatlam fizikasi: pane-float + tez "pop" kirish
-        "enter-pop z-[60] flex origin-top flex-col overflow-hidden rounded-[var(--r-pane)] pane-float",
+        "enter-pop z-[60] flex origin-top flex-col overflow-hidden rounded-[var(--radius-lg)] float",
         className,
       )}
     >
@@ -185,7 +185,7 @@ export interface MenuItem {
 }
 
 const ITEM_CLASS =
-  "flex w-full items-center gap-2.5 rounded-[var(--r-ctl)] px-2.5 py-2 text-left text-[13px] font-medium transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-45";
+  "flex w-full items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-2 text-left text-[14px] font-medium transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-45";
 
 /**
  * Qator amallari uchun menyu — klaviatura bilan to'liq boshqariladi
@@ -287,11 +287,11 @@ export function DropdownMenu({
         }}
         onKeyDown={onTriggerKeyDown}
         className={cn(
-          "inline-flex size-8 shrink-0 items-center justify-center rounded-[var(--r-ctl)] text-[var(--ink-3)] focus-ring",
-          "transition-colors duration-[var(--t-fast)]",
-          "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+          "inline-flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] text-[var(--text-3)] ring-focus",
+          "transition-colors duration-[var(--dur-1)]",
+          "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
           "disabled:pointer-events-none disabled:opacity-45",
-          open && "bg-[var(--pane-sunken)] text-[var(--ink)]",
+          open && "bg-[var(--surface-sunk)] text-[var(--text)]",
           triggerClassName,
         )}
       >
@@ -306,20 +306,20 @@ export function DropdownMenu({
         minWidth={width}
         role="menu"
       >
-        <div className="scrollbar-thin overflow-y-auto p-1.5" onKeyDown={onPanelKeyDown}>
+        <div className="scroll-thin overflow-y-auto p-1.5" onKeyDown={onPanelKeyDown}>
           {items.map((item, index) => {
             const className = cn(
               ITEM_CLASS,
               item.danger
-                ? "text-[var(--bad)] hover:bg-[var(--bad-wash)] focus:bg-[var(--bad-wash)]"
-                : "text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)] focus:bg-[var(--pane-sunken)] focus:text-[var(--ink)]",
+                ? "text-[var(--danger)] hover:bg-[var(--danger-wash)] focus:bg-[var(--danger-wash)]"
+                : "text-[var(--text-2)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)] focus:bg-[var(--surface-sunk)] focus:text-[var(--text)]",
             );
             const content = (
               <>
-                {item.icon ? <span className="shrink-0 text-[var(--ink-4)]">{item.icon}</span> : null}
+                {item.icon ? <span className="shrink-0 text-[var(--text-4)]">{item.icon}</span> : null}
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
                 {item.hint ? (
-                  <kbd className="shrink-0 rounded-[6px] bg-[var(--pane-sunken)] px-1.5 py-0.5 font-sans text-[11px] font-medium text-[var(--ink-3)]">
+                  <kbd className="shrink-0 rounded-[6px] bg-[var(--surface-sunk)] px-1.5 py-0.5 font-sans text-[12px] font-medium text-[var(--text-3)]">
                     {item.hint}
                   </kbd>
                 ) : null}
@@ -329,7 +329,7 @@ export function DropdownMenu({
             return (
               <div key={item.key}>
                 {item.separatorBefore ? (
-                  <div className="my-1 border-t border-[var(--edge)]" />
+                  <div className="my-1 border-t border-[var(--line)]" />
                 ) : null}
                 {item.href ? (
                   <a

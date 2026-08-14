@@ -19,8 +19,8 @@ import { cn } from "@/lib/utils";
    ========================================================================== */
 
 const ROW = [
-  "flex w-full items-center gap-2.5 rounded-[6px] px-2.5 py-[7px] text-left",
-  "text-[13px] font-medium transition-colors duration-[var(--t-fast)] focus-ring",
+  "flex w-full items-center gap-3 rounded-[12px] px-3 py-2.5 text-left",
+  "text-[15px] font-medium transition-colors duration-[var(--dur-1)] ring-focus",
 ].join(" ");
 
 export function PrefsMenu({ className }: { className?: string }) {
@@ -44,10 +44,10 @@ export function PrefsMenu({ className }: { className?: string }) {
         aria-label={t.site.nav.appearance}
         title={t.site.nav.appearance}
         className={cn(
-          "flex size-9 items-center justify-center rounded-[var(--r-ctl)] focus-ring",
-          "text-[var(--ink-3)] transition-colors duration-[var(--t-fast)]",
-          "hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
-          open && "bg-[var(--pane-hover)] text-[var(--ink)]",
+          "flex size-9 items-center justify-center rounded-[var(--radius-sm)] ring-focus",
+          "text-[var(--text-3)] transition-colors duration-[var(--dur-1)]",
+          "hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
+          open && "bg-[var(--surface-hover)] text-[var(--text)]",
         )}
       >
         {resolved === "dark" ? <Moon className="size-[17px]" /> : <Sun className="size-[17px]" />}
@@ -55,7 +55,7 @@ export function PrefsMenu({ className }: { className?: string }) {
 
       <Popover open={open} onClose={() => setOpen(false)} className="min-w-44">
         <div role="menu" aria-label={t.site.nav.appearance}>
-          <p className="t-eyebrow px-2.5 pt-1.5 pb-1.5">{t.site.nav.appearance}</p>
+          <p className="ts-label px-2.5 pt-1.5 pb-1.5">{t.site.nav.appearance}</p>
           {themes.map((item) => {
             const active = mode === item.value;
             return (
@@ -71,15 +71,15 @@ export function PrefsMenu({ className }: { className?: string }) {
                 className={cn(
                   ROW,
                   active
-                    ? "bg-[var(--brand-wash)] text-[var(--brand-ink)]"
-                    : "text-[var(--ink-2)] hover:bg-[var(--pane-hover)] hover:text-[var(--ink)]",
+                    ? "bg-[var(--green-wash)] text-[var(--green-text)]"
+                    : "text-[var(--text-2)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]",
                 )}
               >
-                <span className={cn("shrink-0", active ? "text-[var(--brand)]" : "opacity-70")}>
+                <span className={cn("shrink-0", active ? "text-[var(--green)]" : "opacity-70")}>
                   {item.icon}
                 </span>
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {active ? <Check className="size-3.5 shrink-0 text-[var(--brand)]" /> : null}
+                {active ? <Check className="size-3.5 shrink-0 text-[var(--green)]" /> : null}
               </button>
             );
           })}

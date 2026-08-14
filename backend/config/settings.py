@@ -1,9 +1,15 @@
 """
 CodeArena — Django sozlamalari.
 
-MUHIM: `django.contrib.admin` ATAYLAB o'chirilgan. Loyiha texnik
-spetsifikatsiyasiga ko'ra admin panel Next.js frontendida maxsus qurilgan
-sahifalar (`/admin/...`) va DRF API endpointlari orqali ishlaydi.
+ADMIN PANEL: `django.contrib.admin` + `django-unfold` temasi (`/admin/`).
+Ilgari bu yerda Next.js'da maxsus qurilgan panel bor edi; u olib tashlandi.
+Sabab: har bir yangi model uchun sahifa, forma, filtr va jadval qo'lda
+yozilishi kerak edi va panel doim modeldan orqada qolardi. Django admin
+esa modeldan avtomatik quriladi — yangi maydon qo'shilsa, u o'sha zahoti
+panelda paydo bo'ladi.
+
+Kontent TAYYORLASH (masala, olimpiada, test) Django adminda emas —
+`/studio` panelida: u yerda kod muharriri, generator va checker kerak.
 """
 from __future__ import annotations
 
@@ -31,11 +37,21 @@ def env_list(key: str, default: str = "") -> list[str]:
 
 # ---------------------------------------------------------------- asosiy
 SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-only-insecure-key-change-me")
-DEBUG = env_bool("DJANGO_DEBUG", True)
+# Standart qiymat ATAYLAB `False`: prod muhitida `DJANGO_DEBUG` unutilsa,
+# sayt debug rejimida (HSTS o'chiq, maxfiy kalit tekshiruvi o'chiq, lokal
+# judge yoqiq) ochilib qolmasin. Lokal ishda `.env` da `DJANGO_DEBUG=True`.
+DEBUG = env_bool("DJANGO_DEBUG", False)
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,0.0.0.0")
 
 INSTALLED_APPS = [
-    # django.contrib.admin ATAYLAB yo'q — 3-bo'limdagi izohga qarang
+    # `unfold` va uning modullari `django.contrib.admin` DAN OLDIN turishi
+    # shart: ular admin shablonlarini almashtiradi, shablon qidiruvida esa
+    # birinchi mos kelgan ilova yutadi.
+    "unfold",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "unfold.contrib.inlines",
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -54,7 +70,7 @@ INSTALLED_APPS = [
     "apps.problems",
     "apps.judge",
     "apps.contests",
-    "apps.courses",
+    "apps.assessments",
     "apps.content",
     "apps.community",
     "apps.moderation",
@@ -192,11 +208,92 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# --------------------------------------------------------------- admin panel
+#
+# Tema — `django-unfold`. Ranglar sayt dizayn tizimidan olingan (OQ va
+# YASHIL), shuning uchun panel saytdan ajralib turmaydi. Tailwind ranglarni
+# `R G B` ko'rinishida kutadi — HEX emas.
+#
+# `base` shkalasi ham sof kulrang emas, YASHILGA moyil zumrad-kulrang: sayt
+# tomonda chegara va matn aynan shu ohangda (`--edge`, `--ink-*`), sof
+# kulrang esa yashil aksent yonida "kir" bo'lib ko'rinadi.
+#
+# Yon menyu QO'LDA yozilgan: avtomatik ro'yxat modellarni ilova bo'yicha
+# guruhlaydi va «Problems / Contests / Assessments» kabi texnik nomlarni
+# ko'rsatadi. Bu yerda esa guruhlar ISH bo'yicha ajratilgan va nomlari
+# o'zbekcha — kerakli bo'limni qidirib o'tirish shart emas.
+UNFOLD = {
+    "SITE_TITLE": "CodeArena boshqaruvi",
+    "SITE_HEADER": "CodeArena",
+    "SITE_SUBHEADER": "Boshqaruv paneli",
+    "SITE_URL": "/",
+    "SITE_SYMBOL": "terminal",
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    "SHOW_BACK_BUTTON": True,
+    "ENVIRONMENT": "config.admin_site.environment_badge",
+    "DASHBOARD_CALLBACK": "config.admin_site.dashboard_callback",
+    "LOGIN": {"image": None},
+    "BORDER_RADIUS": "14px",
+    "COLORS": {
+        # Zumradga moyil neytral shkala — sayt `--edge`/`--ink-*` bilan bir oila.
+        "base": {
+            "50": "247 251 249",
+            "100": "239 247 243",
+            "200": "227 239 232",
+            "300": "198 222 209",
+            "400": "157 186 172",
+            "500": "94 124 111",
+            "600": "71 97 86",
+            "700": "47 74 62",
+            "800": "29 51 42",
+            "900": "14 31 25",
+            "950": "11 34 26",
+        },
+        # `--brand` #00814E atrofidagi shkala.
+        "primary": {
+            "50": "237 250 243",
+            "100": "211 242 227",
+            "200": "165 228 199",
+            "300": "111 214 168",
+            "400": "22 182 115",
+            "500": "0 129 78",
+            "600": "0 113 68",
+            "700": "0 105 63",
+            "800": "0 87 51",
+            "900": "0 71 43",
+            "950": "4 23 15",
+        },
+        "font": {
+            "subtle-light": "94 124 111",
+            "subtle-dark": "157 186 172",
+            "default-light": "11 34 26",
+            "default-dark": "242 251 246",
+            "important-light": "11 34 26",
+            "important-dark": "255 255 255",
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        # «Barcha ilovalar» ro'yxati o'chirilgan: u qo'lda tuzilgan menyuni
+        # takrorlaydi va texnik nomlar bilan chalkashtiradi.
+        "show_all_applications": False,
+        "navigation": "config.admin_site.sidebar_navigation",
+    },
+    "TABS": [],
+}
+
 # ---------------------------------------------------------------- i18n
 LANGUAGE_CODE = "uz"
 TIME_ZONE = env("TIME_ZONE", "Asia/Tashkent")
 USE_I18N = True
 USE_TZ = True
+
+# Loyihaning o'z tarjimalari — Django va `unfold` kataloglaridan USTUN
+# turadi (`LOCALE_PATHS` ilova kataloglaridan oldin tekshiriladi).
+# Faqat yetishmayotgan yoki noqulay tarjimalar shu yerda qayta yoziladi.
+# `.po` o'zgargach: `python manage.py compile_locale`.
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -271,6 +368,10 @@ REST_FRAMEWORK = {
         "anon": env("ANON_RATE", "90/min"),
         "user": env("USER_RATE", "600/min"),
         "submission": env("SUBMISSION_RATE", "10/min"),
+        # Studio qumlog'i: har bir chaqiruv alohida jarayon ishga tushiradi.
+        # Faqat muallif/moderator/adminga ochiq, shuning uchun tom baland —
+        # lekin cheksiz emas: bitta sahifa 30 tagacha test yasashi mumkin.
+        "studio_sandbox": env("STUDIO_SANDBOX_RATE", "120/min"),
         "auth": env("AUTH_RATE", "20/min"),
         # Parolni tiklash: IP bo'yicha va nishon email bo'yicha alohida.
         # Nishon bo'yicha cheklov IP almashtirib xat yog'dirishni to'sadi.
@@ -288,10 +389,6 @@ REST_FRAMEWORK = {
         # Interfeys lug'ati: brauzer uni bir marta yuklab localStorage'ga
         # yozadi, shuning uchun tez-tez so'rash kerak emas
         "translate": env("TRANSLATE_RATE", "30/min"),
-        # Kurs misoli va topshirig'ini bajarish. Masala yuborishdan
-        # (`submission`) yumshoqroq: o'quv jarayonida kod ko'p marta
-        # ishga tushiriladi — bu odatiy holat, suiiste'mol emas.
-        "course_run": env("COURSE_RUN_RATE", "40/min"),
     },
     "EXCEPTION_HANDLER": "apps.core.exceptions.api_exception_handler",
 }
@@ -328,8 +425,13 @@ CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
 )
 CORS_ALLOW_CREDENTIALS = True
+# Admin panel formalarida CSRF `Origin`/`Referer` bo'yicha tekshiriladi.
+# Panel Next.js proksisi orqali ochilgani uchun brauzer FRONTEND manzilini
+# yuboradi — shuning uchun ro'yxatda backend porti emas, sayt manzili turadi.
+# `localhost:8001` esa backendni to'g'ridan-to'g'ri ochib sinash uchun.
 CSRF_TRUSTED_ORIGINS = env_list(
-    "CSRF_TRUSTED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+    "CSRF_TRUSTED_ORIGINS",
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8001,http://127.0.0.1:8001",
 )
 
 # ---------------------------------------------------------------- Celery
@@ -351,15 +453,17 @@ CACHES = {
     )
 }
 
-# ---------------------------------------------------------------- Judge0
-JUDGE0_URL = env("JUDGE0_URL", "http://localhost:2358")
-JUDGE0_TOKEN = env("JUDGE0_TOKEN", "")
-JUDGE0_CALLBACK_URL = env("JUDGE0_CALLBACK_URL", "")
+# ----------------------------------------------------------- kod bajarish
+# Runner — ishonchsiz kod bajariladigan ALOHIDA konteyner (`infra/runner`).
+# Bu qiymatlar sayt sozlamalarining boshlang'ich holatini beradi; keyin ular
+# admin panelda o'zgartiriladi (`apps/core/site_settings.py`).
+RUNNER_URL = env("RUNNER_URL", "http://localhost:2400")
+RUNNER_TOKEN = env("RUNNER_TOKEN", "")
 
-# Lokal judge — Judge0 ishlamayotganda kodni shu serverda bajaradi.
+# Lokal ijro — runner ishlamayotganda kodni SHU serverda bajaradi.
 # Bu TO'LIQ SANDBOX EMAS (apps/judge/runner.py dagi izohga qarang), shuning
 # uchun sukut bo'yicha faqat DEBUG rejimida yoqiladi. Produksiyada ishonchsiz
-# foydalanuvchilar kodi uchun Judge0 (Docker izolyatsiyasi) ishlatilsin.
+# foydalanuvchi kodi faqat runner konteynerida bajarilishi kerak.
 LOCAL_JUDGE_ENABLED = env_bool("LOCAL_JUDGE_ENABLED", DEBUG)
 
 # Lokal judge dasturlarni qidiradigan QO'SHIMCHA kataloglar (`;` yoki `:` bilan).

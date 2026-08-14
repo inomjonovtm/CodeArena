@@ -57,11 +57,6 @@ ignore = [
 "**/tests/*" = ["S105", "S106", "E501"]
 # Seed skripti demo parollarni ataylab ishlatadi
 "**/management/commands/seed_demo.py" = ["S105", "S106", "S311"]
-# Kurs kontenti — nazariya matni uzun qatorlarda saqlanadi. Saytning
-# Markdown renderi HAR BIR QATORNI alohida paragraf deb chizadi, ya'ni
-# matnni 120 belgida o'rash sahifada uzilgan paragraflar bo'lib ko'rinardi.
-"apps/courses/seed_data/*.py" = ["E501"]
-
 [tool.ruff.lint.isort]
 known-first-party = ["apps", "config"]
 

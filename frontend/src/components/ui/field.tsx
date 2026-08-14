@@ -14,11 +14,13 @@ export type { SegmentOption } from "./segmented";
 /* Kirish maydoni "botiq" — yozish mumkinligi shakldan ko'rinadi.
    Fokusda maydon oqarib ko'tariladi va brend halqasi paydo bo'ladi. */
 const baseControl =
-  "w-full rounded-[var(--r-field)] border border-[var(--edge)] bg-[var(--pane-sunken)] px-3.5 text-sm text-[var(--ink)] " +
-  "placeholder:text-[var(--ink-4)] outline-none " +
-  "transition-[background-color,border-color,box-shadow] duration-[var(--t-fast)] " +
-  "hover:border-[var(--edge)] " +
-  "focus:border-[var(--brand-edge)] focus:bg-[var(--pane-solid)] focus:shadow-[0_0_0_var(--focus-w)_var(--focus)] " +
+  "w-full rounded-[var(--radius-sm)] border border-[var(--line)] bg-[var(--surface-sunk)] px-3.5 text-sm text-[var(--text)] " +
+  "placeholder:text-[var(--text-4)] " +
+  "transition-[background-color,border-color,box-shadow] duration-[var(--dur-1)] " +
+  "hover:border-[var(--line)] " +
+  // Halqa YO'Q: fokus konturi tizimda global (`aurora.css`, 5a-bo'lim).
+  // Ikkalasi birga maydon atrofida ikki qavatli ramka chizardi.
+  "focus:border-[var(--green)] focus:bg-[var(--surface)] " +
   "disabled:cursor-not-allowed disabled:opacity-55";
 
 // ------------------------------------------------------------------ Field
@@ -36,16 +38,16 @@ export function Field({ label, hint, error, required, htmlFor, className, childr
   return (
     <div className={cn("flex min-w-0 flex-col gap-1.5", className)}>
       {label ? (
-        <label htmlFor={htmlFor} className="text-[13px] font-medium text-[var(--ink-2)]">
+        <label htmlFor={htmlFor} className="text-[14px] font-medium text-[var(--text-2)]">
           {label}
-          {required ? <span className="ml-0.5 text-[var(--bad)]">*</span> : null}
+          {required ? <span className="ml-0.5 text-[var(--danger)]">*</span> : null}
         </label>
       ) : null}
       {children}
       {error ? (
-        <p className="text-xs text-[var(--bad)]">{error}</p>
+        <p className="text-xs text-[var(--danger)]">{error}</p>
       ) : hint ? (
-        <p className="text-xs text-[var(--ink-4)]">{hint}</p>
+        <p className="text-xs text-[var(--text-4)]">{hint}</p>
       ) : null}
     </div>
   );
@@ -66,21 +68,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     return (
       <div className="relative flex items-center">
         {prefixIcon ? (
-          <span className="pointer-events-none absolute left-3.5 text-[var(--ink-4)]">{prefixIcon}</span>
+          <span className="pointer-events-none absolute left-3.5 text-[var(--text-4)]">{prefixIcon}</span>
         ) : null}
         <input
           ref={ref}
           className={cn(
             baseControl,
-            "h-9",
+            "h-11",
             prefixIcon && "pl-10",
             suffix && "pr-10",
-            invalid && "border-[var(--bad)] focus:border-[var(--bad)]",
+            invalid && "border-[var(--danger)] focus:border-[var(--danger)]",
             className,
           )}
           {...props}
         />
-        {suffix ? <span className="absolute right-3.5 text-[var(--ink-4)]">{suffix}</span> : null}
+        {suffix ? <span className="absolute right-3.5 text-[var(--text-4)]">{suffix}</span> : null}
       </div>
     );
   }
@@ -89,8 +91,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ref={ref}
       className={cn(
         baseControl,
-        "h-9",
-        invalid && "border-[var(--bad)] focus:border-[var(--bad)]",
+        "h-11",
+        invalid && "border-[var(--danger)] focus:border-[var(--danger)]",
         className,
       )}
       {...props}
@@ -130,7 +132,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         baseControl,
         autoGrow ? "resize-none" : "resize-y",
         "py-2.5 leading-relaxed",
-        invalid && "border-[var(--bad)] focus:border-[var(--bad)]",
+        invalid && "border-[var(--danger)] focus:border-[var(--danger)]",
         className,
       )}
       {...props}
@@ -145,7 +147,7 @@ export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputE
 }
 
 /* Tug'ma `accent-color` kvadrati platformaga qarab turlicha chiziladi va
-   brend ko'ki xira chiqadi. Shuning uchun kvadrat o'zimizniki: `appearance-none`
+   brend yashili xira chiqadi. Shuning uchun kvadrat o'zimizniki: `appearance-none`
    input + ustidagi belgi. Klaviatura va `indeterminate` xulqi saqlanadi. */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   { className, label, description, id, ...props },
@@ -161,12 +163,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
           id={inputId}
           type="checkbox"
           className={cn(
-            "peer size-4 cursor-pointer appearance-none rounded-[5px] focus-ring",
-            "border border-[var(--edge-strong)] bg-[var(--pane-solid)]",
-            "transition-[background-color,border-color] duration-[var(--t-fast)]",
-            "hover:border-[var(--brand)]",
-            "checked:border-[var(--brand)] checked:bg-[var(--brand)]",
-            "indeterminate:border-[var(--brand)] indeterminate:bg-[var(--brand)]",
+            "peer size-4 cursor-pointer appearance-none rounded-[5px] ring-focus",
+            "border border-[var(--line-strong)] bg-[var(--surface)]",
+            "transition-[background-color,border-color] duration-[var(--dur-1)]",
+            "hover:border-[var(--green)]",
+            "checked:border-[var(--green)] checked:bg-[var(--green)]",
+            "indeterminate:border-[var(--green)] indeterminate:bg-[var(--green)]",
             "disabled:cursor-not-allowed disabled:opacity-50",
             className,
           )}
@@ -175,20 +177,20 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
         <Check
           aria-hidden
           strokeWidth={3.2}
-          className="pointer-events-none absolute size-3 text-[var(--ink-on-brand)] opacity-0 peer-checked:opacity-100 peer-indeterminate:opacity-0"
+          className="pointer-events-none absolute size-3 text-[var(--text-on-green)] opacity-0 peer-checked:opacity-100 peer-indeterminate:opacity-0"
         />
         <Minus
           aria-hidden
           strokeWidth={3.2}
-          className="pointer-events-none absolute size-3 text-[var(--ink-on-brand)] opacity-0 peer-indeterminate:opacity-100"
+          className="pointer-events-none absolute size-3 text-[var(--text-on-green)] opacity-0 peer-indeterminate:opacity-100"
         />
       </span>
       {label || description ? (
         <label htmlFor={inputId} className="cursor-pointer select-none">
           {label ? (
-            <span className="text-[13px] font-medium text-[var(--ink)]">{label}</span>
+            <span className="text-[14px] font-medium text-[var(--text)]">{label}</span>
           ) : null}
-          {description ? <p className="text-xs text-[var(--ink-4)]">{description}</p> : null}
+          {description ? <p className="text-xs text-[var(--text-4)]">{description}</p> : null}
         </label>
       ) : null}
     </div>
@@ -213,8 +215,8 @@ export function Switch({
     <div className="flex items-center justify-between gap-4">
       {label || description ? (
         <div className="min-w-0">
-          {label ? <p className="text-[13px] font-medium text-[var(--ink)]">{label}</p> : null}
-          {description ? <p className="text-xs text-[var(--ink-4)]">{description}</p> : null}
+          {label ? <p className="text-[14px] font-medium text-[var(--text)]">{label}</p> : null}
+          {description ? <p className="text-xs text-[var(--text-4)]">{description}</p> : null}
         </div>
       ) : null}
       <button
@@ -224,19 +226,19 @@ export function Switch({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative h-6 w-11 shrink-0 cursor-pointer rounded-[var(--r-chip)] focus-ring",
-          "transition-colors duration-[var(--t-base)] ease-[var(--ease-snap)]",
+          "relative h-6 w-11 shrink-0 cursor-pointer rounded-[var(--radius-xs)] ring-focus",
+          "transition-colors duration-[var(--dur-2)] ease-[var(--ease)]",
           "disabled:cursor-not-allowed disabled:opacity-50",
           checked
-            ? "bg-[var(--brand)] shadow-[inset_0_1px_2px_rgb(0_0_0/0.14)]"
-            : "border border-[var(--edge)] bg-[var(--pane-sunken)]",
+            ? "bg-[var(--green)] shadow-[inset_0_1px_2px_rgb(0_0_0/0.14)]"
+            : "border border-[var(--line)] bg-[var(--surface-sunk)]",
         )}
       >
         <span
           className={cn(
             "absolute top-1/2 size-4.5 -translate-y-1/2 rounded-[7px] bg-white",
             "shadow-[0_1px_3px_rgb(15_26_51/0.28)]",
-            "transition-[left] duration-[var(--t-base)] ease-[var(--ease-snap)]",
+            "transition-[left] duration-[var(--dur-2)] ease-[var(--ease)]",
             checked ? "left-[calc(100%-1.25rem)]" : "left-[3px]",
           )}
         />

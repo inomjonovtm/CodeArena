@@ -19,7 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     orientation: "portrait-primary",
     // Yuklanish ekrani sayt fonining o'zi bo'lsin — "miltillash" bo'lmaydi.
-    // Qiymat `--canvas` (sof oq) bilan bir xil.
+    // Qiymat `--bg` (sof oq) bilan bir xil.
     background_color: "#ffffff",
     theme_color: "#ffffff",
     lang: "uz",

@@ -107,7 +107,7 @@ class Command(BaseCommand):
         if verify and engine.active_backend() == engine.BACKEND_NONE:
             raise CommandError(
                 "Judge ishlamayapti — testlarning kutilgan javobini hisoblab bo'lmaydi.\n"
-                "Judge0 ni ishga tushiring, LOCAL_JUDGE_ENABLED=True qiling "
+                "Runner konteynerini ishga tushiring, LOCAL_JUDGE_ENABLED=True qiling "
                 "yoki --skip-verify bilan ishlating."
             )
 

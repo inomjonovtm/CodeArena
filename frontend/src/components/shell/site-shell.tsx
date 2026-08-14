@@ -1,35 +1,27 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { CommandPalette } from "./command";
-import { SiteBar } from "./site-bar";
+import { MAIN_ID, SkipLink } from "./skip-link";
 import { SiteFooter } from "./site-footer";
 import { MobileMenu, MobileTabBar } from "./site-mobile";
+import { TopNav } from "./topnav";
 
 /* ==========================================================================
-   Sayt qobig'i
+   SAYT QOBIG'I
    --------------------------------------------------------------------------
-   Tartib: tepada navigatsiya paneli (ochiluvchi menyular bilan), ostida
-   kontent, eng pastda futer; mobilda qo'shimcha tab-panel. Chap rail olib
-   tashlangan — navigatsiya tepada, shuning uchun kontent butun kenglikni
-   egallaydi va sahifa markazlashadi.
+   Tepada navigatsiya lentasi (asosiy bo'limlar tekis, faol belgi — pastki
+   yashil chiziq), ostida MARKAZLASHGAN kontent (1120px), eng pastda
+   ingichka futer. Mobilda qo'shimcha pastki tab-panel.
 
-   Futer huquqiy va yordam havolalarini ushlab turadi: railsiz tartibda
-   ularga boshqa yo'l qolmagan edi.
-
-   SAHIFA ALMASHUVI. `<main>` ga manzil bo'yicha `key` beriladi, shuning
-   uchun har bir yangi sahifada React blokni qaytadan o'rnatadi va
-   `page-in` animatsiyasi (220ms fade + 8px ko'tarilish) qayta ishga
-   tushadi. Siljish ataylab kichik: yirik siljish yopishqoq panel bilan
-   to'qnashadi va sahifa "sakragan" ko'rinadi.
+   Har bir sahifa `PageHead` bilan boshlanadi — u och yashil PANEL bo'lib,
+   sahifaning "boshi" ekanini fon bilan e'lon qiladi (surface.tsx).
    ========================================================================== */
 
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = usePathname();
 
   // ⌘K / Ctrl+K — buyruq paneli. `/` ham ishlaydi, lekin faqat matn
   // maydonidan tashqarida: aks holda izoh yozayotganda panel ochilib ketardi.
@@ -57,13 +49,15 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="aurora-canvas flex min-h-dvh flex-col">
-      <SiteBar onCommand={() => setCommandOpen(true)} onMobileMenu={() => setMenuOpen(true)} />
+    <div className="flex min-h-dvh flex-col bg-[var(--bg)]">
+      <SkipLink />
 
-      {/* Navbar bilan AYNAN bir xil konteyner (`shell`): kenglik cheklovi va
-          chekinish bitta joyda — shu tufayli logo, menyu va sahifa bloklari
-          bir vertikal chiziqda turadi. */}
-      <main key={pathname} className="page-in shell flex-1 pt-12 pb-16 sm:pt-14 lg:pb-24">
+      <TopNav
+        onCommand={() => setCommandOpen(true)}
+        onMobileMenu={() => setMenuOpen(true)}
+      />
+
+      <main id={MAIN_ID} className="wrap w-full flex-1 pt-6 pb-16 sm:pt-8">
         {children}
       </main>
 

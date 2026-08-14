@@ -344,7 +344,6 @@ export const dictionaries = {
     site: {
       nav: {
         problems: "Masalalar",
-        courses: "Kurslar",
         daily: "Kunlik",
         contests: "Musobaqalar",
         leaderboard: "Reyting",
@@ -387,6 +386,11 @@ export const dictionaries = {
         terms: "Foydalanish shartlari",
         privacy: "Maxfiylik siyosati",
         tagline: "O'zbek tilidagi algoritmik masalalar platformasi — yeching, bellashing, o'sing.",
+        /* Futer tepasidagi ulkan bitta qatorli chaqiriq. Qisqa bo'lishi
+           SHART: u 104px gacha o'sadi va uzun jumla u yerda to'rt qatorga
+           bo'linib ketadi. */
+        ctaTitle: "Birinchi kodingizni bugun yozing.",
+        ctaHint: "Ro'yxatdan o'tish bepul — bir daqiqa.",
         rights: "Barcha huquqlar himoyalangan.",
         location: "Toshkent, O'zbekiston",
         social: "Ijtimoiy tarmoqlar",

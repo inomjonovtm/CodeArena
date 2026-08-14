@@ -116,3 +116,34 @@ def scan_problem_plagiarism(problem_id: str, threshold: float | None = None, lim
         if len(rows) > 1:
             total += _scan_group(rows, threshold)
     return f"pairs:{total}"
+
+
+@shared_task(name="apps.moderation.tasks.send_announcement_emails")
+def send_announcement_emails(announcement_id: str) -> int:
+    """E'lonni auditoriyaga email qilib yuboradi — FONDA.
+
+    So'rov oqimida yuborish 2000 ta qabul qiluvchida gunicorn timeout'iga
+    (120 s) yetib, jarayon o'rtada uzilardi: xat qisman ketgan, hisob esa
+    yozilmagan bo'lardi. Fon vazifasida bunday chegara yo'q, natija esa
+    yakunda modelga yoziladi.
+    """
+    from apps.accounts.emails import send_announcement_email
+
+    from .models import Announcement
+
+    announcement = Announcement.objects.filter(pk=announcement_id).first()
+    if announcement is None:
+        logger.warning("E'lon topilmadi: %s", announcement_id)
+        return 0
+
+    recipients = announcement.recipients().filter(notify_email=True)
+    sent = 0
+    for user in recipients[:2000].iterator():
+        if send_announcement_email(user, announcement.title_uz, announcement.body_uz):
+            sent += 1
+
+    announcement.email_sent_at = timezone.now()
+    announcement.email_recipients = sent
+    announcement.save(update_fields=["email_sent_at", "email_recipients"])
+    logger.info("E'lon emaili yuborildi: %s → %d ta", announcement_id, sent)
+    return sent

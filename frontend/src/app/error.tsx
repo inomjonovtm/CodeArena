@@ -31,21 +31,21 @@ export default function AppError({
   }, [error]);
 
   return (
-    <div className="aurora-canvas flex min-h-dvh items-center justify-center px-5 py-16">
+    <div className="bg-[var(--bg)] flex min-h-dvh items-center justify-center px-5 py-16">
       <div className="w-full max-w-md">
-        <span className="flex size-10 items-center justify-center rounded-full border border-[var(--bad)] text-[var(--bad)]">
+        <span className="flex size-10 items-center justify-center rounded-full border border-[var(--danger)] text-[var(--danger)]">
           <TriangleAlert className="size-5" />
         </span>
 
-        <h1 className="t-title mt-6 text-[var(--ink)]">Nimadir noto&apos;g&apos;ri ketdi</h1>
-        <p className="t-body mt-3 text-[var(--ink-3)]">
+        <h1 className="ts-h1 mt-6 text-[var(--text)]">Nimadir noto&apos;g&apos;ri ketdi</h1>
+        <p className="ts-body mt-3 text-[var(--text-3)]">
           Sahifani ko&apos;rsatishda kutilmagan xatolik yuz berdi. Qayta urinib ko&apos;ring —
           takrorlansa, biroz keyinroq qayting.
         </p>
 
         {error.digest ? (
-          <p className="t-meta mt-4 text-[var(--ink-4)]">
-            Xato kodi: <span className="t-num text-[var(--ink-2)]">{error.digest}</span>
+          <p className="ts-sm mt-4 text-[var(--text-4)]">
+            Xato kodi: <span className="ts-num text-[var(--text-2)]">{error.digest}</span>
           </p>
         ) : null}
 

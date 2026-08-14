@@ -3,6 +3,39 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const isDev = process.env.NODE_ENV !== "production";
 
 /**
+ * Produksiya buildi tashqi domensiz ketayotgan bo'lsa — BALAND OVOZDA aytamiz.
+ *
+ * `NEXT_PUBLIC_*` qiymatlarini Next build paytida kodga singdiradi, ya'ni
+ * konteyner ishga tushgach berilgan qiymat kech qoladi. Domen berilmasa
+ * `lib/site.ts` `http://localhost:3000` ga qaytadi va sayt tashqaridan
+ * QARAGANDA quyidagicha buziladi:
+ *
+ *   · `sitemap.xml` dagi barcha havolalar localhost — Google butun
+ *     sitemap'ni rad etadi;
+ *   · `robots.txt` dagi sitemap manzili ham localhost;
+ *   · `og:image` localhost — Telegram va X'da ulashilgan havolada rasm
+ *     umuman ochilmaydi.
+ *
+ * Sayt ISHLAYDI, shuning uchun build to'xtatilmaydi — lekin bu nosozlik
+ * faqat tashqaridan ko'rinadi va oylab sezilmay qolishi mumkin.
+ */
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+if (!isDev && (!siteUrl || siteUrl.includes("localhost"))) {
+  console.warn(
+    "\n" +
+      "=".repeat(78) +
+      "\n[site-url] OGOHLANTIRISH: NEXT_PUBLIC_SITE_URL qo'yilmagan" +
+      `${siteUrl ? ` (hozirgi qiymat: ${siteUrl})` : ""}.\n` +
+      "[site-url] sitemap.xml, robots.txt va og:image localhost'ga ishora qiladi.\n" +
+      "[site-url] Tuzatish: build argumenti sifatida bering —\n" +
+      "[site-url]   docker build --build-arg NEXT_PUBLIC_SITE_URL=https://codearena.uz .\n" +
+      "[site-url] CI uchun: Settings -> Variables -> Actions -> SITE_URL\n" +
+      "=".repeat(78) +
+      "\n",
+  );
+}
+
+/**
  * Analitika skripti (Plausible / Umami — ikkalasi ham cookie ishlatmaydi).
  * Manzil berilmasa hech narsa yuklanmaydi va CSP ham kengaymaydi.
  */
@@ -150,6 +183,26 @@ const nextConfig = {
       // ko'rinmay qoladi. Produksiyada bu yo'lni nginx bevosita uzatadi
       // (`infra/nginx/app.conf`), lekin dev serverda proksi shu yerda kerak.
       { source: "/media/:path*", destination: `${API_URL}/media/:path*` },
+      // Boshqaruv paneli — Django admin. U saytning O'ZIDA (bitta domenda)
+      // ochilishi kerak: alohida port yoki subdomen bo'lsa, sessiya cookie'si
+      // ham alohida bo'lib qoladi va «saytga kirganman, lekin panel meni
+      // tanimayapti» holati chiqadi.
+      //
+      // Manzilga slash QAYTA QO'SHILADI — yuqoridagi `/api/` bilan bir xil
+      // sababga ko'ra. Slashsiz yuborilsa, Django `/admin/login` ni tanimaydi
+      // (`APPEND_SLASH = False`), so'rov admin panelning "catch-all" ko'rinishiga
+      // tushadi va u kirmagan foydalanuvchini yana `/admin/login/` ga
+      // yo'naltiradi — natijada `next=` parametri cheksiz o'sib boradigan
+      // redirect halqasi hosil bo'lardi (ERR_TOO_MANY_REDIRECTS).
+      //
+      // `/admin` — slashsiz ham ishlashi shart: odam manzil satriga odatda
+      // shundoq yozadi.
+      { source: "/admin", destination: `${API_URL}/admin/` },
+      { source: "/admin/:path*", destination: `${API_URL}/admin/:path*/` },
+      // Admin panelning CSS/JS fayllari (`django.contrib.staticfiles` va
+      // unfold temasi) `/static/` ostida turadi. Next o'z fayllarini
+      // `/_next/static/` da saqlaydi, shuning uchun to'qnashuv yo'q.
+      { source: "/static/:path*", destination: `${API_URL}/static/:path*` },
     ];
   },
 };

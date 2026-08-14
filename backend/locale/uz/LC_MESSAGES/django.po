@@ -1,0 +1,120 @@
+# CodeArena — boshqaruv panelining o'zbekcha tarjimasi.
+#
+# Django o'zining `uz` katalogi bilan keladi, lekin u hamma satrni
+# qamramaydi va `django-unfold` ning satrlari umuman yo'q. Shu fayl
+# YETISHMAYOTGANLARINI to'ldiradi: bu yerdagi tarjima Django'nikidan
+# ustun turadi, chunki `LOCALE_PATHS` ilova kataloglaridan oldin
+# tekshiriladi.
+#
+# O'zgartirgandan keyin:
+#     python manage.py compile_locale
+#
+# (`compilemessages` GNU gettext talab qiladi; Windowsda u odatda
+# o'rnatilmagan, shuning uchun loyihada o'z kompilyatorimiz bor.)
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: uz\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+# --- unfold: filtr sarlavhasi -------------------------------------------
+# Asl matn « By Holat » beradi — o'zbekcha jumlaga «By» yopishib qoladi.
+# Prefiksni butunlay olib tashlaymiz: sarlavhaning o'zi yetarli.
+msgid " By %(filter_title)s "
+msgstr "%(filter_title)s"
+
+# --- ro'yxat sahifasi ---------------------------------------------------
+# Django `%s` ni POZITSION ishlatadi — nom bilan yozilsa mos kelmaydi
+# va tarjima jimgina e'tiborsiz qolardi.
+msgid "Select %s to change"
+msgstr "%s: tahrirlash uchun tanlang"
+
+msgid "Select %s to view"
+msgstr "%s: ko'rish uchun tanlang"
+
+# Django'ning o'z uz tarjimasi «Masalalar larni o'chirish» beradi —
+# ko'plik qo'shimchasi ikki marta tushib, jumla buziladi.
+msgid "Delete selected %(verbose_name_plural)s"
+msgstr "Tanlanganlarni o'chirish"
+
+msgid "Select action"
+msgstr "Amalni tanlang"
+
+msgid "Site administration"
+msgstr "Boshqaruv paneli"
+
+msgid "Search"
+msgstr "Qidirish"
+
+msgid "Filters"
+msgstr "Filtrlar"
+
+msgid "Clear all filters"
+msgstr "Filtrlarni tozalash"
+
+msgid "Add"
+msgstr "Qo'shish"
+
+msgid "Save"
+msgstr "Saqlash"
+
+msgid "Delete"
+msgstr "O'chirish"
+
+# --- unfold: kirish sahifasi va qisqartmalar ----------------------------
+msgid "Welcome back to"
+msgstr "Xush kelibsiz —"
+
+msgid "Log in"
+msgstr "Kirish"
+
+msgid "Return to site"
+msgstr "Saytga qaytish"
+
+msgid "Available shortcuts"
+msgstr "Klaviatura qisqartmalari"
+
+msgid "Global shortcuts"
+msgstr "Umumiy qisqartmalar"
+
+msgid "Changelist shortcuts"
+msgstr "Ro'yxat sahifasi qisqartmalari"
+
+msgid "Command tool shortcuts"
+msgstr "Komandalar paneli qisqartmalari"
+
+msgid "Open command tool"
+msgstr "Komandalar panelini ochish"
+
+msgid "Open shortcuts list"
+msgstr "Qisqartmalar ro'yxati"
+
+msgid "Toggle sidebar"
+msgstr "Yon menyuni yig'ish"
+
+msgid "Toggle dark/light mode"
+msgstr "To'q / yorug' rejim"
+
+msgid "Toggle filter"
+msgstr "Filtrni ochish"
+
+msgid "Create new record"
+msgstr "Yangi yozuv"
+
+msgid "Navigate"
+msgstr "Harakatlanish"
+
+msgid "Open selection"
+msgstr "Tanlanganni ochish"
+
+msgid "Open selection in new tab"
+msgstr "Yangi tabda ochish"
+
+msgid "Light"
+msgstr "Yorug'"
+
+msgid "Dark"
+msgstr "To'q"
+
+msgid "System"
+msgstr "Tizim"

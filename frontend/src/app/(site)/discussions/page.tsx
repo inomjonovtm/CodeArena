@@ -26,7 +26,7 @@ export default function DiscussionsPage() {
         <SplitLayout
           aside={
             <div className="flex flex-col gap-4">
-              <Pane className="enter">
+              <Pane className="">
                 <PaneHead
                   eyebrow="Qoidalar"
                   title="Hamjamiyat tartibi"
@@ -36,36 +36,36 @@ export default function DiscussionsPage() {
                   {RULES.map((rule) => (
                     <li key={rule} className="flex items-start gap-2.5">
                       <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-[var(--ok)]" />
-                      <span className="t-meta text-[var(--ink-2)]">{rule}</span>
+                      <span className="ts-sm text-[var(--text-2)]">{rule}</span>
                     </li>
                   ))}
                 </ul>
               </Pane>
 
-              <Pane tone="sunken" inset="sm" className="enter">
-                <p className="t-eyebrow">Belgilar</p>
+              <Pane tone="sunken" inset="sm" className="">
+                <p className="ts-label">Belgilar</p>
                 <ul className="mt-3 flex flex-col gap-2.5">
                   <li className="flex items-center gap-2.5">
-                    <Pin className="size-3.5 shrink-0 text-[var(--brand)]" />
-                    <span className="t-meta text-[var(--ink-3)]">
+                    <Pin className="size-3.5 shrink-0 text-[var(--green)]" />
+                    <span className="ts-sm text-[var(--text-3)]">
                       Qadalgan — moderatorlar tavsiya qilgan mavzu
                     </span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Lock className="size-3.5 shrink-0 text-[var(--ink-4)]" />
-                    <span className="t-meta text-[var(--ink-3)]">
+                    <Lock className="size-3.5 shrink-0 text-[var(--text-4)]" />
+                    <span className="ts-sm text-[var(--text-3)]">
                       Yopilgan — yangi izoh qabul qilinmaydi
                     </span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <BookOpenCheck className="size-3.5 shrink-0 text-[var(--ink-4)]" />
-                    <span className="t-meta text-[var(--ink-3)]">
+                    <BookOpenCheck className="size-3.5 shrink-0 text-[var(--text-4)]" />
+                    <span className="ts-sm text-[var(--text-3)]">
                       Matnlarda Markdown qo&apos;llab-quvvatlanadi
                     </span>
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <MessagesSquare className="size-3.5 shrink-0 text-[var(--ink-4)]" />
-                    <span className="t-meta text-[var(--ink-3)]">
+                    <MessagesSquare className="size-3.5 shrink-0 text-[var(--text-4)]" />
+                    <span className="ts-sm text-[var(--text-3)]">
                       Javoblar daraxt ko&apos;rinishida joylanadi
                     </span>
                   </li>

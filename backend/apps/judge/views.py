@@ -20,6 +20,7 @@ from .serializers import (
     SubmissionCreateSerializer,
     SubmissionStatusSerializer,
 )
+from .tasks import apply_checker, checker_needed
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +35,21 @@ def judge_status(request):
     Frontend shu javob asosida ishlamaydigan tillarni tanlash ro'yxatida
     o'chirib qo'yadi — foydalanuvchi "til o'rnatilmagan" xatosiga urilmaydi.
     """
-    languages = engine.supported_languages()
+    from . import languages as registry
+
+    available = engine.supported_languages()
     return Response(
         {
-            "available": bool(languages),
+            "available": any(available.values()),
             "backend": engine.active_backend(),
-            "languages": languages,
+            "languages": available,
+            # Metama'lumot ham shu yerda: muharrir tili, fayl kengaytmasi va
+            # bo'sh shablon. Ilgari bu ro'yxat frontendda qattiq yozilgan edi
+            # va yangi til qo'shilganda u yerda ham tahrir talab qilardi.
+            "catalog": [
+                {**row, "available": bool(available.get(row["key"]))}
+                for row in registry.as_payload()
+            ],
         }
     )
 
@@ -98,12 +108,22 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
             return Response({"detail": "Masala topilmadi."}, status=status.HTTP_404_NOT_FOUND)
 
         custom_stdin = (data.get("stdin") or "").strip()
+        # Masalada maxsus tekshirish usuli bo'lsa, solishtirishni backendga
+        # bermaymiz: "Run" va "Submit" bir xil qarorni berishi shart, aks
+        # holda namunada WA ko'rgan foydalanuvchi to'g'ri yechimini tashlab
+        # yuborardi.
+        use_checker = checker_needed(problem)
         if custom_stdin:
             # Maxsus kirishda kutilgan javob yo'q — `None` solishtirishni o'chiradi
             cases = [{"input": data["stdin"], "expected_output": None, "custom": True}]
         else:
             cases = [
-                {"input": tc.input, "expected_output": tc.expected_output, "custom": False}
+                {
+                    "input": tc.input,
+                    "expected_output": tc.expected_output,
+                    "custom": False,
+                    "case": tc,
+                }
                 for tc in problem.test_cases.filter(is_sample=True).order_by("order")[:MAX_RUN_TESTS]
             ]
             if not cases:
@@ -116,7 +136,13 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
             backend, parsed_results = engine.execute(
                 language=data["language"],
                 code=data["code"],
-                cases=cases,
+                cases=[
+                    {
+                        "input": case["input"],
+                        "expected_output": None if use_checker else case["expected_output"],
+                    }
+                    for case in cases
+                ],
                 time_limit_ms=problem.time_limit_ms,
                 memory_limit_kb=problem.memory_limit_kb,
             )
@@ -133,6 +159,17 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
                 {"detail": engine.NO_BACKEND_MESSAGE, "code": "judge_unavailable"},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
+
+        if use_checker and not custom_stdin:
+            try:
+                apply_checker(problem, [case["case"] for case in cases], parsed_results)
+            except Exception as exc:  # noqa: BLE001 — checker masalaning nuqsoni
+                logger.warning("Run: checker ishlamadi: %s", exc)
+                return Response(
+                    {"detail": "Masalaning tekshiruvchisi ishlamadi. Muallifga xabar bering.",
+                     "code": "checker_failed"},
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                )
 
         results = []
         passed = 0
@@ -155,6 +192,9 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
                     "runtime_ms": parsed.runtime_ms,
                     "memory_kb": parsed.memory_kb,
                     "is_custom": case["custom"],
+                    # Maxsus checker izohi: «nega qabul qilinmadi» degan savolga
+                    # etalon javobni oshkor qilmasdan javob beradi.
+                    "checker_note": parsed.meta.get("checker", ""),
                 }
             )
 
