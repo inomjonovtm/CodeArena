@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -16,6 +17,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.core import ranks
 from apps.core.middleware import get_client_ip
 from apps.core.mixins import write_audit
+from apps.core.utils import to_int
 
 from .authentication import clear_auth_cookies, set_auth_cookies
 from .models import AdminSession, User
@@ -364,15 +366,30 @@ def leaderboard(request):
         queryset = queryset.filter(
             Q(username__icontains=query) | Q(full_name__icontains=query)
         )
-    if period == "week":
-        since = timezone.now() - timezone.timedelta(days=7)
-        queryset = queryset.filter(submissions__created_at__gte=since).distinct()
-    elif period == "month":
-        since = timezone.now() - timezone.timedelta(days=30)
-        queryset = queryset.filter(submissions__created_at__gte=since).distinct()
-
-    order = "-rating" if sort == "rating" else "-total_points"
-    queryset = queryset.order_by(order, "-problems_solved", "username")
+    # DAVR — HAQIQIY. Ilgari «hafta» filtri faqat KIM ko'rinishini
+    # hal qilardi, ko'rsatkich esa umrbod yig'indi bo'lib qolaverardi:
+    # bu hafta bitta xato urinish yuborgan odam butun tarixidagi ball
+    # bilan birinchi o'rinda turardi. Endi davr tanlansa, ball ham,
+    # yechilgan masalalar ham AYNAN SHU DAVRDA to'plangani hisoblanadi.
+    if period in {"week", "month"}:
+        since = timezone.now() - timezone.timedelta(days=7 if period == "week" else 30)
+        queryset = queryset.annotate(
+            period_points=Coalesce(
+                Sum("solved_problems__points_awarded",
+                    filter=Q(solved_problems__created_at__gte=since)),
+                0,
+            ),
+            period_solved=Count(
+                "solved_problems",
+                filter=Q(solved_problems__created_at__gte=since),
+                distinct=True,
+            ),
+        ).filter(period_solved__gt=0)
+        order = "-rating" if sort == "rating" else "-period_points"
+        queryset = queryset.order_by(order, "-period_solved", "username")
+    else:
+        order = "-rating" if sort == "rating" else "-total_points"
+        queryset = queryset.order_by(order, "-problems_solved", "username")
 
     total = queryset.count()
     offset = (page - 1) * page_size
@@ -409,6 +426,10 @@ def leaderboard(request):
                     "rank": ranks.rank_info(u.rating),
                     "total_points": u.total_points,
                     "problems_solved": u.problems_solved,
+                    # Davr tanlanganda jadval AYNAN shu davr raqamlarini
+                    # ko'rsatadi — umrbod yig'indi chalg'itmasligi uchun.
+                    "period_points": getattr(u, "period_points", None),
+                    "period_solved": getattr(u, "period_solved", None),
                 }
                 for index, u in enumerate(rows)
             ],
@@ -443,3 +464,59 @@ def my_rank(request):
             "problems_solved": user.problems_solved,
         }
     )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def rating_history(request, username: str):
+    """`GET /api/users/:username/rating/` — reyting o'sishi tarixi.
+
+    Profildagi grafik va «nega o'zgardi» ro'yxati shu javobdan quriladi.
+    Ilgari reyting bitta son edi: u qachon va nimadan o'zgargani hech
+    qayerda saqlanmasdi, shuning uchun foydalanuvchi o'z o'sishini ko'ra
+    olmasdi.
+    """
+    from apps.core import ranks
+
+    from .models import RatingChange
+
+    user = User.objects.filter(username__iexact=username, is_active=True).first()
+    if not user:
+        return Response({"detail": "Foydalanuvchi topilmadi."}, status=status.HTTP_404_NOT_FOUND)
+
+    limit = to_int(request.query_params.get("limit"), 60, low=5, high=200)
+    rows = list(
+        RatingChange.objects.filter(user=user)
+        .select_related("problem", "contest")
+        .order_by("-created_at")[:limit]
+    )
+    rows.reverse()
+
+    return Response(
+        {
+            "current": user.rating,
+            "max": user.max_rating,
+            "rank": ranks.rank_info(user.rating),
+            "start": ratings_start(),
+            "changes": [
+                {
+                    "id": row.id,
+                    "kind": row.kind,
+                    "kind_label": row.get_kind_display(),
+                    "delta": row.delta,
+                    "rating_after": row.rating_after,
+                    "note": row.note,
+                    "problem_slug": row.problem.slug if row.problem else None,
+                    "contest_slug": row.contest.slug if row.contest else None,
+                    "created_at": row.created_at,
+                }
+                for row in rows
+            ],
+        }
+    )
+
+
+def ratings_start() -> int:
+    from .rating import START_RATING
+
+    return START_RATING

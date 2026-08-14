@@ -16,7 +16,14 @@ import type {
   ContestStandings,
   CurrentUser,
   FollowState,
+  GroupActivityRow,
+  GroupAssignment,
+  GroupAssignmentDetail,
+  GroupJoinRequestRow,
   GroupMemberRow,
+  GroupPeriod,
+  GroupPrivacy,
+  GroupStats,
   JudgeStatus,
   LeaderboardRow,
   MyContestRow,
@@ -39,6 +46,7 @@ import type {
   PublicProfile,
   PublicSubmission,
   RankGroup,
+  RatingHistory,
   RankTableRow,
   Region,
   PublicSubmissionFull,
@@ -186,22 +194,62 @@ export const publicApi = {
 
   /* ------------------------------------------------------------- guruhlar */
   groups: {
-    list: () => api.get<Paginated<PublicGroup>>("/groups/"),
+    list: (query?: Query) => api.get<Paginated<PublicGroup>>("/groups/", query),
+    /** Ochiq va so'rovli guruhlar — a'zo bo'lmaganlar ham ko'radi. */
+    discover: (query?: Query) =>
+      api.get<Paginated<PublicGroup>>("/groups/", { ...query, discover: 1 }),
     retrieve: (slug: string) => api.get<PublicGroup>(`/groups/${slug}/`),
-    create: (body: { name: string; description?: string; is_private?: boolean }) =>
+    create: (body: { name: string; description?: string; privacy?: GroupPrivacy }) =>
       api.post<PublicGroup>("/groups/", body),
-    update: (slug: string, body: Partial<{ name: string; description: string; is_private: boolean }>) =>
-      api.patch<PublicGroup>(`/groups/${slug}/`, body),
+    update: (
+      slug: string,
+      body: Partial<{
+        name: string;
+        description: string;
+        privacy: GroupPrivacy;
+        max_members: number;
+        avatar_url: string;
+      }>,
+    ) => api.patch<PublicGroup>(`/groups/${slug}/`, body),
     remove: (slug: string) => api.delete<void>(`/groups/${slug}/`),
     join: (inviteCode: string) =>
       api.post<PublicGroup & { joined: boolean }>("/groups/join/", { invite_code: inviteCode }),
+    joinOpen: (slug: string) => api.post<PublicGroup>(`/groups/${slug}/join-open/`),
+    requestJoin: (slug: string, message?: string) =>
+      api.post<{ detail: string }>(`/groups/${slug}/request-join/`, { message }),
+    requests: (slug: string) => api.get<GroupJoinRequestRow[]>(`/groups/${slug}/requests/`),
+    decideRequest: (slug: string, id: number, decision: "approve" | "reject") =>
+      api.post<{ detail: string }>(`/groups/${slug}/requests/`, { id, decision }),
     leave: (slug: string) => api.post<{ detail: string }>(`/groups/${slug}/leave/`),
     regenerateCode: (slug: string) =>
       api.post<{ invite_code: string }>(`/groups/${slug}/regenerate-code/`),
-    removeMember: (slug: string, memberId: string) =>
-      api.post<{ detail: string }>(`/groups/${slug}/members/${memberId}/remove/`),
-    leaderboard: (slug: string) => api.get<GroupMemberRow[]>(`/groups/${slug}/leaderboard/`),
+    removeMember: (slug: string, memberId: string, options?: { ban?: boolean; reason?: string }) =>
+      api.post<{ detail: string }>(`/groups/${slug}/members/${memberId}/remove/`, {
+        ban: options?.ban ? "1" : "",
+        reason: options?.reason ?? "",
+      }),
+    setRole: (slug: string, memberId: string, role: "moderator" | "member") =>
+      api.post<GroupMemberRow>(`/groups/${slug}/members/${memberId}/role/`, { role }),
+    transfer: (slug: string, username: string) =>
+      api.post<PublicGroup>(`/groups/${slug}/transfer/`, { username }),
+    leaderboard: (slug: string, period?: GroupPeriod) =>
+      api.get<GroupMemberRow[]>(`/groups/${slug}/leaderboard/`, { period }),
+    stats: (slug: string) => api.get<GroupStats>(`/groups/${slug}/stats/`),
+    activity: (slug: string) => api.get<GroupActivityRow[]>(`/groups/${slug}/activity/`),
+    assignments: (slug: string) => api.get<GroupAssignment[]>(`/groups/${slug}/assignments/`),
+    createAssignment: (
+      slug: string,
+      body: { title: string; description?: string; due_at?: string | null; problem_slugs: string[] },
+    ) => api.post<GroupAssignment>(`/groups/${slug}/assignments/`, body),
+    assignment: (slug: string, id: string) =>
+      api.get<GroupAssignmentDetail>(`/groups/${slug}/assignments/${id}/`),
+    removeAssignment: (slug: string, id: string) =>
+      api.delete<void>(`/groups/${slug}/assignments/${id}/`),
   },
+
+  /** Reyting o'sishi tarixi — profildagi grafik. */
+  ratingHistory: (username: string) =>
+    api.get<RatingHistory>(`/users/${username}/rating/`),
 
   /* ------------------------------------------------------- bildirishnoma */
   notifications: {

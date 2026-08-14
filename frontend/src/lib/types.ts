@@ -493,14 +493,19 @@ export interface Group {
   avatar_url: string;
   owner: string | null;
   owner_username: string | null;
+  /** Faqat a'zolarga to'ldirilgan holda keladi; boshqalarga bo'sh satr. */
   invite_code: string;
-  is_private: boolean;
+  privacy: GroupPrivacy;
+  privacy_label: string;
   is_verified: boolean;
   member_count: number;
   live_member_count: number;
   max_members: number;
+  /** So'ragan odamning shu guruhdagi roli — `null` bo'lsa a'zo emas. */
+  my_role: GroupRole | null;
+  /** Kutayotgan so'rovlar (faqat egasi va moderatorga ko'rinadi). */
+  pending_requests: number;
   created_at: string;
-  updated_at: string;
 }
 
 export interface GroupMember {
@@ -510,14 +515,103 @@ export interface GroupMember {
   username: string;
   full_name: string;
   avatar_url: string;
-  role: "owner" | "moderator" | "member";
+  role: GroupRole;
   total_points: number;
   rating: number;
   user_rank: RankInfo;
   problems_solved: number;
+  current_streak: number;
+  /** Guruhga qo'shilgandan BERI to'plangan — ichki reyting shu bo'yicha. */
+  group_points: number;
+  group_solved: number;
   joined_at: string;
   /** Guruh reytingidagi o'rin (leaderboard endpointida qo'shiladi). */
   position?: number;
+  /** Hafta/oy davri tanlanganda — o'sha davrda yechilgani. */
+  period_solved?: number;
+}
+
+export interface GroupJoinRequestRow {
+  id: number;
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  rating: number;
+  message: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+}
+
+export interface GroupActivityRow {
+  id: number;
+  kind: "joined" | "left" | "solved" | "assignment" | "role";
+  kind_label: string;
+  username: string | null;
+  avatar_url: string;
+  text: string;
+  url: string;
+  created_at: string;
+}
+
+export interface GroupStats {
+  members: number;
+  max_members: number;
+  solved_total: number;
+  solved_this_week: number;
+  active_this_week: number;
+  points_total: number;
+  avg_rating: number;
+  top_streak: number;
+  by_language: { language: string; total: number }[];
+}
+
+export interface GroupAssignment {
+  id: string;
+  title: string;
+  description: string;
+  due_at: string | null;
+  is_published: boolean;
+  problem_count: number;
+  is_overdue: boolean;
+  created_by_username: string | null;
+  created_at: string;
+}
+
+export interface GroupAssignmentDetail extends GroupAssignment {
+  problems: {
+    slug: string;
+    title: string;
+    difficulty: Difficulty;
+    rating: number;
+    solved: boolean;
+  }[];
+  progress: {
+    username: string;
+    full_name: string;
+    avatar_url: string;
+    solved: number;
+    total: number;
+    percent: number;
+  }[];
+}
+
+/** Reyting o'sishi tarixi — profildagi grafik. */
+export interface RatingHistory {
+  current: number;
+  max: number;
+  rank: RankInfo;
+  start: number;
+  changes: {
+    id: number;
+    kind: "solve" | "contest" | "admin";
+    kind_label: string;
+    delta: number;
+    rating_after: number;
+    note: string;
+    problem_slug: string | null;
+    contest_slug: string | null;
+    created_at: string;
+  }[];
 }
 
 // ------------------------------------------------------------ moderation
@@ -1496,15 +1590,25 @@ export interface PublicGroup {
   avatar_url: string;
   owner: string | null;
   owner_username: string | null;
+  /** Faqat a'zolarga to'ldirilgan holda keladi; boshqalarga bo'sh satr. */
   invite_code: string;
-  is_private: boolean;
+  privacy: GroupPrivacy;
+  privacy_label: string;
   is_verified: boolean;
   member_count: number;
   live_member_count: number;
   max_members: number;
+  /** So'ragan odamning shu guruhdagi roli — `null` bo'lsa a'zo emas. */
+  my_role: GroupRole | null;
+  /** Kutayotgan so'rovlar (faqat egasi va moderatorga ko'rinadi). */
+  pending_requests: number;
   created_at: string;
-  updated_at: string;
 }
+
+export type GroupPrivacy = "open" | "request" | "private";
+export type GroupRole = "owner" | "moderator" | "member";
+/** Ichki reyting davri: `group` — a'zo qo'shilgandan beri. */
+export type GroupPeriod = "group" | "week" | "month" | "all";
 
 export interface GroupMemberRow {
   id: string;
@@ -1513,14 +1617,103 @@ export interface GroupMemberRow {
   username: string;
   full_name: string;
   avatar_url: string;
-  role: "owner" | "moderator" | "member";
+  role: GroupRole;
   total_points: number;
   rating: number;
   user_rank: RankInfo;
   problems_solved: number;
+  current_streak: number;
+  /** Guruhga qo'shilgandan BERI to'plangan — ichki reyting shu bo'yicha. */
+  group_points: number;
+  group_solved: number;
   joined_at: string;
   /** Guruh reytingidagi o'rin (leaderboard endpointida qo'shiladi). */
   position?: number;
+  /** Hafta/oy davri tanlanganda — o'sha davrda yechilgani. */
+  period_solved?: number;
+}
+
+export interface GroupJoinRequestRow {
+  id: number;
+  username: string;
+  full_name: string;
+  avatar_url: string;
+  rating: number;
+  message: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+}
+
+export interface GroupActivityRow {
+  id: number;
+  kind: "joined" | "left" | "solved" | "assignment" | "role";
+  kind_label: string;
+  username: string | null;
+  avatar_url: string;
+  text: string;
+  url: string;
+  created_at: string;
+}
+
+export interface GroupStats {
+  members: number;
+  max_members: number;
+  solved_total: number;
+  solved_this_week: number;
+  active_this_week: number;
+  points_total: number;
+  avg_rating: number;
+  top_streak: number;
+  by_language: { language: string; total: number }[];
+}
+
+export interface GroupAssignment {
+  id: string;
+  title: string;
+  description: string;
+  due_at: string | null;
+  is_published: boolean;
+  problem_count: number;
+  is_overdue: boolean;
+  created_by_username: string | null;
+  created_at: string;
+}
+
+export interface GroupAssignmentDetail extends GroupAssignment {
+  problems: {
+    slug: string;
+    title: string;
+    difficulty: Difficulty;
+    rating: number;
+    solved: boolean;
+  }[];
+  progress: {
+    username: string;
+    full_name: string;
+    avatar_url: string;
+    solved: number;
+    total: number;
+    percent: number;
+  }[];
+}
+
+/** Reyting o'sishi tarixi — profildagi grafik. */
+export interface RatingHistory {
+  current: number;
+  max: number;
+  rank: RankInfo;
+  start: number;
+  changes: {
+    id: number;
+    kind: "solve" | "contest" | "admin";
+    kind_label: string;
+    delta: number;
+    rating_after: number;
+    note: string;
+    problem_slug: string | null;
+    contest_slug: string | null;
+    created_at: string;
+  }[];
 }
 
 /* ------------------------------------------------------------- sayt meta */

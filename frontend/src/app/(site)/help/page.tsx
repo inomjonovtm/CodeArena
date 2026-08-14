@@ -101,7 +101,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: "Reyting nima va qanday o'zgaradi?",
-        a: "Reyting — musobaqalardagi natijalaringizga qarab hisoblanadigan ko'rsatkich. Har bir yangi ishtirokchi bir xil boshlang'ich qiymatdan boshlaydi; reytingli musobaqadan keyin egallagan o'rningizga qarab oshadi yoki kamayadi.",
+        a: "Har bir masalaning o'z qiyinlik reytingi bor. O'zingizdan kuchliroq masalani yechsangiz reyting o'sadi, o'zingizdan oson masala esa uni deyarli qimirlatmaydi. Musobaqalarda reyting egallagan o'rningizga qarab ham o'zgaradi. Hamma bir xil boshlang'ich qiymatdan — zinaning eng pastidan — boshlaydi.",
       },
       {
         q: "Seriya (streak) qanday ishlaydi?",
@@ -109,7 +109,7 @@ const CATEGORIES: Category[] = [
       },
       {
         q: "Amaliyot yechimlari reytingga ta'sir qiladimi?",
-        a: "Yo'q. Oddiy masalalar faqat ball va yechilganlar soniga ta'sir qiladi; reyting esa faqat reytingli musobaqalarda o'zgaradi.",
+        a: "Ha. Amaliyotda yechilgan har bir yangi masala reytingga ta'sir qiladi — masala qanchalik qiyin bo'lsa, o'sish shunchalik katta. Noto'g'ri urinish uchun reyting kamaymaydi: u faqat musobaqada, boshqa ishtirokchilarga nisbatan past natija ko'rsatilganda pasayishi mumkin.",
       },
     ],
   },

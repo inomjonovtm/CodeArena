@@ -5,9 +5,12 @@ import {
   BadgeCheck,
   Check,
   Copy,
+  ClipboardList,
   Crown,
+  Flame,
   Lock,
   LogOut,
+  UserCheck,
   RefreshCw,
   Trash2,
   Trophy,
@@ -29,10 +32,16 @@ import {
   Segmented,
   Stat,
 } from "@/components/kit";
-import { useAuth, useToast } from "@/components/providers";
+import { useAuth, useConfirm, useToast } from "@/components/providers";
 import { ApiError } from "@/lib/api";
+import {
+  GroupActivityPanel,
+  GroupAssignmentsPanel,
+  GroupRequestsPanel,
+  GroupStatsRow,
+} from "@/components/site/group-panels";
 import { publicApi } from "@/lib/public-api";
-import type { GroupMemberRow } from "@/lib/types";
+import type { GroupMemberRow, GroupPeriod } from "@/lib/types";
 import { cn, formatDate, formatNumber, initials } from "@/lib/utils";
 
 /** Rol → yorliq va ohang. Rang yagona signal emas: yonida matn ham turadi. */
@@ -150,7 +159,7 @@ function RemoveMemberButton({ onRemove }: { onRemove: () => void }) {
   );
 }
 
-type Tab = "rank" | "members";
+type Tab = "rank" | "members" | "assignments" | "activity" | "requests";
 
 export default function GroupDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -158,9 +167,15 @@ export default function GroupDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const toast = useToast();
+  const { confirm } = useConfirm();
   const queryClient = useQueryClient();
 
   const [tab, setTab] = useState<Tab>("rank");
+  /* Ichki reyting davri. Sukut bo'yicha «guruhda» — a'zo QO'SHILGANDAN
+     beri to'plangan ball. Ilgari faqat umrbod ball bo'yicha saralanardi:
+     eski hisob bilan kirgan odam avtomatik birinchi bo'lardi va yangi
+     a'zoning uni quvib yetishi imkonsiz edi. */
+  const [period, setPeriod] = useState<GroupPeriod>("group");
 
   const { data: group, isLoading, isError } = useQuery({
     queryKey: ["group", slug],
@@ -175,12 +190,16 @@ export default function GroupDetailPage() {
     isError: membersError,
     refetch: refetchMembers,
   } = useQuery({
-    queryKey: ["group-leaderboard", slug],
-    queryFn: () => publicApi.groups.leaderboard(slug),
+    queryKey: ["group-leaderboard", slug, period],
+    queryFn: () => publicApi.groups.leaderboard(slug, period),
     enabled: Boolean(slug && group),
   });
 
-  const isOwner = Boolean(user && group && group.owner_username === user.username);
+  /* Rol SERVERDAN keladi — ilgari u username satrini solishtirish orqali
+     taxmin qilinardi va moderator umuman hisobga olinmasdi. */
+  const myRole = group?.my_role ?? null;
+  const isOwner = myRole === "owner";
+  const canManage = myRole === "owner" || myRole === "moderator";
 
   const leaveMutation = useMutation({
     mutationFn: () => publicApi.groups.leave(slug),
@@ -203,6 +222,29 @@ export default function GroupDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["group", slug] });
     },
     onError: () => toast.error("Kodni yangilab bo'lmadi"),
+  });
+
+  /* Chiqarish, chiqish va o'chirish — QAYTARIB BO'LMAYDIGAN amallar.
+     Ilgari ular bitta bosishda, savolsiz bajarilardi: tasodifan bosilgan
+     «Guruhni o'chirish» butun guruhni yo'q qilardi. */
+  const askRemove = async (row: GroupMemberRow) => {
+    const ok = await confirm({
+      title: `@${row.username} chiqarilsinmi?`,
+      message: "A'zo guruhdan chiqariladi. Taklif kodi bilan qaytib kira oladi.",
+      confirmLabel: "Chiqarish",
+      danger: true,
+    });
+    if (ok) removeMemberMutation.mutate(row.id);
+  };
+
+  const setRoleMutation = useMutation({
+    mutationFn: ({ id, role }: { id: string; role: "moderator" | "member" }) =>
+      publicApi.groups.setRole(slug, id, role),
+    onSuccess: async () => {
+      toast.success("Rol o'zgartirildi");
+      await queryClient.invalidateQueries({ queryKey: ["group-leaderboard", slug] });
+    },
+    onError: () => toast.error("Rolni o'zgartirib bo'lmadi"),
   });
 
   const removeMemberMutation = useMutation({
@@ -330,8 +372,15 @@ export default function GroupDetailPage() {
             ) : null}
 
             <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <Chip tone={group.is_private ? "neutral" : "ok"} icon={group.is_private ? <Lock className="size-3" /> : undefined}>
-                {group.is_private ? "Yopiq guruh" : "Ochiq guruh"}
+              <Chip
+                tone={group.privacy === "private" ? "neutral" : "ok"}
+                icon={group.privacy === "private" ? <Lock className="size-3" /> : undefined}
+              >
+                {group.privacy === "private"
+                  ? "Yopiq guruh"
+                  : group.privacy === "request"
+                    ? "So'rov bilan"
+                    : "Ochiq guruh"}
               </Chip>
               <span className="ts-sm text-[var(--text-4)]">
                 Egasi: {group.owner_username ? `@${group.owner_username}` : "—"}
@@ -375,7 +424,15 @@ export default function GroupDetailPage() {
                   variant="danger"
                   icon={<Trash2 className="size-4" />}
                   loading={deleteMutation.isPending}
-                  onClick={() => deleteMutation.mutate()}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Guruh o'chirilsinmi?",
+                      message: `«${group.name}» va uning ichki reytingi o'chiriladi. Bu amalni qaytarib bo'lmaydi.`,
+                      confirmLabel: "O'chirish",
+                      danger: true,
+                    });
+                    if (ok) deleteMutation.mutate();
+                  }}
                 >
                   Guruhni o&apos;chirish
                 </Button>
@@ -385,7 +442,15 @@ export default function GroupDetailPage() {
                   variant="ghost"
                   icon={<LogOut className="size-4" />}
                   loading={leaveMutation.isPending}
-                  onClick={() => leaveMutation.mutate()}
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Guruhdan chiqasizmi?",
+                      message: "Ichki reytingdagi o'rningiz yo'qoladi. Taklif kodi bilan qayta kira olasiz.",
+                      confirmLabel: "Chiqish",
+                      danger: true,
+                    });
+                    if (ok) leaveMutation.mutate();
+                  }}
                 >
                   Guruhdan chiqish
                 </Button>
@@ -395,21 +460,10 @@ export default function GroupDetailPage() {
         </div>
       </Pane>
 
-      {/* -------------------------------------------------- statistika kartasi */}
-      <Pane inset="lg">
-        {/* Karta panjarasi emas — ochiq ustunlar */}
-        <div className="grid gap-x-6 gap-y-7 sm:grid-cols-3">
-          <Stat
-            icon={<Users className="size-4" />}
-            label="A'zolar"
-            value={memberCount}
-            sub={`maksimum ${group.max_members}`}
-            tone="brand"
-          />
-          <Stat label="Guruh ballari" value={formatNumber(totalPoints)} />
-          <Stat label="Yechilgan masalalar" value={formatNumber(totalSolved)} />
-        </div>
-      </Pane>
+      {/* Ko'rsatkichlar SERVERDAN: ilgari ular mijozda reyting jadvalidagi
+          qatorlarni qo'shib chiqarilardi, ya'ni «guruh ballari» aslida
+          a'zolarning umrbod ballari yig'indisi edi. */}
+      <GroupStatsRow slug={slug} />
 
       {/* --------------------------------------------------- bo'limlar kartasi */}
       <Pane inset="sm">
@@ -431,9 +485,41 @@ export default function GroupDetailPage() {
                   icon: <Users className="size-4" />,
                   count: memberCount,
                 },
+                {
+                  value: "assignments" as const,
+                  label: "Vazifalar",
+                  icon: <ClipboardList className="size-4" />,
+                },
+                {
+                  value: "activity" as const,
+                  label: "Faollik",
+                  icon: <Flame className="size-4" />,
+                },
+                ...(canManage
+                  ? [
+                      {
+                        value: "requests" as const,
+                        label: "So'rovlar",
+                        icon: <UserCheck className="size-4" />,
+                        count: group.pending_requests || undefined,
+                      },
+                    ]
+                  : []),
               ]}
             />
           </div>
+          {tab === "rank" ? (
+            <Segmented
+              value={period}
+              onChange={setPeriod}
+              items={[
+                { value: "group" as const, label: "Guruhda" },
+                { value: "week" as const, label: "Hafta" },
+                { value: "month" as const, label: "Oy" },
+                { value: "all" as const, label: "Umumiy" },
+              ]}
+            />
+          ) : null}
           <p className="ts-sm text-[var(--text-4)]">
             {tab === "rank"
               ? "To'plangan ball bo'yicha saralangan."
@@ -504,11 +590,9 @@ export default function GroupDetailPage() {
                         </div>
 
                         {/* Egasi a'zoni chiqarishi mumkin — qator ustida ko'rinadi */}
-                        {isOwner && row.role !== "owner" ? (
+                        {canManage && row.role !== "owner" ? (
                           <span className="ml-auto">
-                            <RemoveMemberButton
-                              onRemove={() => removeMemberMutation.mutate(row.id)}
-                            />
+                            <RemoveMemberButton onRemove={() => askRemove(row)} />
                           </span>
                         ) : null}
                       </div>
@@ -528,7 +612,7 @@ export default function GroupDetailPage() {
               </ul>
             </Pane>
           )
-        ) : (
+        ) : tab === "members" ? (
           listState ?? (
             <Pane inset="none" className="overflow-hidden">
               <ul className="divide-y divide-[var(--line-soft)]">
@@ -585,7 +669,22 @@ export default function GroupDetailPage() {
                       </Chip>
 
                       {isOwner && row.role !== "owner" ? (
-                        <RemoveMemberButton onRemove={() => removeMemberMutation.mutate(row.id)} />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            setRoleMutation.mutate({
+                              id: row.id,
+                              role: row.role === "moderator" ? "member" : "moderator",
+                            })
+                          }
+                        >
+                          {row.role === "moderator" ? "Moderatorlikdan olish" : "Moderator qilish"}
+                        </Button>
+                      ) : null}
+
+                      {canManage && row.role !== "owner" ? (
+                        <RemoveMemberButton onRemove={() => askRemove(row)} />
                       ) : null}
                     </li>
                   );
@@ -593,6 +692,18 @@ export default function GroupDetailPage() {
               </ul>
             </Pane>
           )
+        ) : tab === "assignments" ? (
+          <Pane inset="none" className="overflow-hidden">
+            <GroupAssignmentsPanel slug={slug} canManage={canManage} />
+          </Pane>
+        ) : tab === "activity" ? (
+          <Pane inset="none" className="overflow-hidden">
+            <GroupActivityPanel slug={slug} />
+          </Pane>
+        ) : (
+          <Pane inset="none" className="overflow-hidden">
+            <GroupRequestsPanel slug={slug} />
+          </Pane>
         )}
       </div>
     </div>

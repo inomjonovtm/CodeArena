@@ -21,11 +21,12 @@ import {
   PaneHead,
   Spinner,
   Textarea,
-  Toggle,
+  Select,
 } from "@/components/kit";
 import { useAuth, useToast } from "@/components/providers";
 import { ApiError } from "@/lib/api";
 import { publicApi } from "@/lib/public-api";
+import type { GroupPrivacy } from "@/lib/types";
 import { cn, initials } from "@/lib/utils";
 
 /** Guruh belgisi — kvadratsimon avatar, rasm bo'lmasa bosh harflar. */
@@ -66,7 +67,11 @@ export default function GroupsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", description: "", is_private: true });
+  const [form, setForm] = useState<{ name: string; description: string; privacy: GroupPrivacy }>({
+    name: "",
+    description: "",
+    privacy: "private",
+  });
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -81,11 +86,11 @@ export default function GroupsPage() {
       publicApi.groups.create({
         name: form.name.trim(),
         description: form.description.trim(),
-        is_private: form.is_private,
+        privacy: form.privacy,
       }),
     onSuccess: (group) => {
       setCreateOpen(false);
-      setForm({ name: "", description: "", is_private: true });
+      setForm({ name: "", description: "", privacy: "private" });
       setError(null);
       toast.success("Guruh yaratildi", `Taklif kodi: ${group.invite_code}`);
       void queryClient.invalidateQueries({ queryKey: ["groups"] });
@@ -221,7 +226,7 @@ export default function GroupsPage() {
                     <p className="ts-sm mt-0.5 truncate text-[var(--text-4)]">
                       {group.owner_username ? `@${group.owner_username}` : "—"}
                       {" · "}
-                      {group.is_private ? "yopiq" : "ochiq"}
+                      {group.privacy_label?.split(" —")[0] ?? ""}
                       {group.description ? ` · ${group.description}` : ""}
                     </p>
                   </div>
@@ -232,9 +237,10 @@ export default function GroupsPage() {
                     a&apos;zo
                   </span>
 
-                  <span className="ts-num hidden rounded-[var(--radius-sm)] bg-[var(--surface-sunk)] px-2.5 py-1 font-mono text-[12.5px] text-[var(--text-3)] md:block">
-                    {group.invite_code}
-                  </span>
+                  {/* Taklif kodi ro'yxatda KO'RSATILMAYDI: u guruh sahifasida,
+                      nusxalash tugmasi bilan turadi. Ilgari kod har bir
+                      qatorda ochiq yozilgan edi va ekranga tushgan rasm bilan
+                      ham tarqalib ketishi mumkin edi. */}
 
                   <ChevronRight className="size-4 shrink-0 text-[var(--text-4)] transition-transform duration-[var(--dur-1)] group-hover:translate-x-0.5" />
                 </Link>
@@ -292,12 +298,20 @@ export default function GroupsPage() {
             />
           </Field>
 
-          <Toggle
-            label="Yopiq guruh"
-            hint="Faqat taklif kodi bilan qo'shilish mumkin"
-            checked={form.is_private}
-            onChange={(value) => setForm((prev) => ({ ...prev, is_private: value }))}
-          />
+          <Field label="Kim qo'shila oladi" htmlFor="group-privacy">
+            <Select
+              value={form.privacy}
+              ariaLabel="Kim qo'shila oladi"
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, privacy: event.target.value as GroupPrivacy }))
+              }
+              options={[
+                { value: "private", label: "Yopiq — faqat taklif kodi bilan" },
+                { value: "request", label: "So'rov bilan — men tasdiqlayman" },
+                { value: "open", label: "Ochiq — hamma qo'shila oladi" },
+              ]}
+            />
+          </Field>
         </div>
       </Modal>
 

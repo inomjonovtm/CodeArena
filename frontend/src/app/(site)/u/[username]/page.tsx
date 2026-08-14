@@ -31,6 +31,7 @@ import {
 import { useAuth, useI18n } from "@/components/providers";
 import { FollowButton, FollowListModal } from "@/components/site/follow";
 import { RankAvatar, RankBadge, RankProgress } from "@/components/site/rank";
+import { RatingHistory } from "@/components/site/rating-history";
 import { publicApi } from "@/lib/public-api";
 import type { ActivityDay, Difficulty } from "@/lib/types";
 import { cn, formatDate, formatNumber, formatRelative } from "@/lib/utils";
@@ -332,6 +333,11 @@ export default function ProfilePage() {
                 </span>
               </div>
             </Pane>
+
+            {/* Reyting qayerdan o'sgani — grafik va sabablar. Ilgari
+                foydalanuvchi faqat joriy sonni ko'rardi va uning tarixi
+                hech qayerda saqlanmasdi. */}
+            <RatingHistory username={username} />
 
             {/* ------------------------------------------------ statistika
                 Raqamlar bitta kartada — karta panjarasi emas. */}

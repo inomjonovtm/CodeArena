@@ -372,6 +372,8 @@ REST_FRAMEWORK = {
         # Faqat muallif/moderator/adminga ochiq, shuning uchun tom baland —
         # lekin cheksiz emas: bitta sahifa 30 tagacha test yasashi mumkin.
         "studio_sandbox": env("STUDIO_SANDBOX_RATE", "120/min"),
+        # Guruh taklif kodini terib topishga urinishni cheklaydi.
+        "group_join": env("GROUP_JOIN_RATE", "12/min"),
         "auth": env("AUTH_RATE", "20/min"),
         # Parolni tiklash: IP bo'yicha va nishon email bo'yicha alohida.
         # Nishon bo'yicha cheklov IP almashtirib xat yog'dirishni to'sadi.

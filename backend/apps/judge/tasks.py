@@ -238,6 +238,21 @@ def _update_counters(submission: Submission) -> None:
     # saqlaydi va hisoblagichlarni qayta hisoblash mos keladi.
     awarded = problem.points if submission.is_practice else 0
 
+    # KUNLIK BONUS. Kunlik masala sahifasida «+5 bonus ball» deb yozib
+    # qo'yilgan edi-yu, u hech qachon berilmasdi. Endi masala aynan
+    # o'zining kunida yechilsa bonus qo'shiladi.
+    if awarded:
+        from apps.problems.models import DailyChallenge
+
+        today = timezone.localdate()
+        bonus = (
+            DailyChallenge.objects.filter(problem=problem, date=today)
+            .values_list("bonus_points", flat=True)
+            .first()
+        )
+        if bonus:
+            awarded += int(bonus)
+
     _solved, created = SolvedProblem.objects.get_or_create(
         user=user, problem=problem, defaults={"points_awarded": awarded}
     )
@@ -247,7 +262,42 @@ def _update_counters(submission: Submission) -> None:
         # "Yechilgan" hisobi va streak contestda ham yangilanadi — masala
         # yechilgani rost; faqat ball nolga teng bo'ladi.
         user.register_solve(awarded, solved_on=timezone.localdate())
+
+        # Reyting masalaning qiyinlik darajasiga qarab o'sadi. Amaliyotda
+        # ham, olimpiadada ham: masala yechilgani — yechilgani. Olimpiada
+        # oxirida ustiga o'rin bo'yicha hisob ham qo'shiladi.
+        from apps.accounts import rating as rating_engine
+
+        rating_engine.apply_solve(user, problem)
+
+        _log_group_activity(user, problem)
         _notify_first_solve(user, problem, submission)
+
+
+def _log_group_activity(user, problem) -> None:
+    """Yechilgan masala foydalanuvchi guruhlarining tasmasiga tushadi.
+
+    Guruh sahifasi shu tufayli tirik bo'ladi: a'zolar bir-birining
+    harakatini ko'radi va qaytib kelish uchun sabab paydo bo'ladi.
+    """
+    from apps.community.models import GroupActivity, GroupMember
+
+    memberships = GroupMember.objects.filter(user=user).values_list("group_id", flat=True)
+    if not memberships:
+        return
+
+    GroupActivity.objects.bulk_create(
+        [
+            GroupActivity(
+                group_id=group_id,
+                user=user,
+                kind=GroupActivity.Kind.SOLVED,
+                text=problem.title_uz[:200],
+                url=f"/problems/{problem.slug}",
+            )
+            for group_id in memberships
+        ]
+    )
 
 
 def _notify_first_solve(user, problem, submission) -> None:
@@ -257,6 +307,21 @@ def _notify_first_solve(user, problem, submission) -> None:
 
     # Contestda ball berilmaydi — xabarda ham noto'g'ri raqam ko'rsatilmasin
     awarded = problem.points if submission.is_practice else 0
+
+    # KUNLIK BONUS. Kunlik masala sahifasida «+5 bonus ball» deb yozib
+    # qo'yilgan edi-yu, u hech qachon berilmasdi. Endi masala aynan
+    # o'zining kunida yechilsa bonus qo'shiladi.
+    if awarded:
+        from apps.problems.models import DailyChallenge
+
+        today = timezone.localdate()
+        bonus = (
+            DailyChallenge.objects.filter(problem=problem, date=today)
+            .values_list("bonus_points", flat=True)
+            .first()
+        )
+        if bonus:
+            awarded += int(bonus)
     body = f"+{awarded} ball" if awarded else "Musobaqa masalasi yechildi"
     if user.current_streak > 1:
         body += f" · {user.current_streak} kunlik seriya"

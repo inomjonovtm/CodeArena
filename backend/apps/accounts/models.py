@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.validators import RegexValidator
 from django.db import models
@@ -84,8 +85,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     oauth_google_id = models.CharField(max_length=64, blank=True, null=True, unique=True)
 
     # progress / reyting (7-bo'lim)
-    rating = models.IntegerField(default=1500, db_index=True)
-    max_rating = models.IntegerField(default=1500)
+    # Boshlang'ich reyting zinaning ENG PASTIDA (`apps.accounts.rating`):
+    # odam hech narsa qilmasdan turib o'rtada turmasligi kerak. Reyting
+    # masala yechish va olimpiada natijalari bilan o'sadi.
+    rating = models.IntegerField(default=800, db_index=True)
+    max_rating = models.IntegerField(default=800)
     total_points = models.IntegerField(default=0, db_index=True)
     problems_solved = models.IntegerField(default=0)
     submissions_count = models.IntegerField(default=0)
@@ -376,6 +380,51 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
     Role.SETTER: SETTER_PERMISSIONS,
     Role.USER: set(),
 }
+
+
+class RatingChange(models.Model):
+    """Reyting o'zgarishlari tarixi — profildagi grafik shundan quriladi.
+
+    Ilgari reyting shunchaki bitta son edi: u qachon va NEGA o'zgargani
+    hech qayerda saqlanmasdi, shuning uchun foydalanuvchi o'sishini ko'ra
+    olmasdi va «reytingim nega tushdi?» degan savolga javob yo'q edi.
+    """
+
+    class Kind(models.TextChoices):
+        SOLVE = "solve", "Masala yechildi"
+        CONTEST = "contest", "Olimpiada"
+        ADMIN = "admin", "Qo'lda tuzatildi"
+
+    id = models.BigAutoField(primary_key=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="rating_changes"
+    )
+    kind = models.CharField(max_length=10, choices=Kind.choices, db_index=True)
+    rating_before = models.IntegerField()
+    rating_after = models.IntegerField()
+    delta = models.IntegerField()
+
+    problem = models.ForeignKey(
+        "problems.Problem", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="rating_changes",
+    )
+    contest = models.ForeignKey(
+        "contests.Contest", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="rating_changes",
+    )
+    note = models.CharField(max_length=160, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "rating_changes"
+        verbose_name = "Reyting o'zgarishi"
+        verbose_name_plural = "Reyting tarixi"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["user", "-created_at"])]
+
+    def __str__(self) -> str:
+        sign = "+" if self.delta >= 0 else ""
+        return f"{self.user} {sign}{self.delta} ({self.get_kind_display()})"
 
 
 class Follow(models.Model):

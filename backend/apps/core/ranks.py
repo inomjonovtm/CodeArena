@@ -57,15 +57,23 @@ LADDER: list[tuple[str, str, str, str, str, str]] = [
 MAX_TIER = len(LADDER)  # 18
 
 # 2..18 pog'onalarning eng past reytingi (1-pog'ona — shundan pasti).
-# Standart reyting 1500 → «Kumush I»: yangi hisob o'rtadan boshlaydi va
-# yuqoriga ham, pastga ham yo'l bor. «Afsona» uchun 3000 kerak.
+#
+# ZINA YANGI SHKALAGA MOSLANDI. Yangi hisob 800 dan — «Bronza III» dan —
+# boshlaydi va har bir pog'ona yechilgan masalalar bilan qo'lga kiritiladi.
+# Ilgari boshlang'ich 1500 edi va odam hech narsa qilmasdan turib
+# «Kumush I» bo'lib turardi: daraja qo'lga kiritilmagani uchun uning
+# qiymati ham yo'q edi.
+#
+# Oraliqlar pastda TOR (birinchi pog'onalar tez o'tiladi — yangi odam
+# harakati darhol natija beradi), yuqorida esa KENG (usta darajasi uzoq
+# mehnat talab qiladi).
 DEFAULT_THRESHOLDS = [
-    1000, 1150,               # bronza II, I
-    1300, 1400, 1500,         # kumush III, II, I
-    1600, 1700, 1800,         # oltin III, II, I
-    1900, 2000, 2100,         # platina III, II, I
-    2250, 2400, 2550,         # olmos III, II, I
-    2700, 2850, 3000,         # usta, buyuk usta, afsona
+    900, 1000,                # bronza II, I
+    1100, 1200, 1300,         # kumush III, II, I
+    1400, 1500, 1600,         # oltin III, II, I
+    1700, 1800, 1900,         # platina III, II, I
+    2000, 2150, 2300,         # olmos III, II, I
+    2450, 2600, 2800,         # usta, buyuk usta, afsona
 ]
 
 

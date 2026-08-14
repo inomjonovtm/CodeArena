@@ -24,7 +24,7 @@ class AdminGroupViewSet(
     permission_classes = [IsStaff, HasResourcePerm]
     perm_resource = "groups"
     perm_actions = {"members": "view", "leaderboard": "view", "regenerate_invite": "edit"}
-    filterset_fields = ["is_private", "is_verified", "owner"]
+    filterset_fields = ["privacy", "is_verified", "owner"]
     search_fields = ["name", "slug", "invite_code", "owner__username"]
     ordering_fields = ["created_at", "name", "member_count"]
     ordering = ["-created_at"]

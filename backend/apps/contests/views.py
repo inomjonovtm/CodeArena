@@ -83,6 +83,23 @@ class PublicContestViewSet(viewsets.ReadOnlyModelViewSet):
         if contest.visibility == "private":
             if (request.data.get("password") or "") != contest.access_password:
                 return Response({"detail": "Parol noto'g'ri."}, status=status.HTTP_403_FORBIDDEN)
+        # Reyting oynasi. Musobaqa sahifasida «reyting: 1200 … 1800» deb
+        # yozib qo'yilardi-yu, qo'shilishda TEKSHIRILMASDI — ya'ni cheklov
+        # bezak edi. Virtual (kechiktirilgan) ishtirok reytingga ta'sir
+        # qilmagani uchun undan ozod.
+        if not is_virtual:
+            rating = request.user.rating
+            if contest.min_rating and rating < contest.min_rating:
+                return Response(
+                    {"detail": f"Bu musobaqa {contest.min_rating} va undan yuqori reyting uchun."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if contest.max_rating and rating > contest.max_rating:
+                return Response(
+                    {"detail": f"Bu musobaqa {contest.max_rating} va undan past reyting uchun."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
         if contest.max_participants and contest.participants.count() >= contest.max_participants:
             existing = ContestParticipant.objects.filter(contest=contest, user=request.user).exists()
             if not existing:

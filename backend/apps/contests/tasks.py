@@ -20,7 +20,25 @@ def refresh_contest_statuses() -> str:
     finished = Contest.objects.filter(
         status__in=[ContestStatus.SCHEDULED, ContestStatus.RUNNING], end_time__lte=now
     ).update(status=ContestStatus.FINISHED)
-    return f"started={started} finished={finished}"
+
+    # NATIJA VA REYTING O'ZI QO'LLANADI. Ilgari buning uchun admin panelda
+    # ikkita tugma bosish kerak edi: musobaqa tugagach jadval ham, reyting
+    # ham hech kim tugma bosmaguncha eskirib turardi va ishtirokchi «reyting
+    # o'zgarishi» ustunida cheksiz «—» ko'rardi.
+    settle = 0
+    pending = Contest.objects.filter(
+        status=ContestStatus.FINISHED,
+        end_time__lte=now - timezone.timedelta(minutes=2),
+        ratings_applied_at__isnull=True,
+        is_rated=True,
+    ).values_list("id", flat=True)[:20]
+
+    for contest_id in pending:
+        recalculate_standings.delay(str(contest_id))
+        apply_contest_ratings.delay(str(contest_id))
+        settle += 1
+
+    return f"started={started} finished={finished} settled={settle}"
 
 
 @shared_task(name="apps.contests.tasks.send_contest_reminders")
@@ -152,19 +170,29 @@ def apply_contest_ratings(contest_id: str) -> str:
         rows, k_new=contest.rating_k_new, k_experienced=contest.rating_k_experienced
     )
 
+    from apps.accounts import rating as rating_engine
+
     with transaction.atomic():
         for participant in participants:
             delta = changes.get(str(participant.user_id), 0)
             user = participant.user
-            participant.rating_before = user.rating
-            participant.rating_change = delta
-            participant.rating_after = max(0, user.rating + delta)
+            before = user.rating
+
+            # Reytingni yagona dvigatel qo'llaydi: u tarixga ham yozadi va
+            # pastki chegarani ushlab turadi. Ilgari bu yerda alohida
+            # hisob-kitob bor edi va o'zgarish hech qayerda saqlanmasdi.
+            after = rating_engine.apply_contest(
+                user, before=before, delta=delta,
+                contest=contest, rank=participant.rank,
+            )
+
+            participant.rating_before = before
+            participant.rating_change = after - before
+            participant.rating_after = after
             participant.save(update_fields=["rating_before", "rating_change", "rating_after"])
 
-            user.rating = participant.rating_after
-            user.max_rating = max(user.max_rating, user.rating)
             user.contests_participated += 1
-            user.save(update_fields=["rating", "max_rating", "contests_participated"])
+            user.save(update_fields=["contests_participated"])
 
         contest.ratings_applied_at = timezone.now()
         contest.save(update_fields=["ratings_applied_at"])

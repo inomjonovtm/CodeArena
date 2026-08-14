@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.filters.admin import (
     BooleanRadioFilter,
+    ChoicesDropdownFilter,
     RangeDateFilter,
     RelatedDropdownFilter,
 )
@@ -23,9 +24,9 @@ class GroupMemberInline(TabularInline):
 
 @admin.register(Group)
 class GroupAdmin(ModelAdmin):
-    list_display = ("name", "owner", "member_count", "is_private", "verified_badge", "created_at")
+    list_display = ("name", "owner", "member_count", "privacy", "verified_badge", "created_at")
     list_filter = (
-        ("is_private", BooleanRadioFilter),
+        ("privacy", ChoicesDropdownFilter),
         ("is_verified", BooleanRadioFilter),
         ("created_at", RangeDateFilter),
     )

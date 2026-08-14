@@ -10,6 +10,7 @@ urlpatterns = [
     path("users/<str:username>/follow/", social_views.follow_user, name="public-follow"),
     path("users/<str:username>/followers/", social_views.followers, name="public-followers"),
     path("users/<str:username>/following/", social_views.following, name="public-following"),
+    path("users/<str:username>/rating/", views.rating_history, name="public-rating-history"),
     # `<username>` eng oxirida — yuqoridagi aniqroq yo'llarni yutib yubormasligi uchun
     path("users/<str:username>/", views.public_profile, name="public-profile"),
 ]

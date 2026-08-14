@@ -94,6 +94,15 @@ class Problem(SoftDeleteModel, BaseModel):
         max_length=8, choices=Difficulty.choices, default=Difficulty.EASY, db_index=True
     )
     points = models.PositiveIntegerField(default=10, validators=[MinValueValidator(1)])
+    # Masalaning QIYINLIK REYTINGI — foydalanuvchi reytingi bilan bir
+    # shkalada (`apps.accounts.rating`). Foydalanuvchi o'zidan kuchliroq
+    # masalani yechganda reytingi o'sadi, oson masala esa deyarli hech
+    # narsa bermaydi. 0 qoldirilsa qiyinlik darajasidan taxminan olinadi,
+    # ya'ni eski masalalar ham to'g'ri ishlaydi.
+    rating = models.PositiveIntegerField(
+        default=0,
+        help_text="Qiyinlik reytingi (masalan 1200). 0 — qiyinlik darajasidan avtomatik.",
+    )
     status = models.CharField(
         max_length=12, choices=ProblemStatus.choices, default=ProblemStatus.DRAFT, db_index=True
     )
