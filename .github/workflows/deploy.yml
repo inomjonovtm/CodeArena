@@ -57,7 +57,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./backend
           push: true
@@ -68,7 +68,7 @@ jobs:
           cache-to: type=gha,scope=backend,mode=max
 
       - name: Frontend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           push: true
@@ -93,7 +93,7 @@ jobs:
       # Kod bajarish konteyneri — alohida image: unda til kompilyatorlari
       # bor, sayt kodi va maxfiy ma'lumot esa yo'q.
       - name: Runner image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: ./infra/runner
           push: true
