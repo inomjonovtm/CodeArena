@@ -3,10 +3,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
-
-import { Reveal } from "./reveal";
-
 /* ==========================================================================
    Hero — "sarlavha butun kenglikda"
    --------------------------------------------------------------------------

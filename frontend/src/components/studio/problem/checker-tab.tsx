@@ -69,7 +69,17 @@ export function CheckerTab({
     setRunning(true);
     setError(null);
     try {
-      setResult(await studio.tools.checkerTest(problemId, trial));
+      // Ekrandagi (hali saqlanmagan) checker sozlamalari ham yuboriladi —
+      // aks holda sinov bazadagi ESKI kodni tekshirib, muallifni chalg'itardi.
+      setResult(
+        await studio.tools.checkerTest(problemId, {
+          ...trial,
+          checker_type: checkerType,
+          checker_language: checkerLanguage,
+          checker_code: value.checker_code ?? "",
+          float_epsilon: value.float_epsilon,
+        }),
+      );
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : String(exception));
       setResult(null);

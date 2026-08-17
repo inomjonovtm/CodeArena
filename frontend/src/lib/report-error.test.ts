@@ -42,7 +42,7 @@ describe("reportError", () => {
     const { reportError } = await freshModule();
     reportError(new Error("nimadir buzildi"));
     expect(sendBeacon).toHaveBeenCalledTimes(1);
-    expect(sendBeacon.mock.calls[0][0]).toBe("/api/client-errors/");
+    expect(sendBeacon.mock.calls[0][0]).toBe("/api/client-errors");
   });
 
   it("bir xil xatoni ikki marta yubormaydi", async () => {

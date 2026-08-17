@@ -55,11 +55,14 @@ def judge_submission(self, submission_id: str) -> str:
                 {
                     "input": tc.input,
                     "expected_output": None if use_checker else tc.expected_output,
+                    # Har bir test O'Z limiti bilan boradi. Ilgari faqat eng
+                    # katta limit yuborilardi va bitta yumshoq test butun
+                    # to'plamning TLE nazoratini o'chirib qo'yardi.
+                    "time_limit_ms": tc.effective_time_limit,
+                    "memory_limit_kb": tc.effective_memory_limit,
                 }
                 for tc in test_cases
             ],
-            # Limitlar test-case darajasida ham belgilanishi mumkin; eng
-            # kattasini olamiz, chunki batch bitta chaqiruvda ketadi.
             time_limit_ms=max(tc.effective_time_limit for tc in test_cases),
             memory_limit_kb=max(tc.effective_memory_limit for tc in test_cases),
         )
@@ -211,13 +214,32 @@ def _apply_results(submission: Submission, test_cases, results) -> None:
     _update_counters(submission)
 
 
+def _daily_bonus(problem) -> int:
+    """Bugungi kunlik masala bonusi (bo'lmasa 0).
+
+    Bitta joyda hisoblanadi: ilgari mukofot va bildirishnoma alohida-alohida
+    hisoblab, yarim tunda har xil raqam ko'rsatishi mumkin edi.
+    """
+    from apps.problems.models import DailyChallenge
+
+    bonus = (
+        DailyChallenge.objects.filter(problem=problem, date=timezone.localdate())
+        .values_list("bonus_points", flat=True)
+        .first()
+    )
+    return int(bonus or 0)
+
+
 def _update_counters(submission: Submission) -> None:
     user = submission.user
     problem = submission.problem
 
-    # Rejudge hisoblagichlarni ikkinchi marta oshirmasligi kerak — shuning
-    # uchun urinishlar soni faqat birinchi tekshiruvda yoziladi.
-    if not submission.is_counted:
+    # Rejudge hisoblagichlarni ikkinchi marta oshirmasligi kerak. Bayroq
+    # ATOMIK bosib olinadi: ilgari «o'qi, keyin yoz» edi va bitta submission
+    # ikki worker qo'liga tushsa, hisoblagichlar ikki marta oshardi.
+    claimed = Submission.objects.filter(pk=submission.pk, is_counted=False).update(is_counted=True)
+    if claimed:
+        submission.is_counted = True
         problem.total_submissions = F("total_submissions") + 1
         if submission.status == SubmissionStatus.ACCEPTED:
             problem.accepted_submissions = F("accepted_submissions") + 1
@@ -227,9 +249,6 @@ def _update_counters(submission: Submission) -> None:
         user.save(update_fields=["submissions_count"])
         user.refresh_from_db(fields=["submissions_count"])
 
-        Submission.objects.filter(pk=submission.pk).update(is_counted=True)
-        submission.is_counted = True
-
     if submission.status != SubmissionStatus.ACCEPTED:
         return
 
@@ -238,20 +257,9 @@ def _update_counters(submission: Submission) -> None:
     # saqlaydi va hisoblagichlarni qayta hisoblash mos keladi.
     awarded = problem.points if submission.is_practice else 0
 
-    # KUNLIK BONUS. Kunlik masala sahifasida «+5 bonus ball» deb yozib
-    # qo'yilgan edi-yu, u hech qachon berilmasdi. Endi masala aynan
-    # o'zining kunida yechilsa bonus qo'shiladi.
+    # KUNLIK BONUS — masala aynan o'zining kunida yechilsa qo'shiladi.
     if awarded:
-        from apps.problems.models import DailyChallenge
-
-        today = timezone.localdate()
-        bonus = (
-            DailyChallenge.objects.filter(problem=problem, date=today)
-            .values_list("bonus_points", flat=True)
-            .first()
-        )
-        if bonus:
-            awarded += int(bonus)
+        awarded += _daily_bonus(problem)
 
     _solved, created = SolvedProblem.objects.get_or_create(
         user=user, problem=problem, defaults={"points_awarded": awarded}
@@ -259,16 +267,29 @@ def _update_counters(submission: Submission) -> None:
     if created:
         submission.is_first_accepted = True
         submission.save(update_fields=["is_first_accepted"])
-        # "Yechilgan" hisobi va streak contestda ham yangilanadi — masala
-        # yechilgani rost; faqat ball nolga teng bo'ladi.
-        user.register_solve(awarded, solved_on=timezone.localdate())
 
-        # Reyting masalaning qiyinlik darajasiga qarab o'sadi. Amaliyotda
-        # ham, olimpiadada ham: masala yechilgani — yechilgani. Olimpiada
-        # oxirida ustiga o'rin bo'yicha hisob ham qo'shiladi.
-        from apps.accounts import rating as rating_engine
+        # Bir foydalanuvchining ikki DAV masalasi parallel tekshirilsa,
+        # ball/streak/reyting o'zgarishlari bir-birini bosib ketmasligi uchun
+        # foydalanuvchi qatori qulflab olinadi (xotiradagi nusxa emas,
+        # bazadagi eng yangi qiymatlar ustida ishlaymiz).
+        from apps.accounts.models import User
 
-        rating_engine.apply_solve(user, problem)
+        with transaction.atomic():
+            locked_user = User.objects.select_for_update().get(pk=user.pk)
+            # "Yechilgan" hisobi va streak contestda ham yangilanadi — masala
+            # yechilgani rost; faqat ball nolga teng bo'ladi.
+            locked_user.register_solve(awarded, solved_on=timezone.localdate())
+
+            # Reyting masalaning qiyinlik darajasiga qarab o'sadi. Amaliyotda
+            # ham, olimpiadada ham: masala yechilgani — yechilgani. Olimpiada
+            # oxirida ustiga o'rin bo'yicha hisob ham qo'shiladi.
+            from apps.accounts import rating as rating_engine
+
+            rating_engine.apply_solve(locked_user, problem)
+
+        # Tashqi obyekt eskirib qolmasin — keyingi bildirishnomalar yangi
+        # qiymatlarni (streak, reyting) ko'rsatadi.
+        user.refresh_from_db()
 
         _log_group_activity(user, problem)
         _notify_first_solve(user, problem, submission)
@@ -307,21 +328,8 @@ def _notify_first_solve(user, problem, submission) -> None:
 
     # Contestda ball berilmaydi — xabarda ham noto'g'ri raqam ko'rsatilmasin
     awarded = problem.points if submission.is_practice else 0
-
-    # KUNLIK BONUS. Kunlik masala sahifasida «+5 bonus ball» deb yozib
-    # qo'yilgan edi-yu, u hech qachon berilmasdi. Endi masala aynan
-    # o'zining kunida yechilsa bonus qo'shiladi.
     if awarded:
-        from apps.problems.models import DailyChallenge
-
-        today = timezone.localdate()
-        bonus = (
-            DailyChallenge.objects.filter(problem=problem, date=today)
-            .values_list("bonus_points", flat=True)
-            .first()
-        )
-        if bonus:
-            awarded += int(bonus)
+        awarded += _daily_bonus(problem)
     body = f"+{awarded} ball" if awarded else "Musobaqa masalasi yechildi"
     if user.current_streak > 1:
         body += f" · {user.current_streak} kunlik seriya"
@@ -343,6 +351,32 @@ def rejudge_submissions(submission_ids: list[str]) -> str:
         Submission.objects.filter(pk=sid).update(
             status=SubmissionStatus.PENDING, error_message="", compile_output="",
             passed_tests=0, failed_test_index=None, judged_at=None,
+            # Eski o'lchovlar ham tozalanadi — aks holda yangi natija chiqquncha
+            # sahifada avvalgi vaqt/xotira/ball ko'rinib turardi.
+            score=0, runtime_ms=None, memory_kb=None, total_tests=0,
         )
         judge_submission.delay(str(sid))
     return f"queued:{len(submission_ids)}"
+
+
+@shared_task(name="apps.judge.tasks.requeue_stuck_submissions")
+def requeue_stuck_submissions(minutes: int = 10) -> str:
+    """PENDING/JUDGING holatida qotib qolgan yechimlarni qayta navbatga qo'yadi.
+
+    Worker o'lsa (OOM, deploy, SIGKILL) xabar yo'qoladi va submission abadiy
+    «tekshirilmoqda»da qolardi — foydalanuvchi esa javob kutib o'tiraverardi.
+    Beat har necha daqiqada eskirganlarni topib qayta yuboradi.
+    """
+    cutoff = timezone.now() - timezone.timedelta(minutes=minutes)
+    stuck = list(
+        Submission.objects.filter(
+            status__in=[SubmissionStatus.PENDING, SubmissionStatus.JUDGING],
+            created_at__lt=cutoff,
+        ).values_list("pk", flat=True)[:200]
+    )
+    for sid in stuck:
+        Submission.objects.filter(pk=sid).update(status=SubmissionStatus.PENDING, judged_at=None)
+        judge_submission.delay(str(sid))
+    if stuck:
+        logger.warning("Qotib qolgan %s ta submission qayta navbatga qo'yildi.", len(stuck))
+    return f"requeued:{len(stuck)}"

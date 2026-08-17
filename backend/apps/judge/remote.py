@@ -108,7 +108,14 @@ def execute(
         "memory_limit_kb": memory_limit_kb,
     }
 
-    response = _request("/run", payload)
+    # Kutish vaqti testlar soniga bog'liq: 40 ta 2s-lik testda eng yomon
+    # holat (har biri deadline'gacha boradi) sozlamadagi 120s dan oshib
+    # ketishi mumkin. U holda foydalanuvchi TLE o'rniga SYSTEM_ERROR olardi
+    # va sog'lik keshi hammani 30s ga bloklab qo'yardi.
+    worst_case_sec = sum(
+        (case.get("time_limit_ms") or time_limit_ms) / 1000 + 2.5 for case in cases
+    ) + 30  # kompilyatsiya va tarmoq zaxirasi
+    response = _request("/run", payload, timeout=max(_timeout(), worst_case_sec))
     rows = response.get("results")
     if not isinstance(rows, list) or len(rows) != len(cases):
         raise RunnerError(
@@ -136,6 +143,15 @@ def _verdict(case: dict, row: dict) -> ExecutionResult:
     )
 
     if status != "OK":
+        return result
+
+    # Himoya qatlami: dastur muvaffaqiyatli tugagan bo'lsa ham limitdan
+    # sekin ishlagan bo'lsa — TLE. Runner buni o'zi ham tekshiradi, lekin
+    # eski runner yoki chegara holatlarida verdikt shu yerda yakunlanadi.
+    limit_ms = case.get("time_limit_ms")
+    if limit_ms and (result.runtime_ms or 0) > int(limit_ms):
+        result.status = "TIME_LIMIT_EXCEEDED"
+        result.message = f"Vaqt limiti ({limit_ms} ms) oshib ketdi."
         return result
 
     expected = case.get("expected_output")

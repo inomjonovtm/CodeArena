@@ -296,6 +296,12 @@ class StudioToolsViewSet(viewsets.GenericViewSet):
         serializer = CheckerTestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        # Formada turgan (saqlanmagan) checker sozlamalari xotiradagi nusxaga
+        # qo'llanadi — bazaga tegilmaydi, lekin sinov aynan ekrandagi kodni
+        # tekshiradi.
+        for field in ("checker_type", "checker_language", "checker_code", "float_epsilon"):
+            if field in data and data[field] not in (None, ""):
+                setattr(problem, field, data[field])
         return self._run(
             request, authoring.try_checker, problem,
             user=request.user,

@@ -225,10 +225,13 @@ def reset_password(request):
 
 # =============================================================== Google orqali
 def _unique_username(base: str) -> str:
+    from .serializers import RegisterSerializer
+
     candidate = re.sub(r"[^a-zA-Z0-9_]", "", (base or "").replace(".", "_"))[:24] or "user"
     if len(candidate) < 3:
         candidate = f"{candidate}user"[:24]
-    if not User.objects.filter(username__iexact=candidate).exists():
+    reserved = candidate.lower() in RegisterSerializer.RESERVED_USERNAMES
+    if not reserved and not User.objects.filter(username__iexact=candidate).exists():
         return candidate
     while True:
         suffix = secrets.randbelow(9000) + 1000

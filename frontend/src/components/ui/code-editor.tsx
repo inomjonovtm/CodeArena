@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useTheme } from "@/components/providers";
+import { LANGUAGE_LABEL } from "@/lib/languages";
 import { cn } from "@/lib/utils";
 
 /**
@@ -220,7 +221,7 @@ export function CodeEditor({
             <div className="fixed inset-0 z-[95] flex flex-col bg-[var(--bg)] p-3 sm:p-4">
               <div className="mb-2.5 flex shrink-0 items-center justify-between gap-3">
                 <span className="ts-label normal-case tracking-normal">
-                  {MONACO_LANGUAGE[language] ?? language}
+                  {(LANGUAGE_LABEL as Record<string, string>)[language] ?? language}
                 </span>
                 <button
                   type="button"

@@ -7,8 +7,7 @@
 #
 # Serverda kerak bo'ladigan fayllar:
 #   docker-compose.prod.yml, .env, backend/.env,
-#   infra/nginx/{app.conf,entrypoint.sh}, infra/certbot/entrypoint.sh,
-#   infra/judge0.conf
+#   infra/nginx/{app.conf,entrypoint.sh}, infra/certbot/entrypoint.sh
 #
 # Ishga tushirish:
 #   docker compose -f docker-compose.prod.yml pull

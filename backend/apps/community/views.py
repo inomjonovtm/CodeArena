@@ -66,6 +66,10 @@ class GroupViewSet(viewsets.ModelViewSet):
         open_actions = {
             "retrieve", "update", "partial_update", "destroy",
             "join_open", "request_join",
+            # O'qish uchun ochiq bo'limlar: ochiq guruh sahifasidagi tablar
+            # (reyting, statistika, faollik, vazifalar) a'zo bo'lmaganga ham
+            # ko'rinadi — ilgari sahifa ochilardi-yu, har bir tab 404 berardi.
+            "leaderboard", "stats", "activity", "assignments", "assignment_detail",
         }
         if self.action in open_actions or self.request.query_params.get("discover") in {
             "1", "true",
@@ -103,6 +107,20 @@ class GroupViewSet(viewsets.ModelViewSet):
         group = self.get_object()
         if not group.can_manage(self.request.user):
             raise PermissionDenied("Guruh sozlamalarini egasi va moderatorlar tahrirlaydi.")
+        # Maxfiylik, manzil (slug) va sig'im — tuzilmaviy qarorlar, ularni
+        # faqat egasi o'zgartiradi. Aks holda moderator yopiq sinf guruhini
+        # «ochiq» qilib, a'zolar ro'yxatini oshkor qilishi mumkin edi.
+        if not group.is_owner(self.request.user):
+            sensitive = {"privacy", "slug", "max_members"}
+            touched = sensitive & set(serializer.validated_data)
+            changed = {
+                field for field in touched
+                if serializer.validated_data[field] != getattr(group, field)
+            }
+            if changed:
+                raise PermissionDenied(
+                    "Maxfiylik, manzil va sig'imni faqat guruh egasi o'zgartiradi."
+                )
         serializer.save()
 
     def perform_destroy(self, instance):
@@ -129,7 +147,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         return member
 
     @staticmethod
-    def _notify_owner(group: Group, user) -> None:
+    def _notify_owner(group: Group, user, *, title: str | None = None) -> None:
         if not group.owner_id or group.owner_id == user.pk:
             return
         from apps.notifications.models import NotificationKind
@@ -139,7 +157,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             group.owner,
             actor=user,
             kind=NotificationKind.GROUP_INVITE,
-            title=f"{user.username} guruhingizga qo'shildi",
+            title=title or f"{user.username} guruhingizga qo'shildi",
             body=group.name,
             url=f"/groups/{group.slug}",
         )
@@ -212,7 +230,11 @@ class GroupViewSet(viewsets.ModelViewSet):
                 "decided_at": None,
             },
         )
-        self._notify_owner(group, request.user)
+        # Bu hali A'ZOLIK EMAS — xabar matni ham shunga mos bo'lsin.
+        self._notify_owner(
+            group, request.user,
+            title=f"{request.user.username} guruhingizga qo'shilish so'rovini yubordi",
+        )
         return Response({"detail": "So'rov yuborildi — guruh egasi ko'rib chiqadi."})
 
     @action(detail=True, methods=["get", "post"], url_path="requests")
@@ -226,20 +248,34 @@ class GroupViewSet(viewsets.ModelViewSet):
             rows = (
                 group.join_requests.filter(status=GroupJoinRequest.Status.PENDING)
                 .select_related("user")
-                .order_by("created_at")
+                .order_by("created_at")[:500]
             )
             return Response(GroupJoinRequestSerializer(rows, many=True).data)
 
-        request_id = request.data.get("id")
+        request_id = to_int(request.data.get("id"), 0)
         decision = (request.data.get("decision") or "").strip()
-        row = group.join_requests.filter(pk=request_id).select_related("user").first()
-        if not row:
-            return Response({"detail": "So'rov topilmadi."}, status=status.HTTP_404_NOT_FOUND)
         if decision not in {"approve", "reject"}:
             return Response(
                 {"detail": "`decision` — `approve` yoki `reject`."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # Faqat KUTAYOTGAN so'rov ustida qaror qabul qilinadi — allaqachon
+        # hal bo'lganini qayta bosish takroriy xabar/faollik yozuvi bermaydi.
+        row = (
+            group.join_requests.filter(pk=request_id, status=GroupJoinRequest.Status.PENDING)
+            .select_related("user")
+            .first()
+        )
+        if not row:
+            return Response({"detail": "Kutayotgan so'rov topilmadi."}, status=status.HTTP_404_NOT_FOUND)
+
+        if decision == "approve":
+            # Avval shartlar (ban, sig'im), KEYIN holat o'zgaradi. Ilgari
+            # tartib teskari edi: guruh to'lgan bo'lsa so'rov «tasdiqlangan»
+            # deb saqlanib, a'zo esa qo'shilmay qolardi.
+            blocked = self._guard_join(group, row.user)
+            if blocked:
+                return blocked
 
         row.status = (
             GroupJoinRequest.Status.APPROVED if decision == "approve"
@@ -250,9 +286,6 @@ class GroupViewSet(viewsets.ModelViewSet):
         row.save(update_fields=["status", "decided_by", "decided_at"])
 
         if decision == "approve":
-            blocked = self._guard_join(group, row.user)
-            if blocked:
-                return blocked
             self._add_member(group, row.user)
 
         return Response({"detail": "Bajarildi.", "status": row.status})
@@ -296,7 +329,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         if not group.can_manage(request.user):
             raise PermissionDenied("A'zoni egasi va moderatorlar chiqaradi.")
 
-        member = group.members.filter(pk=member_id).select_related("user").first()
+        member = group.members.filter(pk=to_int(member_id, 0)).select_related("user").first()
         if not member:
             return Response({"detail": "A'zo topilmadi."}, status=status.HTTP_404_NOT_FOUND)
         if member.user_id == group.owner_id:
@@ -323,6 +356,45 @@ class GroupViewSet(viewsets.ModelViewSet):
         _log(group, request.user, GroupActivity.Kind.LEFT, f"{username} guruhdan chiqarildi")
         return Response({"detail": "A'zo guruhdan chiqarildi."})
 
+    @action(detail=True, methods=["get"], url_path="bans")
+    def bans(self, request, slug=None):
+        """Chetlatilganlar ro'yxati — egasi va moderatorlarga."""
+        group = self.get_object()
+        if not group.can_manage(request.user):
+            raise PermissionDenied("Ro'yxatni egasi va moderatorlar ko'radi.")
+        rows = group.bans.select_related("user", "created_by").order_by("-created_at")[:500]
+        return Response(
+            [
+                {
+                    "id": row.pk,
+                    "username": row.user.username,
+                    "full_name": row.user.full_name,
+                    "reason": row.reason,
+                    "created_by": row.created_by.username if row.created_by else None,
+                    "created_at": row.created_at,
+                }
+                for row in rows
+            ]
+        )
+
+    @action(detail=True, methods=["post"], url_path="bans/(?P<ban_id>[^/.]+)/remove")
+    def unban(self, request, slug=None, ban_id=None):
+        """Chetlatishni bekor qilish — foydalanuvchi yana qo'shila oladi.
+
+        Busiz ban QAYTARIB BO'LMAS edi: bitta noto'g'ri bosish o'quvchini
+        sinf guruhidan abadiy chiqarib yuborardi.
+        """
+        group = self.get_object()
+        if not group.can_manage(request.user):
+            raise PermissionDenied("Chetlatishni egasi va moderatorlar bekor qiladi.")
+        row = group.bans.filter(pk=to_int(ban_id, 0)).select_related("user").first()
+        if not row:
+            return Response({"detail": "Yozuv topilmadi."}, status=status.HTTP_404_NOT_FOUND)
+        username = row.user.username
+        row.delete()
+        _log(group, request.user, GroupActivity.Kind.ROLE, f"{username} chetlatishdan chiqarildi")
+        return Response({"detail": f"{username} endi guruhga qayta qo'shila oladi."})
+
     @action(detail=True, methods=["post"], url_path="members/(?P<member_id>[^/.]+)/role")
     def set_role(self, request, slug=None, member_id=None):
         """Moderator tayinlash yoki olib tashlash — faqat egasi."""
@@ -330,7 +402,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         if not group.is_owner(request.user):
             raise PermissionDenied("Rolni faqat guruh egasi o'zgartiradi.")
 
-        member = group.members.filter(pk=member_id).select_related("user").first()
+        member = group.members.filter(pk=to_int(member_id, 0)).select_related("user").first()
         if not member:
             return Response({"detail": "A'zo topilmadi."}, status=status.HTTP_404_NOT_FOUND)
         if member.user_id == group.owner_id:
@@ -406,19 +478,10 @@ class GroupViewSet(viewsets.ModelViewSet):
                 .values_list("user")
                 .annotate(total=Count("id"))
             )
-            points = dict(
-                SolvedProblem.objects.filter(
-                    user__in=[row.user_id for row in rows], created_at__gte=since
-                )
-                .values_list("user")
-                .annotate(total=Count("points_awarded"))
-            )
-            scored = [
-                (row, counts.get(row.user_id, 0), points.get(row.user_id, 0)) for row in rows
-            ]
+            scored = [(row, counts.get(row.user_id, 0)) for row in rows]
             scored.sort(key=lambda item: (-item[1], -item[0].user.rating))
             data = []
-            for index, (row, solved, _pts) in enumerate(scored, start=1):
+            for index, (row, solved) in enumerate(scored, start=1):
                 payload = GroupMemberSerializer(row).data
                 payload["position"] = index
                 payload["period_solved"] = solved
@@ -491,10 +554,14 @@ class GroupViewSet(viewsets.ModelViewSet):
         group = self.get_object()
 
         if request.method == "GET":
+            rows = group.assignments.all()
+            # Qoralama vazifalar faqat boshqaruvchilarga ko'rinadi — ilgari
+            # moderator saqlagan qoralamasini ro'yxatdan topa olmasdi.
+            if not group.can_manage(request.user):
+                rows = rows.filter(is_published=True)
             rows = (
-                group.assignments.filter(is_published=True)
-                .annotate(problem_total=Count("problems"))
-                .select_related("created_by")
+                rows.annotate(problem_total=Count("problems"))
+                .select_related("created_by")[:200]
             )
             return Response(GroupAssignmentSerializer(rows, many=True).data)
 
@@ -520,8 +587,10 @@ class GroupViewSet(viewsets.ModelViewSet):
     def assignment_detail(self, request, slug=None, assignment_id=None):
         """Vazifa tafsiloti: masalalar va har bir a'zoning bajarishi."""
         group = self.get_object()
-        assignment = group.assignments.filter(pk=assignment_id).first()
-        if not assignment:
+        assignment = group.assignments.filter(pk=to_int(assignment_id, 0)).first()
+        if not assignment or (
+            not assignment.is_published and not group.can_manage(request.user)
+        ):
             return Response({"detail": "Vazifa topilmadi."}, status=status.HTTP_404_NOT_FOUND)
 
         if request.method == "DELETE":

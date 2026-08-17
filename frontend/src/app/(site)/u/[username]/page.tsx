@@ -32,6 +32,7 @@ import { useAuth, useI18n } from "@/components/providers";
 import { FollowButton, FollowListModal } from "@/components/site/follow";
 import { RankAvatar, RankBadge, RankProgress } from "@/components/site/rank";
 import { RatingHistory } from "@/components/site/rating-history";
+import { LANGUAGE_LABEL } from "@/lib/languages";
 import { publicApi } from "@/lib/public-api";
 import type { ActivityDay, Difficulty } from "@/lib/types";
 import { cn, formatDate, formatNumber, formatRelative } from "@/lib/utils";
@@ -42,11 +43,6 @@ const DIFFICULTY_ROWS: { key: Difficulty; label: string; tone: "ok" | "warn" | "
   { key: "hard", label: "Qiyin", tone: "bad" },
 ];
 
-const LANGUAGE_LABEL: Record<string, string> = {
-  python: "Python",
-  javascript: "JavaScript",
-  cpp: "C++",
-};
 
 /* Faollik darajalari — yashil shkalaning qat'iy pog'onalari.
 
@@ -78,10 +74,21 @@ function ActivityHeatmap({ activity }: { activity: ActivityDay[] }) {
     const end = new Date(today);
     end.setDate(end.getDate() + (6 - end.getDay()));
 
+    // Kalit MAHALLIY sana bo'yicha quriladi. `toISOString()` UTC beradi:
+    // Toshkentda yarim tundan keyin bu KECHAGI sana bo'lib, butun kalendar
+    // bir kunga surilib ketardi — bugungi yechimlar bugungi katakni
+    // hech qachon yoqmasdi.
+    const localKey = (value: Date) =>
+      `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(
+        value.getDate(),
+      ).padStart(2, "0")}`;
+
+    const shown = new Set<string>();
     for (let index = 26 * 7 - 1; index >= 0; index -= 1) {
       const date = new Date(end);
       date.setDate(end.getDate() - index);
-      const key = date.toISOString().slice(0, 10);
+      const key = localKey(date);
+      shown.add(key);
       days.push({ date: key, count: map.get(key) ?? 0 });
     }
 
@@ -92,7 +99,9 @@ function ActivityHeatmap({ activity }: { activity: ActivityDay[] }) {
 
     return {
       weeks: grouped,
-      total: activity.reduce((sum, row) => sum + row.count, 0),
+      // Yig'indi ham KO'RSATILGAN oynaga mos: ilgari sarlavha «oxirgi yil»
+      // deb 365 kunni sanardi, katakchalar esa 26 haftani ko'rsatardi.
+      total: activity.reduce((sum, row) => sum + (shown.has(row.date) ? row.count : 0), 0),
     };
   }, [activity]);
 
@@ -109,7 +118,7 @@ function ActivityHeatmap({ activity }: { activity: ActivityDay[] }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[14px] font-medium text-[var(--text-2)]">Faollik</p>
         <p className="ts-sm text-[var(--text-4)]">
-          Oxirgi yilda <span className="ts-num text-[var(--text-2)]">{formatNumber(total)}</span> ta yuborish
+          Oxirgi 6 oyda <span className="ts-num text-[var(--text-2)]">{formatNumber(total)}</span> ta yuborish
         </p>
       </div>
 

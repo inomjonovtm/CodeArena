@@ -51,6 +51,17 @@ class AuthoringError(Exception):
     """Muallifga ko'rsatiladigan, kutilgan xato (400 bo'lib qaytadi)."""
 
 
+def _touch(problem) -> None:
+    """Masalaning `updated_at` ini yangilaydi.
+
+    Studio qoralamasi `updated_at` ga qarab qayta yuklanadi. Testlarni
+    o'zgartiruvchi amallar buni yangilamasa, ochiq turgan forma ESKI test
+    ro'yxatini ushlab qoladi va keyingi «Saqlash» yangi yasalgan testlarni
+    o'chirib yuboradi.
+    """
+    problem.save(update_fields=["updated_at"])
+
+
 @dataclass
 class ProgramRun:
     """Bitta dasturning bir nechta kirishdagi natijasi."""
@@ -257,6 +268,7 @@ def generate_tests(problem, generator, *, count: int, seed_start: int,
             )
         )
     TestCase.objects.bulk_create(created)
+    _touch(problem)
 
     generator.last_run_at = timezone.now()
     generator.last_message = f"{len(created)} ta test yasaldi."
@@ -316,12 +328,17 @@ def fill_expected(problem, *, user, only_empty: bool = False) -> AuthoringRun:
         )
 
     changed = []
+    now = timezone.now()
     for tc, output in zip(cases, run.outputs, strict=True):
         new_value = output.strip("\n") + "\n" if output.strip() else ""
         if new_value != tc.expected_output:
             tc.expected_output = new_value
+            # bulk_update `auto_now` ni ishlatmaydi — vaqt qo'lda yoziladi.
+            tc.updated_at = now
             changed.append(tc)
-    TestCase.objects.bulk_update(changed, ["expected_output"])
+    TestCase.objects.bulk_update(changed, ["expected_output", "updated_at"])
+    if changed:
+        _touch(problem)
 
     return _record(
         problem, user,
@@ -544,6 +561,7 @@ def stress_test(problem, *, user, generator, model, brute,
             seed=rows[bad]["seed"],
             explanation_uz="Stress-testda topilgan qarshi misol.",
         )
+        _touch(problem)
         detail["saved_as_test"] = True
 
     return _record(

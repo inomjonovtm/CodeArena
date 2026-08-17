@@ -70,4 +70,16 @@ app.conf.beat_schedule = {
         "task": "apps.problems.tasks.purge_trash",
         "schedule": 60 * 60 * 24,
     },
+    "clear-expired-bans": {
+        # Muddati o'tgan vaqtinchalik banlar bayrog'ini tozalash — busiz
+        # foydalanuvchi leaderboarddan muddat o'tgach ham chiqib qolaverardi.
+        "task": "apps.accounts.tasks.clear_expired_bans",
+        "schedule": 10 * 60,
+    },
+    "requeue-stuck-submissions": {
+        # Worker o'lib qolsa PENDING/JUDGING da qotgan yechimlarni qayta
+        # navbatga qo'yish — foydalanuvchi abadiy kutib qolmasin.
+        "task": "apps.judge.tasks.requeue_stuck_submissions",
+        "schedule": 5 * 60,
+    },
 }

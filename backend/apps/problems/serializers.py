@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
 from apps.core.utils import unique_slug
 
+from .authoring import MAX_TEST_CHARS
 from .models import (
     Bookmark,
     DailyChallenge,
@@ -14,6 +16,44 @@ from .models import (
     Tag,
     TestCase,
 )
+
+# Bitta masaladagi testlarning yuqori chegarasi — bitta saqlash so'rovi
+# minglab qator yaratib yubormasin (GET tomonda 2000 himoya chegarasi bor).
+MAX_TEST_CASES = 1000
+
+
+def publish_blockers(*, description_uz: str, test_cases, checker_type: str, checker_code: str) -> list[str]:
+    """Masalani chop etishga to'sqinlik qiladigan sabablar ro'yxati.
+
+    Bitta joyda turadi, chunki chop etish uch yo'ldan bo'lishi mumkin:
+    `publish` amali, bulk amal va oddiy PATCH (`status=published`). Ilgari
+    faqat birinchisi tekshirardi va qolgan ikkitasi testsiz masalani ham
+    saytga chiqarib yuborardi.
+
+    `test_cases` — dict yoki TestCase obyektlari ro'yxati.
+    """
+    problems: list[str] = []
+    if not (description_uz or "").strip():
+        problems.append("Tavsif (uz) bo'sh — chop etib bo'lmaydi.")
+
+    rows = list(test_cases)
+    if not rows:
+        problems.append("Kamida bitta test-case qo'shing.")
+    else:
+        def _get(row, key, default=""):
+            return row.get(key, default) if isinstance(row, dict) else getattr(row, key, default)
+
+        if not any(_get(row, "is_sample", False) for row in rows):
+            problems.append("Kamida bitta namunaviy (sample) test kerak — u masala sahifasida ko'rinadi.")
+        empty = sum(1 for row in rows if not str(_get(row, "expected_output", "") or "").strip())
+        if empty:
+            problems.append(
+                f"{empty} ta testda kutilgan chiqish bo'sh — bunday test bo'sh javobni ham qabul qiladi."
+            )
+
+    if (checker_type or "exact") == "custom" and not (checker_code or "").strip():
+        problems.append("Checker turi «custom», lekin checker kodi yozilmagan.")
+    return problems
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -32,6 +72,11 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class TestCaseSerializer(serializers.ModelSerializer):
+    # Bitta test uchun hajm chegarasi — generator yo'lidagi bilan bir xil.
+    # Busiz qo'lda yoki API orqali cheksiz katta matn saqlash mumkin edi.
+    input = serializers.CharField(required=False, allow_blank=True, max_length=MAX_TEST_CHARS)
+    expected_output = serializers.CharField(required=False, allow_blank=True, max_length=MAX_TEST_CHARS)
+
     class Meta:
         model = TestCase
         fields = (
@@ -40,13 +85,14 @@ class TestCaseSerializer(serializers.ModelSerializer):
             "created_at", "updated_at",
         )
         read_only_fields = ("id", "created_at", "updated_at")
-        extra_kwargs = {"problem": {"required": False}}
 
 
 class TestCaseNestedSerializer(serializers.ModelSerializer):
     """Masala formasi ichida test-case'larni bir vaqtda saqlash uchun."""
 
     id = serializers.IntegerField(required=False)
+    input = serializers.CharField(required=False, allow_blank=True, max_length=MAX_TEST_CHARS)
+    expected_output = serializers.CharField(required=False, allow_blank=True, max_length=MAX_TEST_CHARS)
 
     class Meta:
         model = TestCase
@@ -91,7 +137,7 @@ class ProblemDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Problem
         fields = (
-            "id", "slug", "title_uz", "title_en", "difficulty", "points", "status",
+            "id", "slug", "title_uz", "title_en", "difficulty", "points", "rating", "status",
             "description_uz", "description_en", "constraints_uz", "constraints_en",
             "hint_uz", "hint_en", "editorial_uz", "editorial_en",
             "tags", "tag_ids",
@@ -110,6 +156,19 @@ class ProblemDetailSerializer(serializers.ModelSerializer):
         )
         extra_kwargs = {"slug": {"required": False, "allow_blank": True}}
 
+    def validate_starter_code(self, value):
+        """`{"til": "kod"}` ko'rinishidagi lug'at — boshqa shakl jimgina
+        saqlanib, keyin frontendda indekslashda sinardi."""
+        if value in (None, ""):
+            return {}
+        if not isinstance(value, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) for k, v in value.items()
+        ):
+            raise serializers.ValidationError(
+                "starter_code {\"til\": \"kod\"} ko'rinishidagi lug'at bo'lishi kerak."
+            )
+        return value
+
     def validate(self, attrs):
         if not attrs.get("slug") and not (self.instance and self.instance.slug):
             source = attrs.get("title_en") or attrs.get("title_uz") or ""
@@ -117,31 +176,67 @@ class ProblemDetailSerializer(serializers.ModelSerializer):
         elif attrs.get("slug"):
             attrs["slug"] = unique_slug(Problem, attrs["slug"], instance=self.instance, max_length=120)
 
+        if attrs.get("test_cases") is not None and len(attrs["test_cases"]) > MAX_TEST_CASES:
+            raise serializers.ValidationError(
+                {"test_cases": f"Bitta masalada ko'pi bilan {MAX_TEST_CASES} ta test bo'lishi mumkin."}
+            )
+
         status_value = attrs.get("status", getattr(self.instance, "status", ProblemStatus.DRAFT))
+        was_published = bool(self.instance and self.instance.status == ProblemStatus.PUBLISHED)
         if status_value == ProblemStatus.PUBLISHED:
-            description = attrs.get("description_uz", getattr(self.instance, "description_uz", ""))
-            if not description.strip():
-                raise serializers.ValidationError(
-                    {"description_uz": "Chop etish uchun o'zbekcha tavsif to'ldirilishi shart."}
-                )
+            # Chop etish shartlari `publish` amalida ham, oddiy PATCH orqali
+            # `status` o'zgartirilganda ham BIR XIL tekshiriladi — ilgari
+            # PATCH yo'li ularni chetlab o'tib, testsiz masala chiqarardi.
+            if not was_published:
+                request = self.context.get("request")
+                user = getattr(request, "user", None)
+                if user is not None and hasattr(user, "has_perm_code") and not user.has_perm_code("problems.publish"):
+                    raise serializers.ValidationError(
+                        {"status": "Chop etish uchun sizda huquq yo'q — moderatorga murojaat qiling."}
+                    )
+            if attrs.get("test_cases") is not None:
+                tests = attrs["test_cases"]
+            elif self.instance is not None:
+                tests = list(self.instance.test_cases.all())
+            else:
+                tests = []
+            blockers = publish_blockers(
+                description_uz=attrs.get(
+                    "description_uz", getattr(self.instance, "description_uz", "")
+                ),
+                test_cases=tests,
+                checker_type=attrs.get(
+                    "checker_type", getattr(self.instance, "checker_type", "exact")
+                ),
+                checker_code=attrs.get(
+                    "checker_code", getattr(self.instance, "checker_code", "")
+                ),
+            )
+            if blockers:
+                raise serializers.ValidationError({"status": blockers})
         return attrs
 
     def validate_points(self, value):
         return value or 10
 
     def _sync_test_cases(self, problem: Problem, rows: list[dict]):
-        keep_ids = []
-        for index, row in enumerate(rows):
-            row = dict(row)
-            row.setdefault("order", index)
-            tc_id = row.pop("id", None)
-            if tc_id:
-                TestCase.objects.filter(pk=tc_id, problem=problem).update(**row)
-                keep_ids.append(tc_id)
-            else:
-                created = TestCase.objects.create(problem=problem, **row)
-                keep_ids.append(created.pk)
-        problem.test_cases.exclude(pk__in=keep_ids).delete()
+        # Atomik: o'rtada xato chiqsa, yarmi o'chirilgan/yarmi yangilangan
+        # holat qolmasin. `update()` `auto_now` ni ishlatmaydi — vaqtni qo'lda
+        # yozamiz, aks holda «oxirgi o'zgarish» ustuni yolg'on gapirardi.
+        now = timezone.now()
+        with transaction.atomic():
+            keep_ids = []
+            for index, row in enumerate(rows):
+                row = dict(row)
+                row.setdefault("order", index)
+                tc_id = row.pop("id", None)
+                if tc_id:
+                    TestCase.objects.filter(pk=tc_id, problem=problem).update(**row, updated_at=now)
+                    keep_ids.append(tc_id)
+                else:
+                    created = TestCase.objects.create(problem=problem, **row)
+                    keep_ids.append(created.pk)
+            problem.test_cases.exclude(pk__in=keep_ids).delete()
 
     def create(self, validated_data):
         test_cases = validated_data.pop("test_cases", None)

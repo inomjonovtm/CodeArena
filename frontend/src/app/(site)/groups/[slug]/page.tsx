@@ -30,7 +30,6 @@ import {
   LinkButton,
   Pane,
   Segmented,
-  Stat,
 } from "@/components/kit";
 import { useAuth, useConfirm, useToast } from "@/components/providers";
 import { ApiError } from "@/lib/api";
@@ -303,8 +302,6 @@ export default function GroupDetailPage() {
   }
 
   const rows = members ?? [];
-  const totalPoints = rows.reduce((sum, row) => sum + row.total_points, 0);
-  const totalSolved = rows.reduce((sum, row) => sum + row.problems_solved, 0);
   const memberCount = group.live_member_count || group.member_count;
 
   // "A'zolar" ko'rinishi — rol bo'yicha, keyin nom bo'yicha

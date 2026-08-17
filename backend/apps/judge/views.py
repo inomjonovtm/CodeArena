@@ -27,6 +27,36 @@ logger = logging.getLogger(__name__)
 MAX_RUN_TESTS = 5
 
 
+def _may_run(user, problem) -> bool:
+    """Run tugmasi shu masalada ishlashi mumkinmi.
+
+    Submit bilan bir xil qoida: chop etilgan oddiy masala — hammaga;
+    musobaqa masalasi — faqat boshlangan musobaqa ishtirokchisiga;
+    qoralama — muallif va moderatorlarga.
+    """
+    from apps.problems.models import ProblemStatus
+
+    role = getattr(user, "role", "")
+    if role in {"admin", "moderator"} or (role == "setter" and problem.author_id == user.pk):
+        return True
+    if problem.status != ProblemStatus.PUBLISHED:
+        return False
+    if not problem.is_contest_only:
+        return True
+
+    from django.utils import timezone
+
+    from apps.contests.models import ContestStatus
+
+    # Musobaqa masalasi: foydalanuvchi qatnashayotgan va allaqachon
+    # BOSHLANGAN musobaqada bo'lsa ochiladi.
+    return problem.contest_entries.filter(
+        contest__participants__user=user,
+        contest__status__in=[ContestStatus.RUNNING, ContestStatus.FINISHED],
+        contest__starts_at__lte=timezone.now(),
+    ).exists()
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def judge_status(request):
@@ -73,6 +103,15 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
             queryset = queryset.filter(problem__slug=slug)
         if self.request.query_params.get("accepted_only") in {"1", "true"}:
             queryset = queryset.filter(status="ACCEPTED")
+        # «Boshqa xatolar» tabi bir nechta statusni birlashtiradi; qidiruv esa
+        # masala nomi bo'yicha. Ikkalasi SERVERDA filtrlanadi — ilgari frontend
+        # faqat joriy sahifani filtrlar va sahifalagich boshqa sonni ko'rsatardi.
+        statuses = self.request.query_params.get("status__in")
+        if statuses:
+            queryset = queryset.filter(status__in=[part for part in statuses.split(",") if part])
+        term = (self.request.query_params.get("search") or "").strip()
+        if term:
+            queryset = queryset.filter(problem__title_uz__icontains=term)
         return queryset
 
     def get_serializer_class(self):
@@ -104,7 +143,10 @@ class SubmissionViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin,
         data = serializer.validated_data
 
         problem = Problem.objects.filter(slug=data["problem_slug"]).first()
-        if not problem:
+        if not problem or not _may_run(request.user, problem):
+            # Ko'rish huquqi bo'lmagan masala «yo'q» deb javob beradi — aks
+            # holda slug'ni topib olgan foydalanuvchi qoralama yoki hali
+            # boshlanmagan musobaqa masalasining testlarini o'qiy olardi.
             return Response({"detail": "Masala topilmadi."}, status=status.HTTP_404_NOT_FOUND)
 
         custom_stdin = (data.get("stdin") or "").strip()

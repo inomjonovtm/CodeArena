@@ -44,10 +44,10 @@ export function reportError(error: unknown, context?: Record<string, string>) {
   // foydalanuvchi darhol ketib qolsa, oddiy `fetch` bekor qilinardi.
   if (navigator.sendBeacon) {
     const blob = new Blob([body], { type: "application/json" });
-    if (navigator.sendBeacon("/api/client-errors/", blob)) return;
+    if (navigator.sendBeacon("/api/client-errors", blob)) return;
   }
 
-  void fetch("/api/client-errors/", {
+  void fetch("/api/client-errors", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body,

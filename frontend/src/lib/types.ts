@@ -247,6 +247,8 @@ export interface ProblemListItem {
 }
 
 export interface ProblemDetail extends Omit<ProblemListItem, "test_case_count"> {
+  /** Elo «raqib kuchi». 0 — qiyinlikdan avtomatik olinadi. */
+  rating?: number;
   description_uz: string;
   description_en: string;
   constraints_uz: string;

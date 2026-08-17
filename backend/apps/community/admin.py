@@ -11,7 +11,7 @@ from unfold.contrib.filters.admin import (
 )
 from unfold.decorators import action, display
 
-from .models import Group, GroupMember
+from .models import Group, GroupBan, GroupJoinRequest, GroupMember
 
 
 class GroupMemberInline(TabularInline):
@@ -58,3 +58,23 @@ class GroupMemberAdmin(ModelAdmin):
     search_fields = ("group__name", "user__username")
     autocomplete_fields = ("group", "user")
     ordering = ("group", "role")
+
+
+@admin.register(GroupBan)
+class GroupBanAdmin(ModelAdmin):
+    """Chetlatishlar — sayt UI'dan tashqari, favqulodda tuzatish uchun ham."""
+
+    list_display = ("group", "user", "reason", "created_by", "created_at")
+    list_filter = (("group", RelatedDropdownFilter), ("created_at", RangeDateFilter))
+    search_fields = ("group__name", "user__username", "reason")
+    autocomplete_fields = ("group", "user", "created_by")
+    ordering = ("-created_at",)
+
+
+@admin.register(GroupJoinRequest)
+class GroupJoinRequestAdmin(ModelAdmin):
+    list_display = ("group", "user", "status", "decided_by", "decided_at", "created_at")
+    list_filter = (("group", RelatedDropdownFilter), ("created_at", RangeDateFilter))
+    search_fields = ("group__name", "user__username", "message")
+    autocomplete_fields = ("group", "user", "decided_by")
+    ordering = ("-created_at",)

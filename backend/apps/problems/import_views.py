@@ -14,17 +14,22 @@ from rest_framework.response import Response
 
 from apps.core.mixins import write_audit
 from apps.core.permissions import require
-from apps.core.utils import unique_slug
+from apps.core.utils import to_int, unique_slug
 
+from .authoring import MAX_TEST_CHARS
 from .models import Problem, ProblemStatus, Tag, TestCase
+from .studio_views import visible_problems
 
 # ------------------------------------------------------------------------
 # Masalalarni JSON dan import qilish
 # ------------------------------------------------------------------------
 REQUIRED_FIELDS = {"title_uz", "description_uz"}
 
+# `status` ATAYLAB ro'yxatda yo'q: import har doim qoralama yaratadi.
+# Chop etish — alohida, huquq bilan qo'riqlanadigan amal; aks holda
+# importchi testsiz «published» masalani to'g'ridan-to'g'ri saytga chiqarardi.
 IMPORTABLE_FIELDS = {
-    "title_uz", "title_en", "slug", "difficulty", "points", "status",
+    "title_uz", "title_en", "slug", "difficulty", "points",
     "description_uz", "description_en", "constraints_uz", "constraints_en",
     "hint_uz", "hint_en", "editorial_uz", "editorial_en",
     "starter_code_python", "starter_code_javascript", "starter_code_cpp",
@@ -32,13 +37,15 @@ IMPORTABLE_FIELDS = {
     "is_premium", "is_contest_only",
 }
 
+# Bitta masalaga importda qabul qilinadigan testlar soni chegarasi.
+MAX_IMPORT_TESTS = 1000
+
 SAMPLE_TEMPLATE = [
     {
         "title_uz": "Ikki sonning yig'indisi",
         "title_en": "Two Sum",
         "difficulty": "easy",
         "points": 10,
-        "status": "draft",
         "description_uz": "### Masala\n\nMassiv va target beriladi...",
         "constraints_uz": "- `1 <= n <= 10^5`",
         "tags": ["array", "hash-table"],
@@ -131,15 +138,31 @@ def import_problems(request):
                            "error": "difficulty faqat easy/medium/hard bo'lishi mumkin"})
             continue
 
+        test_rows = [row for row in (raw.get("test_cases") or []) if isinstance(row, dict)]
+        if len(test_rows) > MAX_IMPORT_TESTS:
+            errors.append({"index": index, "title": raw.get("title_uz"),
+                           "error": f"Testlar soni {MAX_IMPORT_TESTS} dan oshmasligi kerak."})
+            continue
+        oversize = sum(
+            1 for row in test_rows
+            if len(str(row.get("input", ""))) > MAX_TEST_CHARS
+            or len(str(row.get("expected_output", ""))) > MAX_TEST_CHARS
+        )
+        if oversize:
+            errors.append({"index": index, "title": raw.get("title_uz"),
+                           "error": f"{oversize} ta test {MAX_TEST_CHARS} belgi chegarasidan katta."})
+            continue
+
         fields = {key: raw[key] for key in IMPORTABLE_FIELDS if key in raw}
         fields.setdefault("difficulty", "easy")
         fields.setdefault("points", {"easy": 10, "medium": 30, "hard": 50}[fields["difficulty"]])
-        fields.setdefault("status", ProblemStatus.DRAFT)
+        # Import HAR DOIM qoralama yaratadi (huquq nazorati uchun).
+        fields["status"] = ProblemStatus.DRAFT
         prepared.append(
             {
                 "fields": fields,
                 "tags": raw.get("tags") or [],
-                "test_cases": raw.get("test_cases") or [],
+                "test_cases": test_rows,
                 "index": index,
             }
         )
@@ -214,7 +237,9 @@ def import_test_cases(request, problem_id):
     - `.zip` — ichida `1.in`/`1.out`, `2.in`/`2.out` juftliklari
     - `.txt` — `---` bilan ajratilgan bloklar (kirish, keyin `===`, keyin chiqish)
     """
-    problem = Problem.objects.filter(pk=problem_id).first()
+    # Egalik chegarasi: setter faqat o'z masalasiga test yuklaydi. Busiz u
+    # istalgan masalaning testlarini `replace=true` bilan o'chirib yuborardi.
+    problem = visible_problems(request.user).filter(pk=problem_id).first()
     if not problem:
         return Response({"detail": "Masala topilmadi."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -223,7 +248,7 @@ def import_test_cases(request, problem_id):
         return Response({"detail": "Fayl yuborilmadi."}, status=status.HTTP_400_BAD_REQUEST)
 
     replace = bool(request.data.get("replace"))
-    sample_count = int(request.data.get("sample_count", 0))
+    sample_count = to_int(request.data.get("sample_count"), 0, low=0)
     pairs: list[tuple[str, str]] = []
 
     name = (upload.name or "").lower()
@@ -259,6 +284,20 @@ def import_test_cases(request, problem_id):
         return Response(
             {"detail": "Test juftliklari topilmadi. ZIP uchun `1.in`/`1.out`, "
                        "TXT uchun `---` va `===` ajratkichlarini ishlating."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if len(pairs) > MAX_IMPORT_TESTS:
+        return Response(
+            {"detail": f"Bir martada ko'pi bilan {MAX_IMPORT_TESTS} ta test yuklash mumkin."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    oversize = sum(
+        1 for raw_input, expected in pairs
+        if len(raw_input) > MAX_TEST_CHARS or len(expected) > MAX_TEST_CHARS
+    )
+    if oversize:
+        return Response(
+            {"detail": f"{oversize} ta test {MAX_TEST_CHARS} belgi chegarasidan katta."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

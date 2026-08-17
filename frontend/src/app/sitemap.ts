@@ -20,7 +20,6 @@ const STATIC: { path: string; priority: number; changeFrequency: MetadataRoute.S
   { path: "/contests", priority: 0.8, changeFrequency: "daily" },
   { path: "/leaderboard", priority: 0.7, changeFrequency: "daily" },
   { path: "/discussions", priority: 0.6, changeFrequency: "daily" },
-  { path: "/groups", priority: 0.4, changeFrequency: "weekly" },
   { path: "/help", priority: 0.4, changeFrequency: "monthly" },
   { path: "/contact", priority: 0.3, changeFrequency: "monthly" },
   { path: "/terms", priority: 0.2, changeFrequency: "yearly" },

@@ -75,7 +75,9 @@ export function useNavModel() {
       label: t.site.sections.community,
       links: [
         { href: "/discussions", label: t.site.nav.discussions, icon: <MessageSquare className="size-[18px]" /> },
-        { href: "/groups", label: t.site.nav.groups, icon: <Users className="size-[18px]" /> },
+        // Guruhlar sahifasi kirishni talab qiladi — mehmonga ko'rsatilsa
+        // havola to'g'ri login devoriga olib borardi.
+        { href: "/groups", label: t.site.nav.groups, icon: <Users className="size-[18px]" />, private: true },
       ],
     },
   ];

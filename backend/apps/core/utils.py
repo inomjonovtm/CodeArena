@@ -26,7 +26,11 @@ def unique_slug(model, value: str, *, field: str = "slug", instance=None, max_le
     base = slugify(value, max_length=max_length - 6)
     candidate = base
     counter = 2
-    queryset = model._default_manager.all()
+    # Savatdagi (soft-delete) yozuvlar standart menejerda ko'rinmaydi, lekin
+    # bazadagi UNIQUE cheklov ularni ham hisobga oladi — shuning uchun bor
+    # bo'lsa `all_objects` bilan tekshiramiz, aks holda IntegrityError bo'lardi.
+    manager = getattr(model, "all_objects", model._default_manager)
+    queryset = manager.all()
     if instance is not None and instance.pk:
         queryset = queryset.exclude(pk=instance.pk)
     while queryset.filter(**{field: candidate}).exists():

@@ -18,6 +18,7 @@ emas, ya'ni image kichik va yangilanish maydoni tor bo'ladi.
 """
 from __future__ import annotations
 
+import hmac
 import json
 import logging
 import os
@@ -57,10 +58,30 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _drain_body(self) -> None:
+        """So'rov tanasini o'qib tashlaydi.
+
+        Keep-alive ulanishda erta javob qaytarilsa-yu, tana o'qilmasa,
+        qolgan baytlar KEYINGI so'rov sifatida talqin qilinib, tushunarsiz
+        400 lar paydo bo'lardi.
+        """
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            length = 0
+        remaining = min(length, MAX_BODY_BYTES)
+        while remaining > 0:
+            chunk = self.rfile.read(min(remaining, 65536))
+            if not chunk:
+                break
+            remaining -= len(chunk)
+
     def _authorized(self) -> bool:
         if not TOKEN:
             return True
-        return self.headers.get("X-Runner-Token", "") == TOKEN
+        # Doimiy vaqtli solishtirish — oddiy `==` token uzunligi/mazmunini
+        # vaqt farqidan bilib olishga yo'l qo'yardi.
+        return hmac.compare_digest(self.headers.get("X-Runner-Token", ""), TOKEN)
 
     # ----------------------------------------------------------------- routes
     def do_GET(self) -> None:  # noqa: N802
@@ -71,9 +92,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         if self.path.rstrip("/") != "/run":
+            self._drain_body()
             self._send(404, {"detail": "Topilmadi."})
             return
         if not self._authorized():
+            self._drain_body()
             self._send(401, {"detail": "Token noto'g'ri."})
             return
 
@@ -83,6 +106,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"detail": "Content-Length noto'g'ri."})
             return
         if length <= 0 or length > MAX_BODY_BYTES:
+            self._drain_body()
             self._send(413, {"detail": "So'rov hajmi chegaradan oshdi."})
             return
 
@@ -104,6 +128,10 @@ class Handler(BaseHTTPRequestHandler):
             return
         if len(cases) > MAX_CASES:
             self._send(413, {"detail": f"Testlar soni {MAX_CASES} dan oshmasin."})
+            return
+        if not all(isinstance(case, dict) for case in cases):
+            # Tekshirilmasa noto'g'ri element butun batchni 500 ga yiqitardi.
+            self._send(400, {"detail": "`cases` elementlari obyekt bo'lishi kerak."})
             return
 
         with _slots:
@@ -127,6 +155,12 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     host = os.environ.get("RUNNER_HOST", "0.0.0.0")  # noqa: S104 — ichki tarmoq
     port = int(os.environ.get("RUNNER_PORT", "2400"))
+
+    if not TOKEN:
+        logger.warning(
+            "RUNNER_TOKEN o'rnatilmagan — autentifikatsiya O'CHIQ. Bu faqat "
+            "yopiq (internal) tarmoqda xavfsiz; prodda token qo'ying."
+        )
 
     languages = executor.available_languages()
     logger.info(

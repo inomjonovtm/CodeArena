@@ -25,17 +25,28 @@ def refresh_contest_statuses() -> str:
     # ikkita tugma bosish kerak edi: musobaqa tugagach jadval ham, reyting
     # ham hech kim tugma bosmaguncha eskirib turardi va ishtirokchi «reyting
     # o'zgarishi» ustunida cheksiz «—» ko'rardi.
+    #
+    # Ikkalasi ZANJIRDA ketadi: reyting jadval qayta hisoblanGANDAN keyin
+    # qo'llanadi. Ilgari ikkita mustaqil task edi va ikkinchi worker eski
+    # rank'lar ustida reyting hisoblashi mumkin edi. `is_rated` filtri ham
+    # olib tashlandi: reytingsiz musobaqaning YAKUNIY jadvali ham bir marta
+    # to'liq hisoblanishi kerak (oxirgi soniyalardagi yechimlar bilan) —
+    # `apply_contest_ratings` bunday musobaqada faqat «yakunlandi» belgisini
+    # qo'yadi.
     settle = 0
     pending = Contest.objects.filter(
         status=ContestStatus.FINISHED,
         end_time__lte=now - timezone.timedelta(minutes=2),
         ratings_applied_at__isnull=True,
-        is_rated=True,
     ).values_list("id", flat=True)[:20]
 
+    from celery import chain
+
     for contest_id in pending:
-        recalculate_standings.delay(str(contest_id))
-        apply_contest_ratings.delay(str(contest_id))
+        chain(
+            recalculate_standings.si(str(contest_id)),
+            apply_contest_ratings.si(str(contest_id)),
+        ).delay()
         settle += 1
 
     return f"started={started} finished={finished} settled={settle}"
@@ -101,39 +112,19 @@ def send_contest_reminders() -> str:
 
 @shared_task(name="apps.contests.tasks.recalculate_standings")
 def recalculate_standings(contest_id: str) -> str:
-    """Ballarni submissionlardan qayta hisoblab, rank'larni yangilaydi."""
-    from apps.judge.models import SubmissionStatus
+    """Ballarni submissionlardan qayta hisoblab, rank'larni yangilaydi.
+
+    Hisoblash mantig'i `standings.refresh_live_standings` bilan YAGONA —
+    ilgari shu yerda nusxasi bor edi va ikkalasi sekin farqlanib ketgan.
+    """
+    from .standings import refresh_live_standings
 
     contest = Contest.objects.filter(pk=contest_id).prefetch_related("contest_problems").first()
     if not contest:
         return "not-found"
 
-    points_by_problem = {cp.problem_id: cp.points for cp in contest.contest_problems.all()}
-
     with transaction.atomic():
-        for participant in contest.participants.select_related("user"):
-            accepted = (
-                contest.submissions.filter(
-                    user=participant.user, status=SubmissionStatus.ACCEPTED
-                )
-                .values("problem_id")
-                .distinct()
-            )
-            solved_ids = [row["problem_id"] for row in accepted]
-            participant.solved_count = len(solved_ids)
-            participant.score = sum(points_by_problem.get(pid, 0) for pid in solved_ids)
-
-            wrong = contest.submissions.filter(
-                user=participant.user, problem_id__in=solved_ids
-            ).exclude(status=SubmissionStatus.ACCEPTED).count()
-            participant.penalty = wrong * 10
-            participant.save(update_fields=["solved_count", "score", "penalty"])
-
-        ordered = contest.participants.filter(is_disqualified=False).order_by("-score", "penalty", "created_at")
-        for index, participant in enumerate(ordered, start=1):
-            if participant.rank != index:
-                participant.rank = index
-                participant.save(update_fields=["rank"])
+        refresh_live_standings(contest)
 
     return f"ok:{contest.participants.count()}"
 
@@ -144,10 +135,18 @@ def apply_contest_ratings(contest_id: str) -> str:
     contest = Contest.objects.filter(pk=contest_id).first()
     if not contest:
         return "not-found"
+
+    # Belgini ATOMIK bosib olamiz: beat har daqiqada qayta navbatga qo'yadi,
+    # sekin birinchi ishga tushish paytida ikkinchisi kelib qolsa, reyting
+    # IKKI MARTA qo'llanardi. Reytingsiz musobaqada ham belgi qo'yiladi —
+    # u «jadval yakunlandi» ma'nosini beradi va qayta navbatlashni to'xtatadi.
+    claimed = Contest.objects.filter(pk=contest_id, ratings_applied_at__isnull=True).update(
+        ratings_applied_at=timezone.now()
+    )
+    if not claimed:
+        return "already-applied"
     if not contest.is_rated:
         return "not-rated"
-    if contest.ratings_applied_at:
-        return "already-applied"
 
     participants = list(
         contest.participants.filter(is_disqualified=False, is_virtual=False)
@@ -172,29 +171,32 @@ def apply_contest_ratings(contest_id: str) -> str:
 
     from apps.accounts import rating as rating_engine
 
-    with transaction.atomic():
-        for participant in participants:
-            delta = changes.get(str(participant.user_id), 0)
-            user = participant.user
-            before = user.rating
+    try:
+        with transaction.atomic():
+            for participant in participants:
+                delta = changes.get(str(participant.user_id), 0)
+                user = participant.user
+                before = user.rating
 
-            # Reytingni yagona dvigatel qo'llaydi: u tarixga ham yozadi va
-            # pastki chegarani ushlab turadi. Ilgari bu yerda alohida
-            # hisob-kitob bor edi va o'zgarish hech qayerda saqlanmasdi.
-            after = rating_engine.apply_contest(
-                user, before=before, delta=delta,
-                contest=contest, rank=participant.rank,
-            )
+                # Reytingni yagona dvigatel qo'llaydi: u tarixga ham yozadi va
+                # pastki chegarani ushlab turadi. Ilgari bu yerda alohida
+                # hisob-kitob bor edi va o'zgarish hech qayerda saqlanmasdi.
+                after = rating_engine.apply_contest(
+                    user, before=before, delta=delta,
+                    contest=contest, rank=participant.rank,
+                )
 
-            participant.rating_before = before
-            participant.rating_change = after - before
-            participant.rating_after = after
-            participant.save(update_fields=["rating_before", "rating_change", "rating_after"])
+                participant.rating_before = before
+                participant.rating_change = after - before
+                participant.rating_after = after
+                participant.save(update_fields=["rating_before", "rating_change", "rating_after"])
 
-            user.contests_participated += 1
-            user.save(update_fields=["contests_participated"])
-
-        contest.ratings_applied_at = timezone.now()
-        contest.save(update_fields=["ratings_applied_at"])
+                user.contests_participated += 1
+                user.save(update_fields=["contests_participated"])
+    except Exception:
+        # Belgi qaytariladi — keyingi beat yana urinadi; aks holda reyting
+        # «qo'llangan» deb belgilangan-u, aslida qo'llanmagan bo'lib qolardi.
+        Contest.objects.filter(pk=contest_id).update(ratings_applied_at=None)
+        raise
 
     return f"applied:{len(participants)}"

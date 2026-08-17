@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { KeyHint } from "@/components/kit";
+import { usePermissions } from "@/components/providers";
 import { publicApi } from "@/lib/public-api";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,7 @@ const TYPE_LABELS: Record<string, string> = {
 export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const { groups } = useNavModel();
+  const permissions = usePermissions();
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -69,7 +71,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const rows: Row[] = useMemo(() => {
     // Matn yo'q — barcha bo'limlar ro'yxati
     if (trimmed.length < 2) {
-      return groups.flatMap((group) =>
+      const sections = groups.flatMap((group) =>
         group.links.map((link) => ({
           id: link.href,
           label: link.label,
@@ -77,6 +79,16 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
           href: link.href,
         })),
       );
+      // Studio — faqat huquqi borlarga ko'rinadi
+      if (permissions.can_access_studio) {
+        sections.push(
+          { id: "/studio", label: "Studio", group: "Boshqaruv", href: "/studio" },
+          { id: "/studio/problems", label: "Studio · Masalalar", group: "Boshqaruv", href: "/studio/problems" },
+          { id: "/studio/contests", label: "Studio · Musobaqalar", group: "Boshqaruv", href: "/studio/contests" },
+          { id: "/studio/daily", label: "Studio · Kunlik masala", group: "Boshqaruv", href: "/studio/daily" },
+        );
+      }
+      return sections;
     }
 
     // Server tekis ro'yxat qaytaradi — turi bo'yicha guruhlaymiz, tartib
@@ -96,7 +108,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       href: `/search?q=${encodeURIComponent(trimmed)}`,
     });
     return result;
-  }, [trimmed, data, groups]);
+  }, [trimmed, data, groups, permissions.can_access_studio]);
 
   useEffect(() => setCursor(0), [trimmed, rows.length]);
 

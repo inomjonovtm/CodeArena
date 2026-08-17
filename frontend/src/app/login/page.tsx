@@ -26,9 +26,23 @@ function LoginForm() {
   const totpRef = useRef<HTMLInputElement>(null);
 
   const nextPath = params.get("next");
+  // Faqat sayt ichidagi yo'l qabul qilinadi: `//evil.uz` yoki to'liq URL
+  // bo'lsa e'tiborga olinmaydi — aks holda parol kiritilgan zahoti
+  // foydalanuvchini begona saytga uzatib yuborish (phishing) mumkin edi.
+  const safeNext = nextPath && /^\/(?!\/)/.test(nextPath) ? nextPath : null;
   // Admin marshrutiga qaytish so'ralgan bo'lsagina rol tekshiriladi
-  const wantsAdmin = Boolean(nextPath?.startsWith("/admin"));
-  const destination = nextPath || "/problems";
+  const wantsAdmin = Boolean(safeNext?.startsWith("/admin"));
+  const destination = safeNext || "/problems";
+
+  // `/admin` — Django sahifasi, Next marshruti emas: klient routeri bilan
+  // ochilsa 404 chiqadi, shuning uchun to'liq sahifa yuklash kerak.
+  const goToDestination = () => {
+    if (destination.startsWith("/admin")) {
+      window.location.assign(destination);
+    } else {
+      router.replace(destination);
+    }
+  };
 
   useEffect(() => {
     if (params.get("error") === "forbidden") {
@@ -43,7 +57,8 @@ function LoginForm() {
   useEffect(() => {
     if (loading || !user) return;
     if (wantsAdmin && !user.permissions.can_access_admin) return;
-    router.replace(destination);
+    goToDestination();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user, wantsAdmin, destination, router]);
 
   useEffect(() => {
@@ -60,7 +75,7 @@ function LoginForm() {
         setError("Bu hisobda admin panelga kirish huquqi yo'q.");
         return;
       }
-      router.replace(destination);
+      goToDestination();
     } catch (err) {
       if (err instanceof ApiError && err.code === "totp_required") {
         setNeedsTotp(true);

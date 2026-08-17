@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from .models import AuthoringRun, ReferenceSolution, TestGenerator
+from .models import AuthoringRun, ReferenceSolution, SolutionKind, TestGenerator
 
 
 class ReferenceSolutionSerializer(serializers.ModelSerializer):
@@ -29,6 +29,16 @@ class ReferenceSolutionSerializer(serializers.ModelSerializer):
         if not (value or "").strip():
             raise serializers.ValidationError("Kod bo'sh bo'lmasligi kerak.")
         return value
+
+    def validate(self, attrs):
+        # «Asosiy» belgisi faqat etalon (model) yechimga tegishli — boshqa
+        # turga qo'yilsa u jimgina hech narsa qilmasdi va muallifni chalg'itardi.
+        kind = attrs.get("kind", getattr(self.instance, "kind", None))
+        if attrs.get("is_primary") and kind != SolutionKind.MODEL:
+            raise serializers.ValidationError(
+                {"is_primary": "Faqat etalon (model) yechim asosiy bo'la oladi."}
+            )
+        return attrs
 
 
 class TestGeneratorSerializer(serializers.ModelSerializer):
@@ -108,3 +118,10 @@ class CheckerTestSerializer(serializers.Serializer):
     input = serializers.CharField(allow_blank=True, trim_whitespace=False)
     user_output = serializers.CharField(allow_blank=True, trim_whitespace=False)
     jury_output = serializers.CharField(allow_blank=True, trim_whitespace=False)
+    # Ekrandagi (hali saqlanmagan) checkerni sinash uchun ixtiyoriy
+    # qiymatlar — berilmasa bazadagi holat sinovdan o'tadi. Busiz muallif
+    # tahrirlagan kodni emas, ESKI saqlangan kodni tekshirib yurardi.
+    checker_type = serializers.CharField(required=False, allow_blank=True)
+    checker_language = serializers.CharField(required=False, allow_blank=True)
+    checker_code = serializers.CharField(required=False, allow_blank=True, trim_whitespace=False)
+    float_epsilon = serializers.FloatField(required=False)

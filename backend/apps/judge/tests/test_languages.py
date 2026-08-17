@@ -34,3 +34,33 @@ class LanguageRegistryTests(SimpleTestCase):
         """`starter_code_*` ustunlari shu uchta til uchun — ular yo'qolmasin."""
         for key in languages.LEGACY_KEYS:
             self.assertIn(key, languages.BY_KEY)
+
+    def test_executor_reyestr_bilan_mos(self):
+        """`infra/runner/executor.py` dagi LANGUAGES backend reyestri bilan bir xil.
+
+        Bu testning BUTUN MAQSADI shu edi, lekin ilgari executor umuman
+        import qilinmasdi: yangi til backendga qo'shilib, runnerda unutilsa,
+        barcha testlar o'tar, foydalanuvchi esa har yuborishda SYSTEM_ERROR
+        olardi.
+        """
+        from apps.judge.runner import _executor
+
+        core = _executor()
+        if core is None:  # produksiya image'ida infra/ katalogi bo'lmaydi
+            self.skipTest("infra/runner katalogi topilmadi")
+        self.assertEqual(set(core.LANGUAGES), set(languages.BY_KEY))
+
+    def test_executor_fayl_nomlari_mos(self):
+        """Runner fayl nomi bilan backend kengaytmasi mos bo'lsin (Main.java ≠ main.java)."""
+        from apps.judge.runner import _executor
+
+        core = _executor()
+        if core is None:
+            self.skipTest("infra/runner katalogi topilmadi")
+        for key, spec in core.LANGUAGES.items():
+            with self.subTest(language=key):
+                item = languages.BY_KEY[key]
+                self.assertTrue(
+                    spec["filename"].endswith("." + item.extension),
+                    f"{key}: runner fayli {spec['filename']}, backend kengaytmasi .{item.extension}",
+                )

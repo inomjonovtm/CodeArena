@@ -51,7 +51,6 @@ import { FALLBACK_CATALOG, LANGUAGE_LABEL, starterFor } from "@/lib/languages";
 import { publicApi, TERMINAL_STATUSES } from "@/lib/public-api";
 import type {
   Language,
-  PublicProblemDetail,
   PublicSubmission,
   PublicSubmissionRow,
   RunResponse,
@@ -234,10 +233,9 @@ export default function ProblemDetailPage() {
     enabled: Boolean(slug),
   });
 
-  // Judge qaysi tillarni bajara oladi — serverga bog'liq (Judge0 bo'lmasa
-  // lokal runner faqat o'rnatilgan tillarni qo'llaydi). Shu javob asosida
+  // Judge qaysi tillarni bajara oladi — serverga bog'liq. Shu javob asosida
   // mavjud bo'lmagan til tanlash ro'yxatida o'chirib qo'yiladi.
-  const { data: judge } = useQuery({
+  const { data: judge, isLoading: isJudgeLoading } = useQuery({
     queryKey: ["judge-status"],
     queryFn: () => publicApi.judgeStatus(),
     staleTime: 60_000,
@@ -262,20 +260,25 @@ export default function ProblemDetailPage() {
     enabled: Boolean(slug && user),
   });
 
-  // Oxirgi tanlangan tilni eslab qolamiz
+  // Oxirgi tanlangan tilni eslab qolamiz — faqat birinchi ochilishda
   useEffect(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem(langKey) : null;
     if (saved && LANGUAGES.some((item) => item.value === saved)) {
       setLanguage(saved as Language);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Til yoki masala o'zgarganda: saqlangan qoralama, bo'lmasa starter kod
+  // Til yoki masala o'zgarganda: saqlangan qoralama, bo'lmasa starter kod.
+  // Judge katalogi kelguncha KUTILADI: aks holda birinchi tashrifda zaxira
+  // (bo'sh shablonli) katalogdan urug'lanib, muharrir bo'sh ochilardi va
+  // katalog kelgach ham qayta urug'lanmasdi.
   useEffect(() => {
-    if (!problem) return;
+    if (!problem || isJudgeLoading) return;
     const saved = typeof window !== "undefined" ? localStorage.getItem(draftKey(slug, language)) : null;
     setCode(saved ?? starterFor(problem as unknown as Record<string, unknown>, language, catalog));
-  }, [problem, slug, language]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problem, slug, language, isJudgeLoading]);
 
   // Qoralamani saqlab boramiz
   useEffect(() => {
@@ -703,16 +706,20 @@ export default function ProblemDetailPage() {
             <Pane tone="solid" inset="none" className="overflow-hidden">
               {/* muharrir asboblar paneli */}
               <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] p-2.5">
-                <Segmented
-                  size="sm"
-                  value={language}
-                  onChange={changeLanguage}
-                  items={LANGUAGES.map((item) => ({
-                    value: item.value,
-                    label: item.label,
-                    disabled: !languageAvailable(item.value),
-                  }))}
-                />
+                {/* 12 til chipi tor ekranga sig'maydi — gorizontal aylantirma
+                    bo'lmasa ro'yxat kesilib, keyingi tillar tanlab bo'lmas edi */}
+                <div className="fade-x -mx-1 min-w-0 max-w-full overflow-x-auto px-1">
+                  <Segmented
+                    size="sm"
+                    value={language}
+                    onChange={changeLanguage}
+                    items={LANGUAGES.map((item) => ({
+                      value: item.value,
+                      label: item.label,
+                      disabled: !languageAvailable(item.value),
+                    }))}
+                  />
+                </div>
 
                 <div className="ml-auto flex items-center gap-1">
                   <Button
@@ -1064,7 +1071,7 @@ function SubmissionResult({ result }: { result: PublicSubmission }) {
 function MySubmissions({ rows }: { rows: PublicSubmissionRow[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const { data: detail, isLoading } = useQuery({
+  const { data: detail, isLoading, isError } = useQuery({
     queryKey: ["submission-full", openId],
     queryFn: () => publicApi.submissions.full(openId as string),
     enabled: Boolean(openId),
@@ -1116,7 +1123,11 @@ function MySubmissions({ rows }: { rows: PublicSubmissionRow[] }) {
         description={detail ? formatRelative(detail.created_at) : undefined}
         size="lg"
       >
-        {isLoading || !detail ? (
+        {isError ? (
+          <Alert tone="bad" title="Yechimni yuklab bo'lmadi">
+            Internet aloqasini tekshirib, qayta ochib ko&apos;ring.
+          </Alert>
+        ) : isLoading || !detail ? (
           <Block className="h-64 rounded-[var(--radius-lg)]" />
         ) : (
           <div className="flex flex-col gap-4">

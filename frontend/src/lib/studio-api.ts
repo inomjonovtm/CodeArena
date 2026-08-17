@@ -90,7 +90,17 @@ export const studio = {
 
     checkerTest: (
       problem: string,
-      body: { input: string; user_output: string; jury_output: string },
+      body: {
+        input: string;
+        user_output: string;
+        jury_output: string;
+        // Formadagi (saqlanmagan) checker sozlamalari — sinov aynan
+        // ekrandagi kodni tekshirsin
+        checker_type?: string;
+        checker_language?: string;
+        checker_code?: string;
+        float_epsilon?: number;
+      },
     ) => api.post<AuthoringRun>(`${STUDIO}/problems/${problem}/checker-test/`, body),
 
     health: (problem: string) =>

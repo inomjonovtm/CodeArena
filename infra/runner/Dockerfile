@@ -27,9 +27,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # TypeScript uchun `tsx` — global o'rnatiladi, ijro paytida tarmoq
-# kerak bo'lmasligi uchun (`npx --no-install`).
+# kerak bo'lmasligi uchun.
 RUN npm install -g --no-fund --no-audit tsx@4 typescript@5 \
     && npm cache clean --force
+
+# Kotlin kompilyatori — Debian omborida yo'q, rasmiy relizdan olinadi.
+# Busiz `kotlin` tanlovda ko'rinardi-yu, har bir yechim SYSTEM_ERROR olardi.
+ARG KOTLIN_VERSION=2.0.21
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip \
+    && curl -fsSL -o /tmp/kotlin.zip \
+        "https://github.com/JetBrains/kotlin/releases/download/v${KOTLIN_VERSION}/kotlin-compiler-${KOTLIN_VERSION}.zip" \
+    && unzip -q /tmp/kotlin.zip -d /opt \
+    && rm /tmp/kotlin.zip \
+    && apt-get purge -y curl unzip && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+ENV PATH="/opt/kotlinc/bin:${PATH}"
 
 # Kod IMTIYOZSIZ foydalanuvchi nomidan bajariladi.
 RUN useradd --create-home --uid 10001 --shell /usr/sbin/nologin runner

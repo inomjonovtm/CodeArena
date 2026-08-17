@@ -23,16 +23,9 @@ import { CodeEditor } from "@/components/ui/code-editor";
 import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
 import { publicApi, TERMINAL_STATUSES } from "@/lib/public-api";
-import { FALLBACK_CATALOG, starterFor } from "@/lib/languages";
-import type { ContestProblemDetail, Language, PublicSubmission, RunResponse } from "@/lib/types";
+import { FALLBACK_CATALOG, LANGUAGE_LABEL, starterFor } from "@/lib/languages";
+import type { Language, PublicSubmission, RunResponse } from "@/lib/types";
 import { formatDuration, formatRelative } from "@/lib/utils";
-
-/* Musobaqada til ro'yxati masala sahifasidagi bilan bir xil manbadan —
-   `FALLBACK_CATALOG` faqat server javob bermaguncha ishlatiladi. */
-const LANGUAGES: { value: Language; label: string }[] = FALLBACK_CATALOG.map((item) => ({
-  value: item.key,
-  label: item.label,
-}));
 
 const draftKey = (contest: string, slug: string, language: Language) =>
   `codearena-contest-draft-${contest}-${slug}-${language}`;
@@ -94,11 +87,21 @@ export default function ContestProblemPage() {
     retry: false,
   });
 
-  const { data: judge } = useQuery({
+  const { data: judge, isLoading: isJudgeLoading } = useQuery({
     queryKey: ["judge-status"],
     queryFn: () => publicApi.judgeStatus(),
     staleTime: 60_000,
   });
+
+  /* Til ro'yxati va starter kod SERVER katalogidan — amaliyot sahifasi bilan
+     bir xil manba. Ilgari bu sahifa faqat zaxira katalogni ishlatardi:
+     undagi shablonlar bo'sh, ya'ni musobaqada muharrir doim bo'sh ochilardi
+     va serverga qo'shilgan yangi tillar bu yerda umuman ko'rinmasdi. */
+  const catalog = judge?.catalog?.length ? judge.catalog : FALLBACK_CATALOG;
+  const LANGUAGES: { value: Language; label: string }[] = catalog.map((item) => ({
+    value: item.key,
+    label: item.label,
+  }));
 
   // Yuborishda contest id kerak — alohida so'rov (kesh odatda tayyor bo'ladi)
   const { data: contest } = useQuery({
@@ -113,15 +116,17 @@ export default function ContestProblemPage() {
     [judge],
   );
 
-  // Qoralama tilga va masalaga bog'lab saqlanadi
+  // Qoralama tilga va masalaga bog'lab saqlanadi. Judge katalogi kelguncha
+  // kutamiz — aks holda bo'sh shablonli zaxira katalogdan urug'lanib qolardi.
   useEffect(() => {
-    if (!data) return;
+    if (!data || isJudgeLoading) return;
     const saved =
       typeof window !== "undefined"
         ? localStorage.getItem(draftKey(contestSlug, problemSlug, language))
         : null;
-    setCode(saved ?? starterFor(data as unknown as Record<string, unknown>, language, FALLBACK_CATALOG));
-  }, [data, contestSlug, problemSlug, language]);
+    setCode(saved ?? starterFor(data as unknown as Record<string, unknown>, language, catalog));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, contestSlug, problemSlug, language, isJudgeLoading]);
 
   useEffect(() => {
     if (!data || !code) return;
@@ -353,23 +358,26 @@ export default function ContestProblemPage() {
         <div className="flex min-w-0 flex-col gap-4">
           <Pane tone="solid" inset="none" className="overflow-hidden">
             <div className="flex flex-wrap items-center gap-2 border-b border-[var(--line)] px-3 py-2.5">
-              <Segmented
-                size="sm"
-                value={language}
-                onChange={setLanguage}
-                items={LANGUAGES.map((item) => ({
-                  value: item.value,
-                  label: item.label,
-                  disabled: !languageAvailable(item.value),
-                }))}
-              />
+              {/* 12 til chipi tor ekranga sig'maydi — aylantirma shart */}
+              <div className="fade-x -mx-1 min-w-0 max-w-full overflow-x-auto px-1">
+                <Segmented
+                  size="sm"
+                  value={language}
+                  onChange={setLanguage}
+                  items={LANGUAGES.map((item) => ({
+                    value: item.value,
+                    label: item.label,
+                    disabled: !languageAvailable(item.value),
+                  }))}
+                />
+              </div>
               <IconButton
                 label={t.site.problem.resetCode}
                 size="sm"
                 className="ml-auto"
                 onClick={() => {
                   localStorage.removeItem(draftKey(contestSlug, problemSlug, language));
-                  setCode(starterFor(data as unknown as Record<string, unknown>, language, FALLBACK_CATALOG));
+                  setCode(starterFor(data as unknown as Record<string, unknown>, language, catalog));
                   toast.info(t.site.problem.codeReset);
                 }}
               >
@@ -400,7 +408,9 @@ export default function ContestProblemPage() {
                 onClick={onSubmit}
                 loading={submitting}
                 icon={submitting ? undefined : <Send className="size-4" />}
-                disabled={runMutation.isPending || judge?.available === false}
+                // `contestId` kelmaguncha yuborish yopiq: aks holda yechim
+                // JIMGINA amaliyot sifatida ketib, musobaqa balliga tushmasdi.
+                disabled={runMutation.isPending || judge?.available === false || !contestId}
               >
                 {submitting ? t.site.judge.submitting : t.site.judge.submit}
               </Button>
@@ -455,7 +465,9 @@ export default function ContestProblemPage() {
                     <span className="ts-num text-[13px] text-[var(--text-2)]">
                       {row.passed_tests}/{row.total_tests}
                     </span>
-                    <span className="ts-sm text-[var(--text-4)]">{row.language}</span>
+                    <span className="ts-sm text-[var(--text-4)]">
+                      {LANGUAGE_LABEL[row.language] ?? row.language}
+                    </span>
                     {row.runtime_ms ? (
                       <span className="ts-num ts-sm text-[var(--text-4)]">{row.runtime_ms} ms</span>
                     ) : null}

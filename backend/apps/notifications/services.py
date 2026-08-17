@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import logging
 
+from django.db import transaction
+
 from .models import Notification, NotificationKind
 
 logger = logging.getLogger(__name__)
@@ -40,16 +42,21 @@ def notify(
         return None
 
     try:
-        notification = Notification.objects.create(
-            recipient=recipient,
-            actor=actor if getattr(actor, "pk", None) else None,
-            kind=kind,
-            level=level,
-            title=title[:160],
-            body=(body or "")[:400],
-            url=(url or "")[:255],
-            payload=payload or {},
-        )
+        # Savepoint ichida: chaqiruvchi ochiq tranzaksiya ichida bo'lsa
+        # (masalan judge natijasini yozayotganda), bu yerdagi IntegrityError
+        # yutib yuborilgani bilan Postgres tashqi tranzaksiyani ham buzardi —
+        # butun tekshiruv natijasi bekor bo'lardi.
+        with transaction.atomic():
+            notification = Notification.objects.create(
+                recipient=recipient,
+                actor=actor if getattr(actor, "pk", None) else None,
+                kind=kind,
+                level=level,
+                title=title[:160],
+                body=(body or "")[:400],
+                url=(url or "")[:255],
+                payload=payload or {},
+            )
     except Exception as exc:  # noqa: BLE001
         logger.warning("Bildirishnoma yozilmadi: %s", exc)
         return None
@@ -72,9 +79,12 @@ def queue_push(notification: Notification) -> None:
     try:
         from .tasks import send_push
 
-        send_push.delay(
-            str(notification.recipient_id), push_module.payload_from_notification(notification)
-        )
+        recipient_id = str(notification.recipient_id)
+        payload = push_module.payload_from_notification(notification)
+        # Ochiq tranzaksiya ichidan navbatga qo'yilsa, worker xabarni baza
+        # commit bo'lmasidan oldin olishi (yoki rollback bo'lsa umuman
+        # bo'lmagan yozuv haqida push ketishi) mumkin — commitdan keyin.
+        transaction.on_commit(lambda: send_push.delay(recipient_id, payload))
     except Exception as exc:  # noqa: BLE001
         logger.warning("Push navbatga qo'yilmadi: %s", exc)
 
@@ -126,6 +136,7 @@ def _queue_push_bulk(rows: list[Notification]) -> None:
         payload = push_module.payload_from_notification(rows[0])
         # `tag` da qabul qiluvchi id si bor — ommaviy xabarda u umumiy bo'lsin
         payload["tag"] = f"{rows[0].kind}:broadcast"
-        send_push_bulk.delay([str(row.recipient_id) for row in rows], payload)
+        recipient_ids = [str(row.recipient_id) for row in rows]
+        transaction.on_commit(lambda: send_push_bulk.delay(recipient_ids, payload))
     except Exception as exc:  # noqa: BLE001
         logger.warning("Ommaviy push navbatga qo'yilmadi: %s", exc)

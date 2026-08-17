@@ -117,6 +117,35 @@ class SubmissionCreateSerializer(serializers.ModelSerializer):
         if state == ContestStatus.FINISHED and not participation.is_virtual:
             raise serializers.ValidationError({"contest": "Musobaqa tugagan."})
 
+        # Til cheklovi endi bezak emas: «faqat C++» musobaqasiga Python
+        # yuborib bo'lmaydi.
+        allowed = contest.allowed_languages or []
+        language = self.initial_data.get("language")
+        if allowed and language and language not in allowed:
+            raise serializers.ValidationError(
+                {"language": "Bu musobaqada ruxsat etilgan tillar: " + ", ".join(allowed)}
+            )
+
+        # Shaxsiy oyna (window) rejimi: ishtirokchi o'z oynasi tugagach
+        # yuborolmaydi — ilgari musobaqa oxirigacha ochiq qolardi.
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.contests.models import ParticipationMode
+
+        if (
+            contest.participation == ParticipationMode.WINDOW
+            and participation.started_at
+            and contest.duration_minutes
+            and not participation.is_virtual
+        ):
+            deadline = participation.started_at + timedelta(minutes=contest.duration_minutes)
+            if timezone.now() > deadline:
+                raise serializers.ValidationError(
+                    {"contest": "Sizning shaxsiy vaqt oynangiz tugagan."}
+                )
+
     def create(self, validated_data):
         request = self.context["request"]
         validated_data["user"] = request.user

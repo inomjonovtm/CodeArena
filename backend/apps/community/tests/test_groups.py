@@ -263,3 +263,91 @@ class LeaderboardTests(GroupBaseTest):
         response = self.client.get(f"/api/groups/{self.group.slug}/activity/")
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any(row["kind"] == "joined" for row in response.data))
+
+
+class UnbanTests(GroupBaseTest):
+    """Chetlatishni bekor qilish — 2026-08 auditigacha bu YO'L UMUMAN YO'Q edi
+    (bitta noto'g'ri bosish o'quvchini guruhdan abadiy chiqarib yuborardi)."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.as_user(self.member).post(
+            "/api/groups/join/", {"invite_code": self.group.invite_code}, format="json"
+        )
+        row = self.group.members.get(user=self.member)
+        self.client.post(
+            f"/api/groups/{self.group.slug}/members/{row.pk}/remove/",
+            {"ban": "1", "reason": "sinov"}, format="json",
+        )
+        self.ban = GroupBan.objects.get(group=self.group, user=self.member)
+
+    def test_banlar_royxati(self):
+        response = self.client.get(f"/api/groups/{self.group.slug}/bans/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["username"], "azo")
+
+    def test_unban_qaytadan_kirishga_yol_ochadi(self):
+        response = self.client.post(
+            f"/api/groups/{self.group.slug}/bans/{self.ban.pk}/remove/"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(GroupBan.objects.filter(pk=self.ban.pk).exists())
+
+        again = self.as_user(self.member).post(
+            "/api/groups/join/", {"invite_code": self.group.invite_code}, format="json"
+        )
+        self.assertEqual(again.status_code, 201)
+
+    def test_oddiy_azo_unban_qilolmaydi(self):
+        response = self.as_user(self.outsider).post(
+            f"/api/groups/{self.group.slug}/bans/{self.ban.pk}/remove/"
+        )
+        self.assertIn(response.status_code, (403, 404))
+
+
+class ApproveIdempotencyTests(GroupBaseTest):
+    """Qo'shilish so'rovi bir marta hal qilinadi — takror bosish 404."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.group.privacy = Group.Privacy.REQUEST
+        self.group.save(update_fields=["privacy"])
+        self.as_user(self.member).post(
+            f"/api/groups/{self.group.slug}/request-join/", {}, format="json"
+        )
+        self.request_row = GroupJoinRequest.objects.get(group=self.group, user=self.member)
+
+    def test_takror_approve_404(self):
+        first = self.client.post(
+            f"/api/groups/{self.group.slug}/requests/",
+            {"id": self.request_row.pk, "decision": "approve"}, format="json",
+        )
+        self.assertEqual(first.status_code, 200)
+        self.assertTrue(self.group.members.filter(user=self.member).exists())
+
+        second = self.client.post(
+            f"/api/groups/{self.group.slug}/requests/",
+            {"id": self.request_row.pk, "decision": "approve"}, format="json",
+        )
+        self.assertEqual(second.status_code, 404)
+
+    def test_notogri_id_500_bermaydi(self):
+        response = self.client.post(
+            f"/api/groups/{self.group.slug}/requests/",
+            {"id": "abc", "decision": "approve"}, format="json",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_tolgan_guruhda_approve_sorovni_buzmaydi(self):
+        """Guruh to'lgan bo'lsa so'rov PENDING holicha qoladi (avval
+        «tasdiqlangan-u a'zo qo'shilmagan» qorishiq holat qolardi)."""
+        self.group.max_members = 1
+        self.group.save(update_fields=["max_members"])
+        response = self.client.post(
+            f"/api/groups/{self.group.slug}/requests/",
+            {"id": self.request_row.pk, "decision": "approve"}, format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.request_row.refresh_from_db()
+        self.assertEqual(self.request_row.status, GroupJoinRequest.Status.PENDING)

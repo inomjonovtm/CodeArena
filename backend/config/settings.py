@@ -443,6 +443,13 @@ CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", DEBUG)
 CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = TIME_ZONE
+# Ishonchlilik: xabar vazifa TUGAGANDAN keyin tasdiqlanadi va worker o'lsa
+# navbatga qaytadi — aks holda tekshirilayotgan yechim jimgina yo'qolardi.
+# Vaqt chegarasi runner kutishidan kengroq qo'yilgan (eng yomon holat uchun).
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+CELERY_TASK_TIME_LIMIT = 60 * 20
+CELERY_TASK_SOFT_TIME_LIMIT = 60 * 18
 
 CACHES = {
     "default": (

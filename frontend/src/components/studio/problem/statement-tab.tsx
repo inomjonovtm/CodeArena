@@ -184,6 +184,20 @@ export function StatementTab({
                   onChange={(event) => onChange({ points: Number(event.target.value) })}
                 />
               </StField>
+              <StField
+                label="Reyting"
+                hint="Elo reytingdagi «raqib kuchi». 0 — qiyinlikdan avtomatik (oson 900 / o'rta 1400 / qiyin 1900)"
+              >
+                <StInputUnit
+                  unit="elo"
+                  type="number"
+                  min={0}
+                  max={3500}
+                  step={100}
+                  value={value.rating ?? 0}
+                  onChange={(event) => onChange({ rating: Number(event.target.value) })}
+                />
+              </StField>
             </div>
 
             {(value.time_limit_ms ?? 2000) < 500 ? (

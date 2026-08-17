@@ -102,6 +102,26 @@ class RegisterSerializer(serializers.ModelSerializer):
             "education_place", "password", "password_confirm", "accept_terms",
         )
 
+    # Tizim so'zlari va rasmiy ko'rinishdagi nomlar band: `admin` deb
+    # ro'yxatdan o'tgan odam o'zini xodim qilib ko'rsatishi mumkin edi.
+    RESERVED_USERNAMES = {
+        "admin", "administrator", "moderator", "moder", "root", "support",
+        "help", "codearena", "system", "staff", "superuser", "owner",
+        "api", "www", "mail", "info", "test", "null", "undefined", "anonymous",
+    }
+
+    def validate_username(self, value: str) -> str:
+        value = (value or "").strip()
+        if value.lower() in self.RESERVED_USERNAMES:
+            raise serializers.ValidationError("Bu nom band — boshqasini tanlang.")
+        # Katta-kichik harf farqi bilan dublikat bo'lmasin: baza cheklovi
+        # `Admin` va `admin` ni har xil deb biladi, qidiruvlar esa
+        # `iexact` ishlatadi — ikkitasi bo'lsa, qaysi biri ochilishi
+        # tasodifga qolardi.
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError("Bu username allaqachon band.")
+        return value
+
     def validate_email(self, value: str) -> str:
         value = value.lower().strip()
         if User.objects.filter(email__iexact=value).exists():

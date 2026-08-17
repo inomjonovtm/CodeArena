@@ -29,7 +29,9 @@ from .serializers import (
     ProblemListSerializer,
     TagSerializer,
     TestCaseSerializer,
+    publish_blockers,
 )
+from .studio_views import visible_problems
 
 
 class ProblemFilter(filters.FilterSet):
@@ -49,7 +51,9 @@ class ProblemFilter(filters.FilterSet):
         fields = ["difficulty", "status", "tags", "is_premium", "is_contest_only"]
 
     def filter_has_test_cases(self, queryset, name, value):
-        queryset = queryset.annotate(_tc=Count("test_cases"))
+        # `distinct=True` — teg filtri bilan birga kelganda JOIN qatorlarni
+        # ko'paytirib, sonni noto'g'ri oshirib yubormasin.
+        queryset = queryset.annotate(_tc=Count("test_cases", distinct=True))
         return queryset.filter(_tc__gt=0) if value else queryset.filter(_tc=0)
 
 
@@ -113,11 +117,14 @@ class AdminProblemViewSet(
     @action(detail=True, methods=["post"])
     def publish(self, request, pk=None):
         problem = self.get_object()
-        if not problem.description_uz.strip():
-            return Response({"detail": "Tavsif (uz) bo'sh — chop etib bo'lmaydi."},
-                            status=status.HTTP_400_BAD_REQUEST)
-        if not problem.test_cases.exists():
-            return Response({"detail": "Kamida bitta test-case qo'shing."},
+        blockers = publish_blockers(
+            description_uz=problem.description_uz,
+            test_cases=list(problem.test_cases.all()),
+            checker_type=problem.checker_type,
+            checker_code=problem.checker_code,
+        )
+        if blockers:
+            return Response({"detail": " ".join(blockers), "blockers": blockers},
                             status=status.HTTP_400_BAD_REQUEST)
         problem.status = ProblemStatus.PUBLISHED
         problem.published_at = problem.published_at or timezone.now()
@@ -129,7 +136,10 @@ class AdminProblemViewSet(
     def unpublish(self, request, pk=None):
         problem = self.get_object()
         problem.status = ProblemStatus.DRAFT
-        problem.save(update_fields=["status", "updated_at"])
+        # Rejalashtirilgan sana ham tozalanadi — aks holda `publish_scheduled`
+        # beat vazifasi masalani jimgina qaytadan chop etib yuborardi.
+        problem.publish_at = None
+        problem.save(update_fields=["status", "publish_at", "updated_at"])
         write_audit(request, action_name="problem.unpublish", obj=problem)
         return Response(self.get_serializer(problem).data)
 
@@ -147,6 +157,7 @@ class AdminProblemViewSet(
         clone.title_en = f"{source.title_en} (copy)" if source.title_en else ""
         clone.status = ProblemStatus.DRAFT
         clone.published_at = None
+        clone.publish_at = None
         clone.total_submissions = 0
         clone.accepted_submissions = 0
         clone.author = request.user
@@ -177,7 +188,11 @@ class AdminProblemViewSet(
             rows = problem.test_cases.order_by("order")[:2000]
             return Response(TestCaseSerializer(rows, many=True).data)
 
-        serializer = TestCaseSerializer(data=request.data)
+        # `problem` maydoni endi majburiy — bu yerda esa u URL dan keladi,
+        # shuning uchun data'ga o'zimiz qo'shamiz.
+        payload = {key: request.data[key] for key in request.data}
+        payload["problem"] = problem.pk
+        serializer = TestCaseSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
         serializer.save(problem=problem)
         write_audit(request, action_name="testcase.create", obj=problem,
@@ -209,22 +224,31 @@ class AdminProblemViewSet(
 
     def handle_bulk_action(self, request, action_name, queryset, payload):
         if action_name == "publish":
-            # Yakka `publish` bilan bir xil talab: shart ham, kamida bitta
-            # test ham bo'lsin — testsiz masala foydalanuvchiga chiqmasin.
-            # (`update()` aggregat filtri bilan ishlamaydi, shuning uchun
-            # avval ID lar yig'iladi.)
-            ready_ids = list(
-                queryset.filter(~Q(description_uz=""))
-                .annotate(_tc=Count("test_cases"))
-                .filter(_tc__gt=0)
-                .values_list("pk", flat=True)
+            # Yakka `publish` bilan BIR XIL shartlar (namunaviy test, bo'sh
+            # kutilgan chiqish, custom checker kodi) — bulk yo'li ilgari
+            # yumshoqroq tekshirar va sifatsiz masala saytga chiqib ketardi.
+            ready_ids = [
+                problem.pk
+                for problem in queryset.prefetch_related("test_cases")
+                if not publish_blockers(
+                    description_uz=problem.description_uz,
+                    test_cases=list(problem.test_cases.all()),
+                    checker_type=problem.checker_type,
+                    checker_code=problem.checker_code,
+                )
+            ]
+            now = timezone.now()
+            # Allaqachon chop etilganlarning asl sanasi saqlanadi — aks holda
+            # bulk amal barcha «chop etilgan» tarixini bugunga surib yuborardi.
+            affected = Problem.objects.filter(pk__in=ready_ids, published_at__isnull=True).update(
+                status=ProblemStatus.PUBLISHED, published_at=now
             )
-            affected = Problem.objects.filter(pk__in=ready_ids).update(
-                status=ProblemStatus.PUBLISHED, published_at=timezone.now()
+            affected += Problem.objects.filter(pk__in=ready_ids, published_at__isnull=False).update(
+                status=ProblemStatus.PUBLISHED
             )
             return {"affected": affected}
         if action_name == "unpublish":
-            return {"affected": queryset.update(status=ProblemStatus.DRAFT)}
+            return {"affected": queryset.update(status=ProblemStatus.DRAFT, publish_at=None)}
         if action_name == "archive":
             return {"affected": queryset.update(status=ProblemStatus.ARCHIVED)}
         if action_name == "set_difficulty":
@@ -276,6 +300,27 @@ class AdminTestCaseViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelViewSet
     ordering_fields = ["order", "created_at"]
     ordering = ["problem", "order"]
     audit_label = "testcase"
+
+    def get_queryset(self):
+        # Setter faqat O'Z masalalarining testlarini ko'radi va o'zgartiradi.
+        # Busiz u boshqa mualliflarning yashirin testlarini (va kutilgan
+        # javoblarini) bemalol o'qiy olardi.
+        return super().get_queryset().filter(problem__in=visible_problems(self.request.user))
+
+    def _guard_problem(self, serializer):
+        problem = serializer.validated_data.get("problem")
+        if problem is not None and not visible_problems(self.request.user).filter(pk=problem.pk).exists():
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied("Bu masala sizniki emas.")
+
+    def perform_create(self, serializer, **save_kwargs):
+        self._guard_problem(serializer)
+        return super().perform_create(serializer, **save_kwargs)
+
+    def perform_update(self, serializer, **save_kwargs):
+        self._guard_problem(serializer)
+        return super().perform_update(serializer, **save_kwargs)
 
 
 class AdminTagViewSet(AuditLogMixin, BulkActionMixin, viewsets.ModelViewSet):

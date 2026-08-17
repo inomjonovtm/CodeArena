@@ -76,6 +76,9 @@ const csp = [
     // `next dev` HMR va react-refresh uchun `eval` ishlatadi. Produksiya
     // buildida bu YO'Q — sozlama build paytida hal bo'ladi.
     isDev ? "'unsafe-eval'" : "",
+    // Google orqali kirish tugmasi GIS skriptini shu manzildan yuklaydi —
+    // ruxsat berilmasa tugma prodda umuman ishlamaydi.
+    "https://accounts.google.com",
     analyticsOrigin,
   ]
     .filter(Boolean)
@@ -85,9 +88,17 @@ const csp = [
   // ko'rib chiqish (preview) uchun.
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  ["connect-src 'self'", isDev ? "ws: http://localhost:*" : "", analyticsOrigin]
+  [
+    "connect-src 'self'",
+    isDev ? "ws: http://localhost:*" : "",
+    "https://accounts.google.com",
+    analyticsOrigin,
+  ]
     .filter(Boolean)
     .join(" "),
+  // GIS One Tap / tugma iframe ichida ochiladi — `frame-src` bo'lmasa
+  // `default-src 'self'` uni bloklaydi.
+  "frame-src https://accounts.google.com",
   "worker-src 'self' blob:",
   "media-src 'self'",
   "object-src 'none'",

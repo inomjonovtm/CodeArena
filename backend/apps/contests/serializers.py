@@ -174,6 +174,42 @@ class ContestDetailSerializer(serializers.ModelSerializer):
             )
         return attrs
 
+    def _sync_problems(self, contest: Contest, rows: list[dict]):
+        keep = []
+        for index, row in enumerate(rows):
+            row = dict(row)
+            row.setdefault("order", index)
+            row.setdefault("label", chr(65 + index) if index < 26 else str(index + 1))
+            cp_id = row.pop("id", None)
+            if cp_id:
+                ContestProblem.objects.filter(pk=cp_id, contest=contest).update(**row)
+                keep.append(cp_id)
+            else:
+                created = ContestProblem.objects.create(contest=contest, **row)
+                keep.append(created.pk)
+        contest.contest_problems.exclude(pk__in=keep).delete()
+        # 11-bo'lim: contest masalalari tugagunga qadar ommaviy ro'yxatda ko'rinmaydi
+        Problem.objects.filter(contest_entries__contest=contest).update(is_contest_only=True)
+
+    def create(self, validated_data):
+        problems = validated_data.pop("contest_problems", [])
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            validated_data.setdefault("created_by", request.user)
+        contest = Contest.objects.create(**validated_data)
+        if problems:
+            self._sync_problems(contest, problems)
+        return contest
+
+    def update(self, instance, validated_data):
+        problems = validated_data.pop("contest_problems", None)
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        if problems is not None:
+            self._sync_problems(instance, problems)
+        return instance
+
 
 class ContestStaffSerializer(serializers.ModelSerializer):
     """Olimpiada mas'uli. Foydalanuvchi username orqali biriktiriladi —
@@ -210,42 +246,6 @@ class ContestStaffSerializer(serializers.ModelSerializer):
                     {"user": "Bu foydalanuvchi allaqachon biriktirilgan."}
                 )
         return attrs
-
-    def _sync_problems(self, contest: Contest, rows: list[dict]):
-        keep = []
-        for index, row in enumerate(rows):
-            row = dict(row)
-            row.setdefault("order", index)
-            row.setdefault("label", chr(65 + index) if index < 26 else str(index + 1))
-            cp_id = row.pop("id", None)
-            if cp_id:
-                ContestProblem.objects.filter(pk=cp_id, contest=contest).update(**row)
-                keep.append(cp_id)
-            else:
-                created = ContestProblem.objects.create(contest=contest, **row)
-                keep.append(created.pk)
-        contest.contest_problems.exclude(pk__in=keep).delete()
-        # 11-bo'lim: contest masalalari tugagunga qadar ommaviy ro'yxatda ko'rinmaydi
-        Problem.objects.filter(contest_entries__contest=contest).update(is_contest_only=True)
-
-    def create(self, validated_data):
-        problems = validated_data.pop("contest_problems", [])
-        request = self.context.get("request")
-        if request and request.user.is_authenticated:
-            validated_data.setdefault("created_by", request.user)
-        contest = Contest.objects.create(**validated_data)
-        if problems:
-            self._sync_problems(contest, problems)
-        return contest
-
-    def update(self, instance, validated_data):
-        problems = validated_data.pop("contest_problems", None)
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
-        instance.save()
-        if problems is not None:
-            self._sync_problems(instance, problems)
-        return instance
 
 
 class ContestParticipantSerializer(serializers.ModelSerializer):

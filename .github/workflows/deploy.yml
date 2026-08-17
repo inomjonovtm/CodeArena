@@ -148,9 +148,6 @@ jobs:
           scp -i ~/.ssh/id_deploy -P "${PORT:-22}" \
             infra/certbot/entrypoint.sh \
             "${USER}@${HOST}:${DEPLOY_PATH}/infra/certbot/entrypoint.sh"
-          # `infra/judge0.conf` ATAYLAB nusxalanmaydi — undagi AUTHN_TOKEN
-          # serverda qo'lda qo'yiladi va repozitoriydagi namuna uni bosib
-          # ketardi (judge butunlay ishlamay qolardi).
 
       - name: Pull va qayta ishga tushirish
         env:

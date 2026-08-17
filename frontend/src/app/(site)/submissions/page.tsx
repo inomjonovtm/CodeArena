@@ -89,19 +89,31 @@ export default function SubmissionsPage() {
   const [statusTab, setStatusTab] = useState<StatusTab>("");
   const [language, setLanguage] = useState<"" | Language>("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<string | null>(null);
 
-  useEffect(() => setPage(1), [statusTab, language]);
+  // Qidiruv har tugma bosilishida emas, pauza qilinganda so'raladi
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
+  useEffect(() => setPage(1), [statusTab, language, debouncedSearch]);
+
+  // Filtrlar SERVERGA yuboriladi: ilgari «Boshqa xatolar» tabi va qidiruv
+  // faqat joriy sahifani filtrlar, sahifalagich esa filtrsiz sonni
+  // ko'rsatardi — «Yechim topilmadi» ostida «5 sahifa» chiqib turardi.
   const params = useMemo(
     () => ({
       page,
       page_size: PAGE_SIZE,
       ...(statusTab && statusTab !== "other" ? { status: statusTab } : {}),
+      ...(statusTab === "other" ? { status__in: OTHER_STATUSES.join(",") } : {}),
       ...(language ? { language } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
     }),
-    [page, statusTab, language],
+    [page, statusTab, language, debouncedSearch],
   );
 
   const { data, isLoading, isError, refetch } = useQuery({
@@ -111,23 +123,17 @@ export default function SubmissionsPage() {
     placeholderData: (previous) => previous,
   });
 
-  const { data: detail, isLoading: detailLoading } = useQuery({
+  const {
+    data: detail,
+    isLoading: detailLoading,
+    isError: detailError,
+  } = useQuery({
     queryKey: ["submission-full", openId],
     queryFn: () => publicApi.submissions.full(openId as string),
     enabled: Boolean(openId),
   });
 
-  const rows = useMemo(() => {
-    let list = data?.results ?? [];
-    if (statusTab === "other") {
-      list = list.filter((row) => OTHER_STATUSES.includes(row.status));
-    }
-    const term = search.trim().toLowerCase();
-    if (term) {
-      list = list.filter((row) => row.problem_title_uz.toLowerCase().includes(term));
-    }
-    return list;
-  }, [data, statusTab, search]);
+  const rows = data?.results ?? [];
 
   if (authLoading) {
     return (
@@ -171,8 +177,8 @@ export default function SubmissionsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Segmented value={statusTab} items={STATUS_TABS} onChange={setStatusTab} size="sm" />
 
-          {/* Til filtri — yakka tanlovli chiplar */}
-          <div className="flex items-center gap-1.5" role="radiogroup" aria-label="Dasturlash tili">
+          {/* Til filtri — yakka tanlovli chiplar; tor ekranda qatorga o'raladi */}
+          <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label="Dasturlash tili">
             {(
               [
                 { value: "" as const, label: "Barcha tillar" },
@@ -357,7 +363,11 @@ export default function SubmissionsPage() {
           ) : null
         }
       >
-        {detailLoading || !detail ? (
+        {detailError ? (
+          <Alert tone="bad" title="Yechimni yuklab bo'lmadi">
+            Internet aloqasini tekshirib, qayta ochib ko&apos;ring.
+          </Alert>
+        ) : detailLoading || !detail ? (
           <Block className="h-64 rounded-[var(--radius-lg)]" />
         ) : (
           <div className="flex flex-col gap-4">

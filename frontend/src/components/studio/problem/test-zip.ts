@@ -59,10 +59,14 @@ function normalize(text: string): string {
 /**
  * ZIP arxividan test juftliklarini o'qiydi.
  *
+ * Qaytadi: `{ tests, skipped }` — `skipped` juftsiz qolgan fayllar soni.
+ *
  * `jszip` DINAMIK import qilinadi: u ~100 KB va faqat shu tugma
  * bosilgandagina kerak — Studio'ning boshlang'ich yuklamasiga tushmasin.
  */
-export async function readTestsZip(file: File): Promise<TestCase[]> {
+export async function readTestsZip(
+  file: File,
+): Promise<{ tests: TestCase[]; skipped: number }> {
   const { default: JSZip } = await import("jszip");
   const zip = await JSZip.loadAsync(file);
 
@@ -80,9 +84,17 @@ export async function readTestsZip(file: File): Promise<TestCase[]> {
     pairs.set(parsed.index, slot);
   }
 
-  return [...pairs.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([, slot], order) => ({
+  // Juftsiz fayllar (faqat `in` yoki faqat `out`) testga aylantirilmaydi:
+  // kutilgan chiqishi bo'sh test har qanday bo'sh javobni ham «to'g'ri» deb
+  // qabul qilib yuborardi. Chaqiruvchi ogohlantirishni ko'rsatadi.
+  const complete = [...pairs.entries()]
+    .filter(([, slot]) => slot.input !== undefined && slot.output !== undefined)
+    .sort((a, b) => a[0] - b[0]);
+  const skipped = pairs.size - complete.length;
+
+  return {
+    skipped,
+    tests: complete.map(([, slot], order) => ({
       order: order + 1,
       input: normalize(slot.input ?? ""),
       expected_output: normalize(slot.output ?? ""),
@@ -91,7 +103,8 @@ export async function readTestsZip(file: File): Promise<TestCase[]> {
       time_limit_ms: null,
       memory_limit_kb: null,
       source: "manual" as const,
-    }));
+    })),
+  };
 }
 
 /**

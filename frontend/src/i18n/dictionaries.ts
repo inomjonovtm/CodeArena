@@ -507,7 +507,7 @@ export const dictionaries = {
         editorialUnlocked: "Bu tahlil masalani yechganingiz uchun ochildi.",
       },
       judge: {
-        unavailable: "Judge xizmati hozir ishlamayapti",
+        unavailable: "Tekshirish xizmati hozir ishlamayapti",
         unavailableHint: "Administrator xabardor qilindi. Keyinroq urinib ko'ring.",
         run: "Ishga tushirish",
         submit: "Yuborish",

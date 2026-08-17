@@ -64,7 +64,8 @@ class PublicContestViewSet(viewsets.ReadOnlyModelViewSet):
         """Masalalar contest boshlangandan keyin ishtirokchiga, tugagach hammaga ochiq."""
         state = contest.computed_status
         if state == ContestStatus.FINISHED:
-            return True
+            # «Tugagach ochiq qoladimi» sozlamasi endi haqiqatan ishlaydi.
+            return contest.keep_problems_public or participation is not None
         if state == ContestStatus.RUNNING:
             return participation is not None
         return False
@@ -83,6 +84,24 @@ class PublicContestViewSet(viewsets.ReadOnlyModelViewSet):
         if contest.visibility == "private":
             if (request.data.get("password") or "") != contest.access_password:
                 return Response({"detail": "Parol noto'g'ri."}, status=status.HTTP_403_FORBIDDEN)
+
+        # Ro'yxatdan o'tish sozlamalari endi bezak emas: yopiq bo'lsa yoki
+        # muddati o'tgan bo'lsa, yangi ishtirokchi qo'shilmaydi. Virtual
+        # ishtirok bundan ozod — u musobaqa tugaganidan keyingi mashq.
+        already_joined = ContestParticipant.objects.filter(
+            contest=contest, user=request.user
+        ).exists()
+        if not is_virtual and not already_joined:
+            if not contest.open_registration:
+                return Response(
+                    {"detail": "Bu musobaqaga ro'yxatdan o'tish yopiq."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if contest.registration_ends_at and now > contest.registration_ends_at:
+                return Response(
+                    {"detail": "Ro'yxatdan o'tish muddati tugagan."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         # Reyting oynasi. Musobaqa sahifasida «reyting: 1200 … 1800» deb
         # yozib qo'yilardi-yu, qo'shilishda TEKSHIRILMASDI — ya'ni cheklov
         # bezak edi. Virtual (kechiktirilgan) ishtirok reytingga ta'sir
@@ -280,7 +299,26 @@ class PublicContestViewSet(viewsets.ReadOnlyModelViewSet):
     def leaderboard(self, request, slug=None):
         """Jonli natijalar jadvali. Contest davomida ballar submissionlardan hisoblanadi."""
         contest = self.get_object()
-        if contest.computed_status == ContestStatus.RUNNING:
+        state = contest.computed_status
+
+        # Ko'rinish sozlamalari endi haqiqatan tekshiriladi. Moderatorlarga
+        # istisno: ular jadval yashirilganda ham nazorat qila olishi kerak.
+        role = getattr(request.user, "role", "")
+        is_overseer = role in {"admin", "moderator"}
+        participation = self._participation(contest, request.user)
+        if not is_overseer:
+            if not contest.public_scoreboard and participation is None:
+                return Response(
+                    {"detail": "Natijalar jadvali faqat ishtirokchilarga ochiq.", "code": "locked"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if contest.hide_results and state == ContestStatus.RUNNING:
+                return Response(
+                    {"detail": "Natijalar musobaqa tugagach e'lon qilinadi.", "code": "hidden"},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        if state == ContestStatus.RUNNING:
             refresh_if_stale(contest)
 
         rows = (

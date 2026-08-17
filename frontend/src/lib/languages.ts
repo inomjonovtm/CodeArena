@@ -47,11 +47,43 @@ export const LEGACY_STARTER_KEY: Partial<Record<Language, string>> = {
   cpp: "starter_code_cpp",
 };
 
+/** Haqiqiy fayl kengaytmalari — yuklab olishda `main.python` emas, `main.py`. */
+const EXTENSION: Record<Language, string> = {
+  python: "py",
+  cpp: "cpp",
+  c: "c",
+  java: "java",
+  javascript: "js",
+  typescript: "ts",
+  go: "go",
+  rust: "rs",
+  kotlin: "kt",
+  csharp: "cs",
+  php: "php",
+  ruby: "rb",
+};
+
+/** Monaco muharriri tushunadigan til identifikatorlari. */
+const MONACO_ID: Record<Language, string> = {
+  python: "python",
+  cpp: "cpp",
+  c: "c",
+  java: "java",
+  javascript: "javascript",
+  typescript: "typescript",
+  go: "go",
+  rust: "rust",
+  kotlin: "kotlin",
+  csharp: "csharp",
+  php: "php",
+  ruby: "ruby",
+};
+
 export const FALLBACK_CATALOG: LanguageMeta[] = LANGUAGE_ORDER.map((key) => ({
   key,
   label: LANGUAGE_LABEL[key],
-  extension: key,
-  monaco: key,
+  extension: EXTENSION[key],
+  monaco: MONACO_ID[key],
   starter: "",
   // Server javob bermaguncha hech narsani "o'chirilgan" deb ko'rsatmaymiz:
   // aks holda tanlagich bo'sh bo'lib qolardi.

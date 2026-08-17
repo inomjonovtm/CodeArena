@@ -5,7 +5,7 @@ import { ExternalLink, Loader2, Upload } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-import { useConfirm, useToast } from "@/components/providers";
+import { useCan, useConfirm, useToast } from "@/components/providers";
 import { CheckerTab } from "@/components/studio/problem/checker-tab";
 import { GeneratorTab } from "@/components/studio/problem/generator-tab";
 import { StButton } from "@/components/studio/problem/shared";
@@ -33,6 +33,7 @@ const SAVED_FIELDS = [
   "slug",
   "difficulty",
   "points",
+  "rating",
   "status",
   "description_uz",
   "constraints_uz",
@@ -56,6 +57,7 @@ const EMPTY: ProblemDraft = {
   slug: "",
   difficulty: "easy",
   points: 10,
+  rating: 0,
   status: "draft",
   description_uz: "",
   constraints_uz: "",
@@ -85,6 +87,8 @@ export default function ProblemWorkbench() {
 
   const isNew = params.id === "new";
   const problemId = isNew ? null : params.id;
+  const can = useCan();
+  const mayPublish = can("problems.publish");
 
   const [draft, setDraft] = useState<ProblemDraft>(EMPTY);
   const [dirty, setDirty] = useState(false);
@@ -308,7 +312,9 @@ export default function ProblemWorkbench() {
         onSelect={setTab}
         isNew={isNew}
         action={
-          problemId && draft.status !== "published" ? (
+          // Huquqi yo'q muallifga tugma KO'RSATILMAYDI — ilgari u har doim
+          // chiqib turardi va bosilganda 403 bilan tugardi.
+          problemId && draft.status !== "published" && mayPublish ? (
             <StButton
               variant="brand"
               onClick={() => void askAndPublish()}

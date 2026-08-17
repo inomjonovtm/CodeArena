@@ -121,7 +121,7 @@ export function TestsTab({
   const importZip = async (file: File) => {
     setBusyZip(true);
     try {
-      const parsed = await readTestsZip(file);
+      const { tests: parsed, skipped } = await readTestsZip(file);
 
       if (!parsed.length) {
         toast.error(
@@ -129,6 +129,14 @@ export function TestsTab({
           "Fayllar 1in.txt / 1out.txt ko'rinishida nomlangan bo'lishi kerak.",
         );
         return;
+      }
+      if (skipped) {
+        // Juftsiz fayl — odatda nomlashdagi xato; jimgina tashlab ketilsa
+        // muallif testlar soni kamayganini sezmasdi.
+        toast.error(
+          `${skipped} ta fayl juftsiz qoldi`,
+          "Har bir `Nin.txt` uchun mos `Nout.txt` bo'lishi kerak — ular test qilib olinmadi.",
+        );
       }
 
       let replace = true;

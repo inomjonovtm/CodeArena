@@ -56,7 +56,14 @@ _CPU_SIGNALS: tuple[int, ...] = (
     (-signal.SIGXCPU, 128 + int(signal.SIGXCPU)) if hasattr(signal, "SIGXCPU") else ()
 )
 
-MAX_OUTPUT_BYTES = 64_000
+# stdout — javob matni: eng katta kutilgan chiqish (200 ming belgi) dan ham
+# 5 barobar keng. Oshib ketsa javob baribir noto'g'ri — WA qaytariladi.
+# stderr — faqat diagnostika: chegaradan oshsa JIMGINA kesiladi, chunki JVM
+# ogohlantirishi yoki debug chiqishi to'g'ri yechimni yiqitmasligi kerak
+# (ilgari ikkala oqim BITTA bayroqni bo'lishar va 64KB stderr RE berardi).
+MAX_STDOUT_BYTES = 1_000_000
+MAX_STDERR_BYTES = 64_000
+MAX_OUTPUT_BYTES = 64_000  # kompilyatsiya xabari uchun
 COMPILE_TIMEOUT_SEC = 20
 COMPILE_MEMORY_KB = 1_024 * 1024  # 1 GB — kompilyator o'zi ko'p xotira oladi
 MIN_TIME_LIMIT_MS = 100
@@ -93,21 +100,31 @@ LANGUAGES: dict[str, dict] = {
         "run": ["node", "--no-warnings", "{src}"],
         "check": ["node", "--no-warnings", "--check", "{src}"],
         "probe": "node",
+        # V8 64-bitda bir necha GB virtual manzil fazosini OLDINDAN band
+        # qiladi — RLIMIT_AS ostida node umuman ishga tushmaydi. Xotira
+        # nazorati o'lchangan RSS (MLE verdikti) va konteyner cgroup
+        # chegarasi orqali qoladi.
+        "no_as_limit": True,
     },
     "typescript": {
         "label": "TypeScript",
         "filename": "main.ts",
-        # `--transpile-only` ataylab: tur tekshiruvi musobaqada keraksiz
-        # sekinlik beradi, xatolar esa baribir ishga tushganda ko'rinadi.
-        "run": ["npx", "--no-install", "tsx", "{src}"],
-        "probe": "npx",
+        # `tsx` to'g'ridan-to'g'ri chaqiriladi. Ilgari probe `npx` edi —
+        # u Node bor har qanday joyda topiladi va tsx o'rnatilmagan bo'lsa
+        # ham til «ishlaydi» deb ko'rinardi.
+        "run": ["tsx", "{src}"],
+        "probe": "tsx",
+        "no_as_limit": True,
     },
     "java": {
         "label": "Java 17",
         "filename": "Main.java",
         "compile": ["javac", "-nowarn", "-d", "{dir}", "{src}"],
         "run": ["java", "-XX:+UseSerialGC", "-Xss64m", "-cp", "{dir}", "Main"],
-        "probe": "javac",
+        "probe": ["javac", "java"],
+        # JVM ishga tushishdayoq yuzlab MB virtual fazo band qiladi —
+        # RLIMIT_AS ostida har qanday Java yechimi yiqilardi.
+        "no_as_limit": True,
     },
     "go": {
         "label": "Go",
@@ -128,7 +145,10 @@ LANGUAGES: dict[str, dict] = {
         "filename": "Main.cs",
         "compile": ["mcs", "-out:{exe}", "{src}"],
         "run": ["mono", "{exe}"],
-        "probe": "mcs",
+        # Ikkalasi ham tekshiriladi: ilgari faqat `mcs` bor-yo'qligi
+        # qaralardi va runtime yo'q bo'lsa har bir yechim SYSTEM_ERROR olardi.
+        "probe": ["mcs", "mono"],
+        "no_as_limit": True,
     },
     "php": {
         "label": "PHP",
@@ -149,14 +169,23 @@ LANGUAGES: dict[str, dict] = {
         "filename": "Main.kt",
         "compile": ["kotlinc", "-include-runtime", "-d", "{exe}.jar", "{src}"],
         "run": ["java", "-XX:+UseSerialGC", "-jar", "{exe}.jar"],
-        "probe": "kotlinc",
+        "probe": ["kotlinc", "java"],
+        "no_as_limit": True,
     },
 }
 
 
+def _probe_ok(spec: dict) -> bool:
+    """Til uchun kerakli barcha dasturlar PATH da bormi."""
+    probes = spec["probe"]
+    if isinstance(probes, str):
+        probes = [probes]
+    return all(shutil.which(name) is not None for name in probes)
+
+
 def available_languages() -> dict[str, bool]:
     """Qaysi tillar shu konteynerda haqiqatan ishlaydi."""
-    return {key: shutil.which(spec["probe"]) is not None for key, spec in LANGUAGES.items()}
+    return {key: _probe_ok(spec) for key, spec in LANGUAGES.items()}
 
 
 # ------------------------------------------------------------------ namespace
@@ -219,8 +248,18 @@ def _child_env() -> dict[str, str]:
     return env
 
 
-def _limits(memory_kb: int, cpu_seconds: int):
-    """Bola jarayonga qattiq resurs chegaralarini o'rnatadi (faqat POSIX)."""
+def _limits(memory_kb: int, cpu_seconds: int, *, limit_address_space: bool = True):
+    """Bola jarayonga qattiq resurs chegaralarini o'rnatadi (faqat POSIX).
+
+    Sessiya endi `start_new_session=True` bilan ochiladi (Popen ning o'zi
+    fork'dan keyin `setsid` qiladi) — preexec faqat rlimit qo'yadi, bu
+    ko'p-ipli serverda fork-deadlock xavfini kamaytiradi.
+
+    `limit_address_space=False` — JVM/Node/Mono kabi virtual fazoni
+    oldindan band qiladigan muhitlar uchun: ularda RLIMIT_AS dastur
+    boshlanmasidanoq yiqitadi; xotira nazorati o'lchangan RSS va konteyner
+    cgroup chegarasida qoladi.
+    """
     if os.name != "posix":
         return None
 
@@ -228,14 +267,13 @@ def _limits(memory_kb: int, cpu_seconds: int):
 
     def apply() -> None:
         resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds + 1))
-        address_space = max(memory_kb, MIN_MEMORY_KB) * 1024
-        resource.setrlimit(resource.RLIMIT_AS, (address_space, address_space))
+        if limit_address_space:
+            address_space = max(memory_kb, MIN_MEMORY_KB) * 1024
+            resource.setrlimit(resource.RLIMIT_AS, (address_space, address_space))
         resource.setrlimit(resource.RLIMIT_FSIZE, (16 * 1024 * 1024, 16 * 1024 * 1024))
         resource.setrlimit(resource.RLIMIT_NPROC, (128, 128))
         resource.setrlimit(resource.RLIMIT_NOFILE, (256, 256))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-        # O'z guruhini yaratadi: vaqt tugaganda butun daraxtni o'ldiramiz.
-        os.setsid()
 
     return apply
 
@@ -317,23 +355,35 @@ class Execution:
             # Kompilyatsiya tarmoqsiz ham bajariladi: hech bir til uchun
             # tashqi paket yuklab olish kerak emas (va kerak bo'lmasligi ham
             # kerak — aks holda bu tarmoq teshigi bo'lardi).
-            proc = subprocess.run(
+            #
+            # Popen + qo'lda timeout: `subprocess.run(timeout=...)` faqat
+            # bevosita bolani o'ldiradi, javac/kotlinc esa nabira jarayonlar
+            # tug'adi — ular `pids_limit` li konteynerda yetim bo'lib
+            # to'planib qolardi. Endi vaqt tugasa BUTUN guruh o'ladi.
+            proc = subprocess.Popen(
                 _wrap(self._resolve(command), isolate_network=self.isolate_network),
                 cwd=self.workdir,
                 env=_child_env(),
-                capture_output=True,
-                timeout=COMPILE_TIMEOUT_SEC,
-                preexec_fn=_limits(COMPILE_MEMORY_KB, COMPILE_TIMEOUT_SEC),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=os.name == "posix",
+                preexec_fn=_limits(
+                    COMPILE_MEMORY_KB, COMPILE_TIMEOUT_SEC,
+                    limit_address_space=not self.spec.get("no_as_limit"),
+                ),
             )
-        except subprocess.TimeoutExpired:
-            self.compile_error = "Kompilyatsiya juda uzoq davom etdi."
-            return
+            try:
+                out, err = proc.communicate(timeout=COMPILE_TIMEOUT_SEC)
+            except subprocess.TimeoutExpired:
+                self._kill(proc)
+                self.compile_error = "Kompilyatsiya juda uzoq davom etdi."
+                return
         except OSError as exc:
             self.setup_error = f"Kompilyatorni ishga tushirib bo'lmadi: {exc}"
             return
 
         if proc.returncode != 0:
-            raw = (proc.stderr or proc.stdout or b"")[:MAX_OUTPUT_BYTES]
+            raw = (err or out or b"")[:MAX_OUTPUT_BYTES]
             self.compile_error = self._scrub(raw.decode("utf-8", "replace")) or "Kompilyatsiya xatosi."
 
     def _scrub(self, text: str) -> str:
@@ -361,32 +411,50 @@ class Execution:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                preexec_fn=_limits(memory_limit_kb, cpu_seconds),
+                start_new_session=os.name == "posix",
+                preexec_fn=_limits(
+                    memory_limit_kb, cpu_seconds,
+                    limit_address_space=not self.spec.get("no_as_limit"),
+                ),
             )
         except OSError as exc:
             return {"status": "SYSTEM_ERROR", "message": str(exc)}
 
         out_chunks: list[bytes] = []
         err_chunks: list[bytes] = []
-        overflow = threading.Event()
+        # Ikkala oqim ALOHIDA bayroq oladi: stderr'dagi diagnostika (JVM
+        # ogohlantirishi, debug print) to'g'ri yechimni yiqitmasligi kerak.
+        out_overflow = threading.Event()
+        err_overflow = threading.Event()
         threads = [
-            threading.Thread(target=_reader, args=(proc.stdout, out_chunks, MAX_OUTPUT_BYTES, overflow)),
-            threading.Thread(target=_reader, args=(proc.stderr, err_chunks, MAX_OUTPUT_BYTES, overflow)),
+            threading.Thread(target=_reader, args=(proc.stdout, out_chunks, MAX_STDOUT_BYTES, out_overflow)),
+            threading.Thread(target=_reader, args=(proc.stderr, err_chunks, MAX_STDERR_BYTES, err_overflow)),
         ]
         for thread in threads:
             thread.daemon = True
             thread.start()
 
         started = time.perf_counter()
-        try:
-            proc.stdin.write((stdin or "").encode("utf-8"))
-        except (BrokenPipeError, OSError):
-            pass
-        finally:
+
+        # stdin ALOHIDA ipda yoziladi. Bosh ipda yozilsa: dastur kirishni
+        # o'qimasa (cheksiz sikl, xato mantiq) pipe buferi (~64KB) to'lgach
+        # `write()` ABADIY bloklanardi — deadline sikli ishga tushmasdan
+        # butun so'rov (va navbatdagi slot) osilib qolardi.
+        def _feed(pipe, payload: bytes) -> None:
             try:
-                proc.stdin.close()
-            except OSError:
+                pipe.write(payload)
+            except (BrokenPipeError, OSError):
                 pass
+            finally:
+                try:
+                    pipe.close()
+                except OSError:
+                    pass
+
+        feeder = threading.Thread(
+            target=_feed, args=(proc.stdin, (stdin or "").encode("utf-8")), daemon=True
+        )
+        feeder.start()
 
         timed_out = False
         peak_kb = None
@@ -405,7 +473,7 @@ class Execution:
                 elif proc.poll() is not None:
                     break
 
-                if overflow.is_set():
+                if out_overflow.is_set():
                     break
                 if time.perf_counter() > deadline:
                     timed_out = True
@@ -416,7 +484,7 @@ class Execution:
 
         runtime_ms = int((time.perf_counter() - started) * 1000)
 
-        if timed_out or overflow.is_set():
+        if timed_out or out_overflow.is_set() or proc.poll() is None:
             self._kill(proc)
 
         for thread in threads:
@@ -434,23 +502,31 @@ class Execution:
                 "message": f"Vaqt limiti ({time_limit_ms} ms) oshib ketdi.",
             }
 
-        if overflow.is_set():
+        if out_overflow.is_set():
+            # Kutilgan javob hech qachon bunchalik katta bo'lmaydi — demak
+            # javob noto'g'ri. Ilgari bu RUNTIME_ERROR deb qaytarilardi.
             return {
-                "status": "RUNTIME_ERROR",
+                "status": "WRONG_ANSWER",
                 "runtime_ms": runtime_ms,
                 "memory_kb": peak_kb,
                 "stdout": stdout,
                 "stderr": stderr,
-                "message": "Dastur juda ko'p ma'lumot chiqardi.",
+                "message": "Dastur chiqishi juda katta (1 MB chegara).",
             }
 
         code = proc.returncode if proc.returncode is not None else -1
-        if runtime_ms > time_limit_ms and code != 0:
+
+        # Devor vaqti bo'yicha QAT'IY chegara: dastur muvaffaqiyatli tugagan
+        # bo'lsa ham limitdan sekin ishlagan bo'lsa — TLE. Ilgari bu faqat
+        # `code != 0` holatda tekshirilardi va limit + 2 soniya ichida
+        # tugagan sekin yechim ACCEPTED bo'lib ketardi.
+        if runtime_ms > time_limit_ms:
             return {
                 "status": "TIME_LIMIT_EXCEEDED",
                 "runtime_ms": runtime_ms,
                 "memory_kb": peak_kb,
                 "stdout": stdout,
+                "message": f"Vaqt limiti ({time_limit_ms} ms) oshib ketdi.",
             }
 
         if code != 0:

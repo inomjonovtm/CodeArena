@@ -41,6 +41,7 @@ import { ContestBar, Countdown } from "@/components/site/contest-bar";
 import { Markdown } from "@/components/ui/markdown";
 import { ApiError } from "@/lib/api";
 import { useEventSource } from "@/hooks/use-event-source";
+import { LANGUAGE_LABEL } from "@/lib/languages";
 import { ringStyle } from "@/lib/rank";
 import { publicApi } from "@/lib/public-api";
 import type { ContestParticipantRow, ContestStandings, RankInfo } from "@/lib/types";
@@ -142,7 +143,9 @@ export default function ContestDetailPage() {
   const [liveStandings, setLiveStandings] = useState<ContestStandings | null>(null);
 
   const streamStatus = useEventSource<ContestStandings>(
-    slug && isRunning && tab === "standings" ? `/api/contests/${slug}/stream/` : null,
+    // Oxirida `/` YO'Q — `api.ts` normalizatori bilan bir xil shakl, aks
+    // holda proksidagi qo'shimcha slash Django'da 404 berardi.
+    slug && isRunning && tab === "standings" ? `/api/contests/${slug}/stream` : null,
     { event: "standings", onData: setLiveStandings },
   );
   const isLive = streamStatus === "live";
@@ -493,7 +496,9 @@ export default function ContestDetailPage() {
                     <div className="flex justify-between gap-3">
                       <dt className="text-[var(--text-4)]">Tillar</dt>
                       <dd className="text-[var(--text-2)]">
-                        {contest.allowed_languages.join(", ")}
+                        {contest.allowed_languages
+                          .map((key) => (LANGUAGE_LABEL as Record<string, string>)[key] ?? key)
+                          .join(", ")}
                       </dd>
                     </div>
                   ) : null}
