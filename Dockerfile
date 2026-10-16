@@ -13,7 +13,7 @@
 # `POSTGRES_*` orqali tashqi bazaga ulanadi.
 
 # --------------------------------------------------------- 1. frontend build
-FROM node:22-bookworm-slim AS frontend
+FROM node:26-bookworm-slim AS frontend
 
 WORKDIR /build
 ENV NEXT_TELEMETRY_DISABLED=1
